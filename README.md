@@ -1,5 +1,7 @@
 # Word Condenser
 
+![image](https://user-images.githubusercontent.com/36768177/220889557-c1c23784-7803-4d6d-abdf-0d381ea6a930.png)
+
 
 The Word Condenser is a Holochain App designed to collectively condense latent [term that yet needs to be condensed] dissolved in the grammatical space of human collectives.
 
