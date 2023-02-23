@@ -475,7 +475,7 @@ export class CravingView extends LitElement {
 
           <div class="column box" style="flex-shrink: 0; width: 475px; margin-left: 20px;">
           <div class="row" style="align-items: center; margin: 18px 10px 30px 23px;">
-              <img src="associations.svg" style="height: 80px;">
+              <img src="associations.png" style="height: 80px;">
               <div
                 style="font-size: 34px; margin-left: 10px; color: #ffc64cff;"
                 title="What tickles your mind? Keep it short."
