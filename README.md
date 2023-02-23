@@ -8,6 +8,8 @@ The Word Condenser is a Holochain App designed to collectively condense latent [
 Just as glasses condense water droplets dissolved in warm humid air when entering a cozy pub in winter, the Word Condenser condenses words and sayings that are latently dissolved across the humid space of human experience and imagination.
 
 
+## Installation
+
 Visit [wordcondenser.com](https://wordcondenser.com) for instructions on how to install the Word Condenser.
 
 
