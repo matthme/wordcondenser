@@ -114,7 +114,6 @@ export class ReflectionElement extends LitElement {
 
 
   renderReflection() {
-    console.log("REFLECTION TITLE: ", this.reflection.reflection.title);
 
     const color = getHexColorForTimestamp(this.reflection.timestamp);
     const date = new Date(this.reflection.timestamp/1000);

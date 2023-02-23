@@ -31,7 +31,7 @@ export class CravingContext extends LitElement {
 
     const cravingStore = get(this.condenserStore.cravingStore(this.cravingCellId));
 
-    console.log("@connectedCallback: cravingStore: ", cravingStore);
+    // console.log("@connectedCallback: cravingStore: ", cravingStore);
 
     this._cravingProvider = new ContextProvider(
       this,

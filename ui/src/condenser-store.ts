@@ -55,14 +55,14 @@ export class CondenserStore {
     this._lobbies.set(lobbies);
     this._disabledLobbies.set(disabledLobbies);
     this._cravingLobbyMapping.set(cravingLobbyMapping);
-    console.log("@CondenserStore constructor: installedCravings: ", installedCravings.values());
-    console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
+      // console.log("@CondenserStore constructor: installedCravings: ", installedCravings.values());
+      // console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
   }
 
   static async connect(
     appAgentWebsocket: AppAgentWebsocket
   ) {
-    console.log("%%% Connecting to CondenserStore... %%%");
+    // console.log("%%% Connecting to CondenserStore... %%%");
 
     const [installedCravings, disabledCravings, lobbies, disabledLobbies] = await this.fetchCells(appAgentWebsocket);
     // console.log("%%% @connect(): installedCravings: ", installedCravings);
@@ -97,7 +97,7 @@ export class CondenserStore {
 
     }));
 
-    console.log("@connect: cravingLobbyMapping: ", cravingLobbyMapping);
+    // console.log("@connect: cravingLobbyMapping: ", cravingLobbyMapping);
 
 
     return new CondenserStore(
@@ -141,16 +141,7 @@ export class CondenserStore {
       })
     }));
 
-    console.log("@fetchStores: cravingLobbyMapping: ", cravingLobbyMapping);
-
-    // export interface DnaRecipe {
-    //   title: string;
-    //   network_seed: string | undefined;
-    //   properties: any;
-    //   origin_time: number | undefined;
-    //   membrane_proof: MembraneProof | undefined;
-    //   resulting_dna_hash: DnaHash;
-    // }
+    // console.log("@fetchStores: cravingLobbyMapping: ", cravingLobbyMapping);
 
 
     this._installedCravings.set(installedCravings);
@@ -181,7 +172,7 @@ export class CondenserStore {
     const disabledLobbies: Record<string, ClonedCell> = {};
 
     const appInfo = await appAgentWebsocket.appInfo();
-    console.log("%%% AppInfo: ", appInfo);
+    // console.log("%%% AppInfo: ", appInfo);
     const cravingCells = appInfo.cell_info.craving;
     await Promise.all(cravingCells.map(async (cellInfo) => {
       // console.log("@CondenserStore.connect(): Found cell: ", cellInfo);
@@ -293,15 +284,15 @@ export class CondenserStore {
     };
 
 
-    console.log("@createCraving: clonecellrequest: ", cloneCellRequest);
+    // console.log("@createCraving: clonecellrequest: ", cloneCellRequest);
     const requestHash = md5(JSON.stringify(cloneCellRequest));
-    console.log("@createCraving: Hash of create clone cell request: ", requestHash)
+    // console.log("@createCraving: Hash of create clone cell request: ", requestHash)
 
     const cellInfo = await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
 
     const cellId = cellInfo.cell_id;
 
-    console.log(`@condenser-store: created craving with dna hash: ${encodeHashToBase64(cellId[0])}`);
+    // console.log(`@condenser-store: created craving with dna hash: ${encodeHashToBase64(cellId[0])}`);
 
     let cravingService = new CravingService(
       this.appAgentWebsocket,
@@ -345,18 +336,8 @@ export class CondenserStore {
 
   async joinCraving(dnaRecipe: DnaRecipe): Promise<ClonedCell> {
 
-    console.log(`JOINING CRAVING WITH RECIPE: ${JSON.stringify(dnaRecipe)}`);
-    console.log(`JOINING CRAVING WITH resulting dna hash: ${encodeHashToBase64(dnaRecipe.resulting_dna_hash)}`);
-
-    // make sure the order of the properties attributes is the same as upon initial creation of the craving
-    // const orderedProperties: CravingDnaProperties = {
-    //   title: dnaRecipe.properties.title,
-    //   description: dnaRecipe.properties.title,
-    //   max_anecdote_chars: dnaRecipe.properties.max_anecdote_chars,
-    //   max_association_chars: dnaRecipe.properties.max_association_chars,
-    //   max_offer_chars: dnaRecipe.properties.max_offer_chars,
-    //   max_reflection_chars: dnaRecipe.properties.max_reflection_chars,
-    // };
+    // console.log(`JOINING CRAVING WITH RECIPE: ${JSON.stringify(dnaRecipe)}`);
+    // console.log(`JOINING CRAVING WITH resulting dna hash: ${encodeHashToBase64(dnaRecipe.resulting_dna_hash)}`);
 
 
     const cloneCellRequest = {
@@ -369,18 +350,18 @@ export class CondenserStore {
       name: dnaRecipe.title,
     };
 
-    console.log("@joinCraving: cloneCellRequest: ", cloneCellRequest);
+    // console.log("@joinCraving: cloneCellRequest: ", cloneCellRequest);
     const requestHash = md5(JSON.stringify(cloneCellRequest));
-    console.log("@joinCraving: Hash of create clone cell request: ", requestHash)
+    // console.log("@joinCraving: Hash of create clone cell request: ", requestHash)
 
     const cellInfo = await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
 
 
     const cellId = cellInfo.cell_id;
 
-    console.log(`@condenser-store: @joinCraving: created cell clone with dna hash: ${encodeHashToBase64(cellId[0])}`);
+    // console.log(`@condenser-store: @joinCraving: created cell clone with dna hash: ${encodeHashToBase64(cellId[0])}`);
 
-    console.log("@CondenserStore: @joinCraving: Created clone cell: ", cellInfo);
+    // console.log("@CondenserStore: @joinCraving: Created clone cell: ", cellInfo);
 
     let cravingService = new CravingService(
       this.appAgentWebsocket,
@@ -443,9 +424,9 @@ export class CondenserStore {
   }
 
   getLobbiesForCraving(cravingDnaHash: DnaHash): Readable<LobbyData[]> {
-    console.log("@getLobbiesForCraving: get(this._cravingLobbyMapping)", get(this._cravingLobbyMapping));
-    console.log("@getLobbiesForCraving: got cravingDnaHash: ", cravingDnaHash);
-    console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
+    // console.log("@getLobbiesForCraving: get(this._cravingLobbyMapping)", get(this._cravingLobbyMapping));
+    // console.log("@getLobbiesForCraving: got cravingDnaHash: ", cravingDnaHash);
+    // console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
     return derived(this._cravingLobbyMapping, (store) => store.get(cravingDnaHash)[1]);
   }
 
@@ -554,7 +535,7 @@ export class CondenserStore {
 
     const cellId = cellInfo.cell_id;
 
-    console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
+    // console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
 
     let lobbyService = new LobbyService(
       this.appAgentWebsocket,
@@ -562,7 +543,7 @@ export class CondenserStore {
       cellId,
     );
 
-    console.log("@CondenserStore: @createLobby: Created lobbyService: ", lobbyService);
+    // console.log("@CondenserStore: @createLobby: Created lobbyService: ", lobbyService);
 
     // wait 2 seconds in order to get the chance to fetch the lobby info from another peer
     setTimeout(async () => {

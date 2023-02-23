@@ -34,7 +34,7 @@ export class AssociationMapElement extends LitElement {
 
 
   async handleResonator() {
-    console.log(":::HANDLING RESONATOR:::");
+    // console.log(":::HANDLING RESONATOR:::");
     if (this.association.iResonated) {
       await this.unresonate();
     } else {

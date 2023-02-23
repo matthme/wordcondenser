@@ -21,10 +21,10 @@ export class AllCravings extends LitElement {
   );
 
   renderList(cravings: DnaHashMap<CravingStore>) {
-    console.log("/// Rendering cravings list: ", cravings.values());
-    console.log("/// this._store: ", this._store);
-    console.log("/// carvings.size: ", cravings.size);
-    console.log("/// carvings.values(): ", cravings.values());
+    // console.log("/// Rendering cravings list: ", cravings.values());
+    // console.log("/// this._store: ", this._store);
+    // console.log("/// carvings.size: ", cravings.size);
+    // console.log("/// carvings.values(): ", cravings.values());
 
     if (cravings.size === 0) return html`
       <div class="column" style="justify-content: center; align-items: center; flex: 1;">

@@ -36,7 +36,7 @@ export class CravingStore {
 
   static async connect(service: CravingService) {
     const craving = await service.getCraving();
-    console.log("&&& @CravingStore.connect(): got craving: ", craving);
+    // console.log("&&& @CravingStore.connect(): got craving: ", craving);
     const initTime = await service.getInitTime();
 
     return new CravingStore(service, craving, initTime);
@@ -68,7 +68,7 @@ export class CravingStore {
     set(associationDatas);
 
     return this.service.on("signal", (signal) => {
-      console.log("||| RECEIVED SIGNAL |||: ", signal);
+      // console.log("||| RECEIVED SIGNAL |||: ", signal);
       if (signal.type === "EntryCreated" && signal.app_entry.type === "Association") {
         const associationData: AssociationData = {
           record: signal.record,
@@ -197,7 +197,7 @@ export class CravingStore {
     set(offerDatas);
 
     return this.service.on("signal", (signal) => {
-      console.log("||| RECEIVED SIGNAL |||: ", signal);
+      // console.log("||| RECEIVED SIGNAL |||: ", signal);
       if (signal.type === "EntryCreated" && signal.app_entry.type === "Offer") {
         const offerData: OfferData = {
           record: signal.record,
@@ -211,8 +211,8 @@ export class CravingStore {
 
       if (signal.type === "LinkCreated" && "EntryToResonator" in signal.link_type) {
 
-        console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
-        console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
+        // console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
+        // console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
 
 
         const updatedOfferDatas = offerDatas.map((data) => {
@@ -236,8 +236,8 @@ export class CravingStore {
 
       if (signal.type === "LinkDeleted" && "EntryToResonator" in signal.link_type) {
 
-        console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
-        console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
+        // console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
+        // console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
 
 
         const updatedOfferDatas = offerDatas.map((data) => {
@@ -246,12 +246,12 @@ export class CravingStore {
             JSON.stringify((data.record.signed_action.hashed.content as NewEntryAction).entry_hash)
             === JSON.stringify(signal.action.hashed.content.base_address)
           ) {
-            console.log("½½½½ CONDITION MET ½½½½½½");
-            console.log("data.resonators before: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
-            console.log("myPubKey: ", encodeHashToBase64(myPubKey));
+            // console.log("½½½½ CONDITION MET ½½½½½½");
+            // console.log("data.resonators before: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
+            // console.log("myPubKey: ", encodeHashToBase64(myPubKey));
             data.resonators = data.resonators.filter((pubKey) => encodeHashToBase64(pubKey).slice(5) !== encodeHashToBase64(myPubKey).slice(5));
-            console.log("data.resonators after: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
-            console.log(data.resonators.filter((pubKey) => JSON.stringify(pubKey).slice(5) !== JSON.stringify(myPubKey)).slice(5));
+            // console.log("data.resonators after: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
+            // console.log(data.resonators.filter((pubKey) => JSON.stringify(pubKey).slice(5) !== JSON.stringify(myPubKey)).slice(5));
 
             if (JSON.stringify(signal.action.hashed.content.author) === JSON.stringify(myPubKey)) {
               data.iResonated = false;
@@ -260,8 +260,8 @@ export class CravingStore {
           return data;
         });
 
-        console.log("@craving-store signalCallback: offerDatas before: ", offerDatas);
-        console.log("@craving-store signalCallback: updatedOfferDatas: ", updatedOfferDatas);
+        // console.log("@craving-store signalCallback: offerDatas before: ", offerDatas);
+        // console.log("@craving-store signalCallback: updatedOfferDatas: ", updatedOfferDatas);
 
         offerDatas = updatedOfferDatas;
         set(offerDatas);

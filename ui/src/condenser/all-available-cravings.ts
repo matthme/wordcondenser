@@ -32,7 +32,7 @@ export class AllAvailableCravings extends LitElement {
     try {
       const clonedCell = await this._store.joinCraving(dnaRecipe);
 
-      console.log("@all-available-cravings: @joinCraving: Created craving cell with hash: ", encodeHashToBase64(clonedCell.cell_id[0]));
+      // console.log("@all-available-cravings: @joinCraving: Created craving cell with hash: ", encodeHashToBase64(clonedCell.cell_id[0]));
       this.dispatchEvent(new CustomEvent("installed-craving", {
         bubbles: true,
         composed: true,

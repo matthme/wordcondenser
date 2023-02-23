@@ -58,7 +58,6 @@ export class ListProfiles extends ScopedElementsMixin(LitElement) {
           },
         })
       );
-      console.log("expandedprofiles before: ", this._expandedProfiles);
 
       const pubKeyB64 = encodeHashToBase64(agentPubKey);
 
@@ -70,8 +69,6 @@ export class ListProfiles extends ScopedElementsMixin(LitElement) {
         this._expandedProfiles.push(pubKeyB64);
         this.shadowRoot?.getElementById(pubKeyB64)?.classList.remove("invisible");
       }
-
-      console.log("expandedprofiles after: ", this._expandedProfiles);
 
     }
   }

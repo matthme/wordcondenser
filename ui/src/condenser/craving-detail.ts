@@ -38,7 +38,7 @@ export class CravingDetail extends LitElement {
     const craving = this.store.craving;
     const date = new Date(timestamp);
 
-    console.log("Craving: ", craving);
+    // console.log("Craving: ", craving);
 
     return html`
       <mwc-snackbar id="delete-error" leading> </mwc-snackbar>

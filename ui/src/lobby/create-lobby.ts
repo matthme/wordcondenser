@@ -86,7 +86,7 @@ export class CreateLobby extends LitElement {
     try {
       this.installing = true;
 
-      console.log("Starting to create lobby");
+      // console.log("Starting to create lobby");
       // make sure button is disabled.
 
       (this.shadowRoot?.getElementById("create-lobby-button") as MVBButton).disabled = true;
@@ -95,7 +95,7 @@ export class CreateLobby extends LitElement {
       const networkSeed = generateSillyPassword({ wordCount: 5 });
 
 
-      console.log("Generated random network seed: ", networkSeed);
+      // console.log("Generated random network seed: ", networkSeed);
 
       // create cell clone for this craving
       const cellId = await this.store.createLobby(
@@ -106,7 +106,7 @@ export class CreateLobby extends LitElement {
         this._logoSrc!
       );
 
-      console.log("Created lobby");
+      // console.log("Created lobby");
 
 
       this.dispatchEvent(new CustomEvent('lobby-created', {

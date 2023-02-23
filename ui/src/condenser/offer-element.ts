@@ -34,7 +34,7 @@ export class OfferElement extends LitElement {
 
 
   async handleResonator() {
-    console.log(":::HANDLING RESONATOR:::");
+    // console.log(":::HANDLING RESONATOR:::");
     if (this.offer.iResonated) {
       await this.unresonate();
     } else {

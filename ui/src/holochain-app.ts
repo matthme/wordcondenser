@@ -127,7 +127,6 @@ export class HolochainApp extends LitElement {
             const retrievedLobbyDnaHash = decodeHashFromBase64(window.localStorage.getItem("selectedLobbyDnaHash") as string);
             this._selectedLobbyCellId = [retrievedLobbyDnaHash, this.client.myPubKey];
             this._dashboardMode = DashboardMode.LobbyView;
-            console.log("@ FIRST UPDATED: this._dashboardMode: ", this._dashboardMode);
             break;
 
         }

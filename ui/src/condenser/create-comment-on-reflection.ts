@@ -42,7 +42,6 @@ export class CreateCommentOnReflection extends LitElement {
       comment: this._comment!,
     };
 
-    console.log("CALLLING ZOME WITH CELLID: ", this.cravingCellId);
     try {
       const record: Record = await this.client.callZome({
         cap_secret: null,

@@ -79,8 +79,8 @@ export class LobbyService {
   }
 
   async registerCraving(dnaRecipe: DnaRecipe): Promise<Record> {
-    console.log(`@lobbyService: registering craving with dnaRecipe: ${JSON.stringify(dnaRecipe)}}`);
-    console.log(`@lobbyService: regisetring craving with dna hash: ${encodeHashToBase64(dnaRecipe.resulting_dna_hash)}`)
+    // console.log(`@lobbyService: registering craving with dnaRecipe: ${JSON.stringify(dnaRecipe)}}`);
+    // console.log(`@lobbyService: regisetring craving with dna hash: ${encodeHashToBase64(dnaRecipe.resulting_dna_hash)}`)
     return await this.callZome(
       "create_dna_recipe",
       dnaRecipe,

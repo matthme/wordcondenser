@@ -23,10 +23,6 @@ export class ListLobbies extends LitElement {
   );
 
   renderList(lobbies: DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>) {
-    console.log("/// Rendering lobbies list: ", lobbies.values());
-    console.log("/// this._store: ", this._store);
-    console.log("/// lobbies.size: ", lobbies.size);
-    console.log("/// lobbies.values(): ", lobbies.values());
 
     if (lobbies.size === 0) return html`<span style="color: #9098b3;">No lobbies found.</span>`;
 

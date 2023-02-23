@@ -21,7 +21,7 @@ export class LobbyStore {
     } catch(e) {
       if (JSON.stringify(e).includes("There is no link pointing to the lobby info yet.")) {
         // ignore since maybe just no other peer is online yet
-        console.log("Failed to fetch lobby info.")
+        // console.log("Failed to fetch lobby info.")
       } else {
         throw new Error(JSON.stringify(e));
       }

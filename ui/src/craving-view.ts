@@ -183,8 +183,8 @@ export class CravingView extends LitElement {
     const allLobbies = Array.from(this._allLobbies.value.entries());
 
     // filter out the ones this craving is already shared with
-    console.log("allLobbies dna hashes: ", allLobbies.map(([dnaHash, _]) => encodeHashToBase64(dnaHash)));
-    console.log("_lobbiesForCraving dna hashes: ", this._lobbiesForCraving.value.map((lobbyData) => encodeHashToBase64(lobbyData.dnaHash)));
+    // console.log("allLobbies dna hashes: ", allLobbies.map(([dnaHash, _]) => encodeHashToBase64(dnaHash)));
+    // console.log("_lobbiesForCraving dna hashes: ", this._lobbiesForCraving.value.map((lobbyData) => encodeHashToBase64(lobbyData.dnaHash)));
 
 
     const remainingLobbies = allLobbies.filter(([dnaHash, _]) => {

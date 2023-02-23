@@ -41,7 +41,7 @@ export class AllCravingRecipes extends LitElement {
 
   async installCraving(recipe: DnaRecipe) {
 
-    console.log("RECIPE: ", recipe);
+    // console.log("RECIPE: ", recipe);
     try {
 
       // create cell clone for this craving

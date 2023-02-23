@@ -96,7 +96,7 @@ export class CreateCraving extends LitElement {
         max_reflection_chars: this._max_reflection_chars,
     };
 
-    console.log("@create-craving: cravingDnaProperties: ", cravingDnaProperties);
+    // console.log("@create-craving: cravingDnaProperties: ", cravingDnaProperties);
 
     try {
       const networkSeed = uuidv4();
@@ -118,7 +118,7 @@ export class CreateCraving extends LitElement {
         resulting_dna_hash: clonedCell.cell_id[0]
       };
 
-      console.log("Creating craving with recipe: ", dnaRecipe);
+      // console.log("Creating craving with recipe: ", dnaRecipe);
 
       // create an entry in each of the lobby cells to register that Craving there
       Promise.all(this._selectedLobbies.map(async (dnaHashB64) => {
@@ -164,8 +164,8 @@ export class CreateCraving extends LitElement {
       (this.shadowRoot?.getElementById(hashString) as HTMLElement).classList.add("selected");
     }
     this.requestUpdate();
-    console.log("Clicked. Length of this._selectedLobbies: ", this._selectedLobbies.length);
-    console.log("content of this._selectedLobbies: ", this._selectedLobbies);
+    // console.log("Clicked. Length of this._selectedLobbies: ", this._selectedLobbies.length);
+    // console.log("content of this._selectedLobbies: ", this._selectedLobbies);
   }
 
 

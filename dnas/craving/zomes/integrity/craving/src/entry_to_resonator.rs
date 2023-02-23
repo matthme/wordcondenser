@@ -6,10 +6,10 @@ pub fn validate_create_link_entry_to_resonator(
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
     let target_pubkey = AgentPubKey::from(EntryHash::from(target_address.clone()));
-    debug!("#### Validating EntryToResonator link. Target pubkey: {:?}", target_pubkey);
+    // debug!("#### Validating EntryToResonator link. Target pubkey: {:?}", target_pubkey);
     let author_pubkey = action.author;
-    debug!("#### Validating EntryToResonator link. author_pubkey: {:?}", author_pubkey);
-    debug!("#### Validating EntryToResonator link. target_pubkey == author_pubkey: {:?}", target_pubkey == author_pubkey);
+    // debug!("#### Validating EntryToResonator link. author_pubkey: {:?}", author_pubkey);
+    // debug!("#### Validating EntryToResonator link. target_pubkey == author_pubkey: {:?}", target_pubkey == author_pubkey);
 
     if target_pubkey != author_pubkey {
         return Ok(
@@ -32,10 +32,10 @@ pub fn validate_delete_link_entry_to_resonator(
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
     let target_pubkey = AgentPubKey::from(EntryHash::from(target.clone()));
-    debug!("#### Validating DeleteEntryToResonator link. Target pubkey: {:?}", target_pubkey);
+    // debug!("#### Validating DeleteEntryToResonator link. Target pubkey: {:?}", target_pubkey);
     let author_pubkey = action.author;
-    debug!("#### Validating DeleteEntryToResonator link. author_pubkey: {:?}", author_pubkey);
-    debug!("#### Validating DeleteEntryToResonator link. target_pubkey == author_pubkey: {:?}", target_pubkey == author_pubkey);
+    // debug!("#### Validating DeleteEntryToResonator link. author_pubkey: {:?}", author_pubkey);
+    // debug!("#### Validating DeleteEntryToResonator link. target_pubkey == author_pubkey: {:?}", target_pubkey == author_pubkey);
     if target_pubkey != author_pubkey {
         return Ok(
             ValidateCallbackResult::Invalid(

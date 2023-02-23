@@ -50,7 +50,7 @@ export class CreateAssociation extends LitElement {
         payload: association,
       });
 
-      console.log("@create-association: Created association.");
+      // console.log("@create-association: Created association.");
 
       this.dispatchEvent(new CustomEvent('association-created', {
         composed: true,
