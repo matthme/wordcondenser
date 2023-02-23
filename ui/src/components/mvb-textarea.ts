@@ -14,6 +14,8 @@ export class MVBTextArea extends LitElement {
 
   @property() cols: number = 50;
 
+  @property() width: string | undefined;
+
   @state()
   value: string = "";
 
@@ -38,6 +40,7 @@ export class MVBTextArea extends LitElement {
             id="textarea-field"
             type="text"
             class="textarea"
+            style="${this.width ? "width: ${this.width}" : ""}"
             .placeholder=${this.placeholder}
             .rows=${this.rows}
             .cols=${this.cols}

@@ -424,10 +424,17 @@ export class CondenserStore {
   }
 
   getLobbiesForCraving(cravingDnaHash: DnaHash): Readable<LobbyData[]> {
-    // console.log("@getLobbiesForCraving: get(this._cravingLobbyMapping)", get(this._cravingLobbyMapping));
-    // console.log("@getLobbiesForCraving: got cravingDnaHash: ", cravingDnaHash);
-    // console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
-    return derived(this._cravingLobbyMapping, (store) => store.get(cravingDnaHash)[1]);
+    console.log("@getLobbiesForCraving: get(this._cravingLobbyMapping)", get(this._cravingLobbyMapping));
+    console.log("@getLobbiesForCraving: got cravingDnaHash: ", cravingDnaHash);
+    console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
+    return derived(this._cravingLobbyMapping, (store) => {
+      try {
+        return store.get(cravingDnaHash)[1]
+      } catch(e) {
+        console.error("No Lobby found for the requested craving.")
+        return [];
+      }
+    });
   }
 
   /**

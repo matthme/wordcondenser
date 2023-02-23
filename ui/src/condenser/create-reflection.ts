@@ -119,6 +119,7 @@ export class CreateOffer extends LitElement {
             "
             cols="59"
             placeholder="Reflection"
+            width="780px"
             @input=${(e: CustomEvent) => {
               this._reflection = (e.target as any).value;
             }}
