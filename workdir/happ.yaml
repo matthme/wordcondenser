@@ -1,0 +1,31 @@
+---
+manifest_version: "1"
+name: word-condenser
+description: ~
+roles:
+  - name: craving
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: "../dnas/craving/workdir/craving.dna"
+      modifiers:
+        network_seed: ~
+        properties: ~
+        origin_time: ~
+        quantum_time: ~
+      version: ~
+      clone_limit: 99999
+  - name: lobby
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: "../dnas/lobby/workdir/lobby.dna"
+      modifiers:
+        network_seed: ~
+        properties: ~
+        origin_time: ~
+        quantum_time: ~
+      version: ~
+      clone_limit: 99999

@@ -1,0 +1,28 @@
+---
+manifest_version: "1"
+name: lobby
+integrity:
+  network_seed: ~
+  properties: ~
+  origin_time: 1676150196587909
+  zomes:
+    - name: cravings_integrity
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/cravings_integrity.wasm"
+      dependencies: ~
+    - name: profiles_integrity
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm"
+      dependencies: ~
+coordinator:
+  zomes:
+    - name: cravings
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/cravings.wasm"
+      dependencies:
+        - name: cravings_integrity
+    - name: profiles
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/profiles.wasm"
+      dependencies:
+        - name: profiles_integrity

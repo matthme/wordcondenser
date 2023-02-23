@@ -1,0 +1,19 @@
+---
+manifest_version: "1"
+name: craving
+integrity:
+  network_seed: ~
+  properties: ~
+  origin_time: 1674917468682740
+  zomes:
+    - name: craving_integrity
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/craving_integrity.wasm"
+      dependencies: ~
+coordinator:
+  zomes:
+    - name: craving
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/craving.wasm"
+      dependencies:
+        - name: craving_integrity

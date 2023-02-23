@@ -1,0 +1,31 @@
+[profile.dev]
+opt-level = "z"
+
+[profile.release]
+opt-level = "z"
+
+[workspace]
+members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
+
+[workspace.dependencies]
+hdi = "=0.2.1"
+hdk = "=0.1.1"
+serde = "1"
+
+[workspace.dependencies.craving]
+path = "dnas/craving/zomes/coordinator/craving"
+
+[workspace.dependencies.craving_integrity]
+path = "dnas/craving/zomes/integrity/craving"
+
+[workspace.dependencies.cravings]
+path = "dnas/lobby/zomes/coordinator/cravings"
+
+[workspace.dependencies.cravings_integrity]
+path = "dnas/lobby/zomes/integrity/cravings"
+
+[workspace.dependencies.profiles]
+path = "dnas/lobby/zomes/coordinator/profiles"
+
+[workspace.dependencies.profiles_integrity]
+path = "dnas/lobby/zomes/integrity/profiles"
