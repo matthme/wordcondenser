@@ -98,6 +98,7 @@ export class JoinLobby extends LitElement {
           </div>
 
           <div style="margin-bottom: 15px;">
+            <div style="color: #929ab9; font-size: 18px; text-align: left; margin-left: 10px;"><b>IMPORTANT:</b> The name must exactly match the one from the invitation.</div>
             <mvb-textfield
               style="
                 --mvb-primary-color: #abb5d6;
@@ -113,6 +114,7 @@ export class JoinLobby extends LitElement {
             >
             </mvb-textfield>
           </div>
+
 
           <div style="margin-bottom: 15px;">
             <mvb-textfield
