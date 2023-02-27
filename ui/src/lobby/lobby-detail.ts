@@ -42,23 +42,23 @@ export class LobbyDetail extends LitElement {
         class=${!!lobbyInfo ? "lobby-container" : "lobby-container-disabled"}
         style="display: flex; flex-direction: column; flex: 1;"
         tabindex="0"
-        @keypress.enter=${() => !!lobbyInfo ? this.dispatchEvent(new CustomEvent("selected-lobby", {
+        @keypress.enter=${() => this.dispatchEvent(new CustomEvent("selected-lobby", {
           detail: {
             cellId: this.store.service.cellId,
             lobbyInfo,
           },
           bubbles: true,
           composed: true,
-        })) : undefined
+        }))
       }
-        @click=${() => !!lobbyInfo ? this.dispatchEvent(new CustomEvent("selected-lobby", {
+        @click=${() => this.dispatchEvent(new CustomEvent("selected-lobby", {
           detail: {
             cellId: this.store.service.cellId,
             lobbyInfo,
           },
           bubbles: true,
           composed: true,
-        })) : undefined
+        }))
       }
       >
         <div class="row" style="align-items: center; flex: 1; width: 100%;">
@@ -87,7 +87,10 @@ export class LobbyDetail extends LitElement {
           }
 
           <div class="lobby-title" style="margin-left: 15px;">${this.store.lobbyName}</div>
-          ${ lobbyInfo ? html`` : html `<img
+          ${ lobbyInfo ? html`` : html `
+
+
+            <img
               @click=${async () => {
                 await this.condenserStore.fetchStores()
                 this.requestUpdate();
@@ -99,9 +102,9 @@ export class LobbyDetail extends LitElement {
                 }
               }
               src="clock.svg"
-              style="height: 60px; opacity: 0.8; margin-left: auto; cursor: pointer;"
+              style="height: 60px; opacity: 0.8; margin-left: auto;"
               alt="clock icon, depicting that Group meta data could not yet be fetched from other peers"
-              title="Waiting to get group meta data. At least one other peer needs to be online for this. Click to refresh."
+              title="Waiting to get group meta data. At least one other peer needs to be online for this. To refresh, click the refresh button in the lower left corner of the screen."
             />`
             }
         </div>
@@ -145,6 +148,11 @@ export class LobbyDetail extends LitElement {
       border-radius: 20px;
       box-shadow: 2px 2px 4px 3px #1e253d;
       padding: 20px;
+      cursor: pointer;
+    }
+
+    .lobby-container-disabled:hover {
+      background: #818caec8;
     }
 
     .lobby-title {

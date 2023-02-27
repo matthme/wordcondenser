@@ -58,7 +58,7 @@ export class LobbyView extends LitElement {
   lobbyStore!: LobbyStore;
 
   @property({ type: Object })
-  lobbyInfo!: LobbyInfo;
+  lobbyInfo: LobbyInfo | undefined;
 
   @state()
   _viewMode: LobbyViewMode = LobbyViewMode.Home;
@@ -93,7 +93,7 @@ Name:
 ${this.lobbyStore.lobbyName}
 
 Secret words:
-${this.lobbyInfo.network_seed}
+${this.lobbyInfo!.network_seed}
 
 
 -----
@@ -197,6 +197,7 @@ ${this.lobbyInfo.network_seed}
 
 
 
+  // This may only be called if lobbyInfo is not undefined
   renderMainSection() {
     return html`
       <button
@@ -234,7 +235,26 @@ ${this.lobbyInfo.network_seed}
 
         <div>
           <div class="column" style="align-items: center;">
-            <img src=${this.lobbyInfo.logo_src} style="height: 220px; width: 220px; border-radius: 25px; margin: 30px;"/>
+            ${ this.lobbyInfo?.logo_src
+              ? html`<img src=${this.lobbyInfo!.logo_src} style="height: 220px; width: 220px; border-radius: 25px; margin: 30px;" alt="Group logo"/>`
+              : html `<div
+                  class="column"
+                  style="
+                    height: 220px;
+                    width: 220px;
+                    border-radius: 25px;
+                    background: #929ab9;
+                    color: black;
+                    font-size: 80px;
+                    font-weight: bold;
+                    justify-content: center;
+                    align-items: center;
+                  "
+                  alt="Group logo placeholder"
+                >
+                  ${this.lobbyStore.lobbyName.slice(0,2)}
+                </div>`
+            }
             <div
               style="font-weight: bold; margin-top: 5px; font-size: 1.2em; color: #9098b3; margin-bottom: 30px;"
             >
@@ -273,7 +293,10 @@ ${this.lobbyInfo.network_seed}
       </div>
 
       <div class="column" style="align-items: center; flex: 1;">
-        <img src=${this.lobbyInfo.logo_src} style="height: 220px; width: 220px; border-radius: 25px; margin: 30px;"/>
+        ${ this.lobbyInfo?.logo_src
+          ? html`<img src=${this.lobbyInfo!.logo_src} style="height: 220px; width: 220px; border-radius: 25px; margin: 30px;" alt="Group logo"/>`
+          : html `<img src="clock_blue.svg" style="height: 220px; width: 220px; border-radius: 25px; margin: 30px;" alt="Clock icon" title="Waiting for peers..."/>`
+        }
         <div class="row" style="font-size: 1.5em; font-weight: bold; color: #9098b3; justify-content: center; align-items: center; margin-bottom: 50px;">
           <span>${this.lobbyStore.lobbyName}</span>
           <img
@@ -286,45 +309,57 @@ ${this.lobbyInfo.network_seed}
           @keypress=${() => writeText(this.lobbyStore.lobbyName)}
           />
         </div>
-        <div style="margin-bottom: 8px;">
-          <span style="color: #9098b3;">Secret words: </span>
-        </div>
-        <div class="row" style="font-size: 1em; color: #9098b3; justify-content: center; align-items: center; margin-bottom: 30px;">
-          <span style="margin-left: 20px; border: 1px solid #9098b3; padding: 8px 16px; border-radius: 8px;">${this.lobbyInfo.network_seed}</span>
-          <img
-            src="copy_icon.svg"
-            style="cursor: pointer; height: 30px; margin-left: 10px;"
-            title="copy to clipboard"
-            tabindex="0"
-            alt="copy secret words"
-            @click=${() => writeText(this.lobbyInfo.network_seed)}
-            @keypress=${() => writeText(this.lobbyInfo.network_seed)}
-          />
-        </div>
-        <div
-          class="row böttns"
-          style="margin-bottom: 70px;"
-          title="Click to copy the invitation to this group"
-          tabindex="0"
-          @click=${() => writeText(this.invitationText())}
-          @keypress=${() => writeText(this.invitationText())}
-        >
-          <img
-            src="copy_icon.svg"
-            style="cursor: pointer; height: 30px; margin-left: 10px;"
-            @click=${() => writeText(this.lobbyInfo.network_seed)}
-            @keypress=${() => writeText(this.lobbyInfo.network_seed)}
-          />
-          <span style="color: #abb5d6; margin-left: 10px; font-size: 23px;">Copy Invitation</span>
-        </div>
-        <div style="font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 0.9em;">Description:</div>
-        <div style="max-width: 800px; text-align: left; color: #9098b3; font-size: 0.9em; margin-bottom: 70px;">
-          ${this.lobbyInfo.description}
-        </div>
-        <div class="column" style="background: #9098b30e; align-items: center; width: 100vw; padding-bottom: 100px;">
-        <div style="font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 1em; margin-top: 50px;">Other Members:</div>
-          <list-profiles></list-profiles>
-        </div>
+
+        ${ this.lobbyInfo
+          ? html`
+            <div style="margin-bottom: 8px;">
+              <span style="color: #9098b3;">Secret words: </span>
+            </div>
+            <div class="row" style="font-size: 1em; color: #9098b3; justify-content: center; align-items: center; margin-bottom: 30px;">
+              <span style="margin-left: 20px; border: 1px solid #9098b3; padding: 8px 16px; border-radius: 8px;">${this.lobbyInfo!.network_seed}</span>
+              <img
+                src="copy_icon.svg"
+                style="cursor: pointer; height: 30px; margin-left: 10px;"
+                title="copy to clipboard"
+                tabindex="0"
+                alt="copy secret words"
+                @click=${() => writeText(this.lobbyInfo!.network_seed)}
+                @keypress=${() => writeText(this.lobbyInfo!.network_seed)}
+              />
+            </div>
+            <div
+              class="row böttns"
+              style="margin-bottom: 70px;"
+              title="Click to copy the invitation to this group"
+              tabindex="0"
+              @click=${() => writeText(this.invitationText())}
+              @keypress=${() => writeText(this.invitationText())}
+            >
+              <img
+                src="copy_icon.svg"
+                style="cursor: pointer; height: 30px; margin-left: 10px;"
+                @click=${() => writeText(this.lobbyInfo!.network_seed)}
+                @keypress=${() => writeText(this.lobbyInfo!.network_seed)}
+              />
+              <span style="color: #abb5d6; margin-left: 10px; font-size: 23px;">Copy Invitation</span>
+            </div>
+            <div style="font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 0.9em;">Description:</div>
+            <div style="max-width: 800px; text-align: left; color: #9098b3; font-size: 0.9em; margin-bottom: 70px;">
+              ${this.lobbyInfo!.description}
+            </div>
+            <div class="column" style="background: #9098b30e; align-items: center; width: 100vw; padding-bottom: 100px;">
+            <div style="font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 1em; margin-top: 50px;">Other Members:</div>
+              <list-profiles></list-profiles>
+            </div>
+          `
+          : html`
+            <div style="margin-bottom: 8px; max-width: 800px; margin-bottom: 150px; margin-top: 40px;">
+              <span style="color: #9098b3;">Could not get Group meta data from peers yet. At least one other group member
+              needs to be online at the same time in order to synchronize data.</span>
+            </div>
+          `
+        }
+
         <div style="margin: 80px 0;">
           <div
             class="row leave-btn"
@@ -340,12 +375,17 @@ ${this.lobbyInfo.network_seed}
   `
   }
 
+
+  renderWaitingForPeers() {
+
+  }
+
   renderContent() {
     switch (this._viewMode) {
       case LobbyViewMode.Home:
-        return this.renderMainSection()
+        return this.renderMainSection();
       case LobbyViewMode.EditProfile:
-        return this.renderEditProfile()
+        return this.renderEditProfile();
       case LobbyViewMode.LeaveGroup:
         return this.renderLeaveGroup();
     }

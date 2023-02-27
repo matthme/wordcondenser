@@ -508,7 +508,7 @@ export class HolochainApp extends LitElement {
       case DashboardMode.LobbyView:
         const [lobbyStore, profilesStore] = this.store.lobbyStore(this._selectedLobbyCellId![0]);
         const lobbyInfoRecord = lobbyStore.lobbyInfo;
-        const lobbyInfo = decodeEntry(lobbyInfoRecord!) as LobbyInfo;
+        const lobbyInfo: LobbyInfo | undefined = lobbyInfoRecord ? decodeEntry(lobbyInfoRecord) : undefined;
 
         return html`
           <profiles-context .store=${profilesStore}>
