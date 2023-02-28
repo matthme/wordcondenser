@@ -17,6 +17,7 @@ import { sharedStyles } from './sharedStyles';
 import { get } from '@holochain-open-dev/stores';
 import { decodeEntry } from '@holochain-open-dev/utils';
 import { CravingDnaProperties } from './condenser/types';
+import { open } from '@tauri-apps/api/shell';
 
 
 import "@fontsource/poppins";
@@ -620,6 +621,21 @@ export class HolochainApp extends LitElement {
             >
               <span style="color: #abb5d6; font-size: 1em;">Accept to not need to accept Cookies</span>
             </div>
+
+
+
+            <div
+              class="confirm-btn column"
+              style="align-items: center; margin-top: 30px; margin-bottom: 80px;"
+              tabindex="0"
+              @click=${() => open("https://github.com/matthme/wordcondenser/issues/new")}
+              @keypress=${() => open("https://github.com/matthme/wordcondenser/issues/new")}
+            >
+              <img src="report_problem.svg" style="height: 40px; margin-bottom: 10px;" />
+              <div style="color: #abb5d6; font-size: 1em; color: #ffc64c; opacity: 0.9;">Report A Problem</div>
+            </div>
+
+
           </div>
         `
 
