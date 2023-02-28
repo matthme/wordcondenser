@@ -40,7 +40,7 @@ export class MVBTextArea extends LitElement {
             id="textarea-field"
             type="text"
             class="textarea"
-            style="${this.width ? "width: ${this.width}" : ""}"
+            style="${this.width ? `width: ${this.width}` : ""}"
             .placeholder=${this.placeholder}
             .rows=${this.rows}
             .cols=${this.cols}
