@@ -182,7 +182,7 @@ export class CreateLobby extends LitElement {
                 --mvb-secondary-color: #838ba4;
               "
               @input=${(e: CustomEvent) => { this._description = (e.target as any).value;} }
-              placeholder="Description of the group."
+              placeholder="Description of the Group."
               cols=57
               rows=6
               required
@@ -196,7 +196,7 @@ export class CreateLobby extends LitElement {
                 --mvb-secondary-color: #838ba4;
               "
               @input=${(e: CustomEvent) => { this._unenforcedRules = (e.target as any).value;} }
-              placeholder="(Optional) Unenforced rules the group. Write anything that you would like people to abide by in this group."
+              placeholder="(Optional) Unenforced rules of the Group. Write anything that you would like people to abide by in this group."
               cols=57
               rows=6
               required
