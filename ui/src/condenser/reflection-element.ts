@@ -54,6 +54,14 @@ export class ReflectionElement extends LitElement {
     return this._comments.value.status === "complete" && this._comments.value.value.length !== 0;
   }
 
+  numberOfComments(): number | undefined {
+    if (this._comments.value.status === "complete") {
+      return this._comments.value.value.length
+    } else {
+      return undefined
+    }
+  }
+
 
   isMine(author: AgentPubKey) {
     return JSON.stringify(this.client.myPubKey) === JSON.stringify(author);
@@ -157,13 +165,18 @@ export class ReflectionElement extends LitElement {
                 >`
           }
           <span style="display: flex; flex: 1;"></span>
-          <img
-            src=${this.commentsExist() ? "comment_filled.svg" : "comment_hollow.svg"}
-            class="icon ${this.showComments ? "icon-selected" : ""}"
-            style="height: 30px; cursor: pointer;"
-            title="comments"
+          <div
+            class="row icon ${this.showComments ? "icon-selected" : ""}"
+            style="aligng-items: center; cursor: pointer"
             @click=${() => this.showComments = !this.showComments}
           >
+            <span style="color: #abb5d6; margin-right: 10px; font-size: 23px;">${this.numberOfComments()}</span>
+            <img
+              src=${this.commentsExist() ? "comment_filled.svg" : "comment_hollow.svg"}
+              style="height: 30px; cursor: pointer;"
+              title="comments"
+            >
+          </div>
         </div>
         <!-- here comes resonator -->
       </div>
@@ -219,19 +232,19 @@ export class ReflectionElement extends LitElement {
 
     .icon {
       background: transparent;
-      border-radius: 25%;
+      border-radius: 10px;
       padding: 8px;
     }
 
     .icon:hover {
       background: #abb5d638;
-      border-radius: 25%;
+      border-radius: 10px;
       padding: 8px;
     }
 
     .icon-selected {
       background: #abb5d638;
-      border-radius: 25%;
+      border-radius: 10px;
       padding: 8px;
     }
 
