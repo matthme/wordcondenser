@@ -33,6 +33,68 @@ export class CravingDetail extends LitElement {
     () => this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
   );
 
+  private _allReflections = new StoreSubscriber(
+    this,
+    () => this.store.allReflections
+  );
+
+  private _allOffers = new StoreSubscriber(
+    this,
+    () => this.store.allOffers
+  );
+
+  private _allAssociations = new StoreSubscriber(
+    this,
+    () => this.store.allAssociations
+  );
+
+  associationsCount(): string {
+    switch (this._allAssociations.value.status) {
+      case "pending":
+        return "?";
+      case "error":
+        return "?";
+      case "complete":
+        return this._allAssociations.value.value.length.toString();
+    }
+  }
+
+  reflectionCount(): string {
+    switch (this._allReflections.value.status) {
+      case "pending":
+        return "?";
+      case "error":
+        return "?";
+      case "complete":
+        return this._allReflections.value.value.length.toString();
+    }
+  }
+
+  offersCount(): string {
+    switch (this._allOffers.value.status) {
+      case "pending":
+        return "?";
+      case "error":
+        return "?";
+      case "complete":
+        return this._allOffers.value.value.length.toString();
+    }
+  }
+
+  renderCounts() {
+    return html`
+      <div class="row" stye="align-items: center;">
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()} associations">${this.associationsCount()}</span>
+        <img src="associations.png" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()} reflections">${this.reflectionCount()}</span>
+        <img src="reflections_black.svg" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()} offers">${this.offersCount()}</span>
+        <img src="offers.svg" style="height: 30px;" title="${this.offersCount()} offers"/>
+      </div>
+    `
+  }
+
+
   render() {
     const timestamp = this.store.initTime
     const craving = this.store.craving;
@@ -65,8 +127,9 @@ export class CravingDetail extends LitElement {
         }))}
       >
         <div class="row" style="text-align: right; font-size: 14px; color: black; width: 100%; margin-bottom: 10px;">
+          ${this.renderCounts()}
           <span style="display: flex; flex: 1;"></span>
-          <span>installed ${timeAgo.format(date)}</span>
+          <span style="font-size: 14px;">installed ${timeAgo.format(date)}</span>
         </div>
         <div class="craving-title">${craving.title}</div>
         <div class="craving-description">${craving.description}</div>
