@@ -44,6 +44,7 @@ import './lobby/profiles/elements/my-profile';
 import './lobby-view';
 import './intro';
 import './no-cookies-ever';
+import './loading-animation';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -650,7 +651,7 @@ export class HolochainApp extends LitElement {
   render() {
     if (this.loading)
       return html`
-        <mwc-circular-progress indeterminate></mwc-circular-progress>
+        <loading-animation></loading-animation>
       `;
 
     return html`
