@@ -275,6 +275,7 @@ export class CreateCraving extends LitElement {
               title="Describe what it is that you want a word or expression for"
               cols=57
               rows=13
+              width="760px"
               required
             ></mvb-textarea>
           </div>
