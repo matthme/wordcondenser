@@ -347,6 +347,18 @@ ${this.lobbyInfo!.network_seed}
             <div style="max-width: 800px; text-align: left; color: #9098b3; font-size: 0.9em; margin-bottom: 70px;">
               ${this.lobbyInfo!.description}
             </div>
+            ${
+              this.lobbyInfo?.unenforced_rules
+                ? html`
+                  <div class="row" style="align-items: center; font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 0.9em;">
+                    <img src="rules.svg" style="height: 25px; margin-right: 10px;" />
+                    <span>Unenforced Rules of the Group:</span>
+                  </div>
+                  <div style="max-width: 800px; text-align: left; color: #9098b3; font-size: 0.9em; margin-bottom: 70px;">
+                    ${this.lobbyInfo!.unenforced_rules}
+                  </div>`
+                : html``
+            }
             <div class="column" style="background: #9098b30e; align-items: center; width: 100vw; padding-bottom: 100px;">
             <div style="font-weight: bold; color: #9098b3; margin-bottom: 20px; font-size: 1em; margin-top: 50px;">Other Members:</div>
               <list-profiles></list-profiles>
