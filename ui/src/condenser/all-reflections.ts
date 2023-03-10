@@ -39,7 +39,7 @@ export class AllReflections extends LitElement {
   cravingCellId!: CellId;
 
   @state()
-  sortBy: 'latest' | 'mostComments' = 'latest';
+  sortBy: 'latest' | "oldest" | 'mostComments' = 'latest';
 
   @consume({ context: cravingStoreContext })
   _store!: CravingStore;
@@ -68,8 +68,18 @@ export class AllReflections extends LitElement {
         : undefined;
     })
     .filter((data) => !!data)
-    .sort((reflectionData_a, reflectionData_b) => reflectionData_b!.timestamp - reflectionData_a!.timestamp);
 
+
+    switch (this.sortBy) {
+      case "latest":
+        reflectionDatas = reflectionDatas.sort((reflectionData_a, reflectionData_b) => reflectionData_b!.timestamp - reflectionData_a!.timestamp);
+        console.log("reflection datas sorted by newest?: ", reflectionDatas);
+        break;
+      case "oldest":
+        reflectionDatas = reflectionDatas.sort((reflectionData_a, reflectionData_b) => reflectionData_a!.timestamp - reflectionData_b!.timestamp);
+        console.log("reflection datas sorted by oldest?: ", reflectionDatas);
+
+      }
 
     return html`
       <div style="display: flex; flex-direction: column">

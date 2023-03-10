@@ -73,6 +73,9 @@ export class CravingView extends LitElement {
   sortAssociationsBy: 'latest' | 'resonanceTimeRatio' | 'resonanceAbsolute' = 'resonanceAbsolute';
 
   @state()
+  sortReflectionsBy: 'latest' | 'oldest' = 'latest';
+
+  @state()
   _selectedLobbies: DnaHashB64[] = [];
 
   @state()
@@ -504,7 +507,17 @@ export class CravingView extends LitElement {
               >Reflections</div>
             </div>
             <create-reflection  .cravingCellId=${this.cravingCellId}></create-reflection>
-            <all-reflections .cravingCellId=${this.cravingCellId}></all-reflections>
+            <div class="row" style="justify-content: flex-end; margin-right: 20px;">
+              <span
+                class=${this.sortReflectionsBy === "latest" ? "order-selector-selected" : "order-selector"}
+                @click=${() => this.sortReflectionsBy = "latest"}
+              >latest</span>
+              <span
+                class=${this.sortReflectionsBy === "oldest" ? "order-selector-selected" : "order-selector"}
+                @click=${() => this.sortReflectionsBy = "oldest"}
+              >oldest</span>
+            </div>
+            <all-reflections .cravingCellId=${this.cravingCellId} .sortBy=${this.sortReflectionsBy}></all-reflections>
           </div>
 
           <div class="column box" style="flex-shrink: 0; width: 495px;">

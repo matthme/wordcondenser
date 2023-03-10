@@ -14,7 +14,7 @@ import { DashboardMode, LobbyInfo } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
 
-import { get } from '@holochain-open-dev/stores';
+import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { decodeEntry } from '@holochain-open-dev/utils';
 import { CravingDnaProperties } from './condenser/types';
 import { open } from '@tauri-apps/api/shell';
@@ -69,6 +69,22 @@ export class HolochainApp extends LitElement {
   @provide({ context: condenserContext })
   @property({ type: Object })
   store!: CondenserStore;
+
+  private _allCravings = new StoreSubscriber(
+    this,
+    () => this.store ? this.store.getAllInstalledCravings() : undefined,
+  );
+
+  private _allAvailableCravings = new StoreSubscriber(
+    this,
+    () => this.store ? this.store.getAvailableCravings() : undefined,
+  );
+
+  private _allDisabledCravings = new StoreSubscriber(
+    this,
+    () => this.store ? this.store.getAllDisabledCravings() : undefined,
+  );
+
 
   async firstUpdated() {
     // We pass '' as url because it will dynamically be replaced in launcher environments
@@ -286,7 +302,7 @@ export class HolochainApp extends LitElement {
           @click=${() => this._cravingMenuItem = "installed"}
           @keypress=${() => this._cravingMenuItem = "installed"}
           style="font-size: 0.8em;"
-        >Installed</div>
+        >Installed (${this._allCravings.value.size})</div>
         <div
           title="Cravings that are tracked by at least one of your groups but that you don't have installed"
           tabindex="0"
@@ -294,7 +310,7 @@ export class HolochainApp extends LitElement {
           @click=${() => this._cravingMenuItem = "available"}
           @keypress=${() => this._cravingMenuItem = "available"}
           style="font-size: 0.8em;"
-        >Available</div>
+        >Available (${this._allAvailableCravings.value.length})</div>
         <div
           title="Cravings that you have installed in your conductor but that are disabled"
           tabindex="0"
@@ -302,7 +318,7 @@ export class HolochainApp extends LitElement {
           @click=${() => this._cravingMenuItem = "disabled"}
           @keypress=${() => this._cravingMenuItem = "disabled"}
           style="font-size: 0.8em;"
-        >Disabled</div>
+        >Disabled (${Object.values(this._allDisabledCravings.value).length})</div>
       </div>
 
       ${this.renderCravingTypes()}
@@ -832,7 +848,7 @@ export class HolochainApp extends LitElement {
 
 
     .menu-item {
-      background: transparent;
+      background: #abb5d61b;
       border-radius: 15px;
       padding: 15px;
       color: #9098b3;
@@ -852,7 +868,7 @@ export class HolochainApp extends LitElement {
     }
 
     .menu-item-selected {
-      background: #abb5d638;
+      background: #abb5d671;
       border-radius: 15px;
       padding: 15px;
       color: #9098b3;
