@@ -49,8 +49,9 @@ export class AssociationMap extends LitElement {
 
 
     if (this.sortBy === "resonanceAbsolute") {
-      associationDatas = associationDatas.sort((data_a, data_b) => data_b.resonators.length - data_a.resonators.length)
-        .sort((data_a, data_b) => data_b.timestamp - data_a.timestamp);
+      associationDatas = associationDatas
+        .sort((data_a, data_b) => data_b.timestamp - data_a.timestamp)
+        .sort((data_a, data_b) => data_b.resonators.length - data_a.resonators.length);
     } else if (this.sortBy === "latest") {
       associationDatas = associationDatas.sort((data_a, data_b) => data_b.timestamp - data_a.timestamp);
     }
