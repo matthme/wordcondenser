@@ -1,4 +1,4 @@
-import { AsyncReadable, asyncReadable } from "@holochain-open-dev/stores";
+import { AsyncReadable, asyncReadable, lazyLoadAndPoll } from "@holochain-open-dev/stores";
 import { decodeEntry, LazyHoloHashMap } from "@holochain-open-dev/utils";
 import { ActionHash, AgentPubKey, encodeHashToBase64, NewEntryAction, Record } from "@holochain/client";
 
@@ -42,6 +42,27 @@ export class CravingStore {
     return new CravingStore(service, craving, initTime);
   }
 
+
+  // allAssociations = lazyLoadAndPoll(async () => {
+  //   const associationRecords = await this.service.getAllAssociations();
+
+  //   const myPubKey = this.service.cellId[1];
+
+  //   // here: Promise.all( ... fetch resonances for each of the records ... )
+  //   return Promise.all(associationRecords.map(async (record) => {
+  //     const resonances = await this.service.getResonatorsForEntry((record.signed_action.hashed.content as NewEntryAction).entry_hash);
+  //     const iResonated = resonances.map((hash) => JSON.stringify(hash)).includes(JSON.stringify(myPubKey));
+  //     const associationData: AssociationData = {
+  //       record,
+  //       resonators: resonances,
+  //       iResonated,
+  //       timestamp: record.signed_action.hashed.content.timestamp,
+  //     };
+
+  //     return associationData;
+
+  //   }))
+  // }, 1000)
 
 
   // create instead a data structure here that also contains the info about resonances and iResonated
@@ -122,50 +143,53 @@ export class CravingStore {
   });
 
 
-  // create instead a data structure here that also contains all the comments and resonances for a reflection
-  allReflections = asyncReadable<Array<Record>>(async (set) => {
-    let reflectionRecords = await this.service.getAllReflections();
-    set(reflectionRecords);
+  allReflections = lazyLoadAndPoll(() => this.service.getAllReflections(), 1000);
 
-    return this.service.on("signal", (signal) => {
-      if (signal.type === "EntryCreated" && signal.app_entry.type === "Reflection") {
-        reflectionRecords.push(signal.record);
-        set(reflectionRecords)
-      }
-    })
-  });
+  // // create instead a data structure here that also contains all the comments and resonances for a reflection
+  // allReflections = asyncReadable<Array<Record>>(async (set) => {
+  //   let reflectionRecords = await this.service.getAllReflections();
+  //   set(reflectionRecords);
+
+  //   return this.service.on("signal", (signal) => {
+  //     if (signal.type === "EntryCreated" && signal.app_entry.type === "Reflection") {
+  //       reflectionRecords.push(signal.record);
+  //       set(reflectionRecords)
+  //     }
+  //   })
+  // });
 
 
   // all comments on all reflections
   commentsOnReflections = new LazyHoloHashMap((reflectionHash: ActionHash) =>
-    asyncReadable<Array<Record>>(async (set) => {
-      let commentRecords = await this.service.getAllCommentsOnReflection(reflectionHash);
-      set(commentRecords);
+    lazyLoadAndPoll(() => this.service.getAllCommentsOnReflection(reflectionHash), 1000)
+    // asyncReadable<Array<Record>>(async (set) => {
+    //   let commentRecords = await this.service.getAllCommentsOnReflection(reflectionHash);
+    //   set(commentRecords);
 
-      return this.service.on("signal", (signal) => {
+    //   return this.service.on("signal", (signal) => {
 
-        // if ((signal.type === "EntryCreated" || signal.type === "EntryUpdated") && signal.app_entry.type === "CommentOnReflection") {
-        if (signal.type === "EntryCreated"
-          && signal.app_entry.type === "CommentOnReflection"
-          && JSON.stringify((decodeEntry(signal.record) as CommentOnReflection).reflection_hash) === JSON.stringify(reflectionHash)
-          ) {
-          commentRecords.push(signal.record)
-          set(commentRecords);
-        }
+    //     // if ((signal.type === "EntryCreated" || signal.type === "EntryUpdated") && signal.app_entry.type === "CommentOnReflection") {
+    //     if (signal.type === "EntryCreated"
+    //       && signal.app_entry.type === "CommentOnReflection"
+    //       && JSON.stringify((decodeEntry(signal.record) as CommentOnReflection).reflection_hash) === JSON.stringify(reflectionHash)
+    //       ) {
+    //       commentRecords.push(signal.record)
+    //       set(commentRecords);
+    //     }
 
-        // Updates not implemented yet. The question is how to deal with timestamps because the updated record
-        // will have a new timestamp and we want to sort comments by timestamps
-        // if (signal.type === "EntryUpdated" && signal.app_entry.type === "CommentOnReflection") {
-        //   // find the original record of this update and drop it from the list
-        //   commentRecords = commentRecords.filter((record) => {
-        //     !(JSON.stringify(record.signed_action.hashed.hash) === JSON.stringify(signal.original_record.signed_action.hashed))
-        //   })
-        //   // push the new record
-        //   commentRecords.push(signal.record);
-        //   set(commentRecords);
-        // }
-      });
-    })
+    //     // Updates not implemented yet. The question is how to deal with timestamps because the updated record
+    //     // will have a new timestamp and we want to sort comments by timestamps
+    //     // if (signal.type === "EntryUpdated" && signal.app_entry.type === "CommentOnReflection") {
+    //     //   // find the original record of this update and drop it from the list
+    //     //   commentRecords = commentRecords.filter((record) => {
+    //     //     !(JSON.stringify(record.signed_action.hashed.hash) === JSON.stringify(signal.original_record.signed_action.hashed))
+    //     //   })
+    //     //   // push the new record
+    //     //   commentRecords.push(signal.record);
+    //     //   set(commentRecords);
+    //     // }
+    //   });
+    // })
   );
 
   commentsOnReflection(reflectionHash: ActionHash): AsyncReadable<Array<Record>> {

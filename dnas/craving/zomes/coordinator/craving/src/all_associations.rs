@@ -18,6 +18,8 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
 
     // associations should not be duplicated if multiple agents create the same association independently
     // this function therefore returns deduplicated Records
+    // TODO!! Those records need to be filtered by time before deduping, otherwise it leads to different
+    // results about which duplicates are filtered out and which not
     let entry_hashes_deduped: HashSet<EntryHash> = records
         .into_iter()
         .filter_map(|r| r) // filter out None's
