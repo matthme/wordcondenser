@@ -76,6 +76,8 @@ export class AllOffers extends LitElement {
       case "error":
         return html`ERROR`
       case "complete":
+        // update offers count in localStorage
+        this._store.updateOffersCount(this._allOffers.value.value.length);
         return this.renderList(this._allOffers.value.value);
     }
   }

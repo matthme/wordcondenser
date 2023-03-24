@@ -77,6 +77,8 @@ export class AssociationMap extends LitElement {
       case "error":
         return html`ERROR`
       case "complete":
+        // update associations count in localStorage
+        this._store.updateAssociationsCount(this._allAssociations.value.value.length);
         return this.renderList(this._allAssociations.value.value);
     }
   }

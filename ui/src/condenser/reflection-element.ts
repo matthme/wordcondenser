@@ -79,6 +79,7 @@ export class ReflectionElement extends LitElement {
       case "error":
         return html`error`
       case "complete":
+        this.cravingStore.updateCommentsCount(this.reflection.actionHash, this._comments.value.value.length);
         return html`
           <div class="column" style="flex-end; padding-left: 40px;">
 

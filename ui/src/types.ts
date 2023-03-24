@@ -1,4 +1,4 @@
-import { Create, DnaHash, SignedActionHashed, Record, MembraneProof } from "@holochain/client";
+import { Create, DnaHash, SignedActionHashed, Record as HolochainRecord, MembraneProof, DnaHashB64, ActionHashB64 } from "@holochain/client";
 import { CravingDnaProperties } from "./condenser/types";
 
 export enum DashboardMode {
@@ -37,11 +37,28 @@ export type LobbySignal =
   | {
       type: "EntryCreated";
       action: SignedActionHashed<Create>;
-      record: Record;
+      record: HolochainRecord;
       app_entry: EntryTypes;
     };
 
 export type EntryTypes =
   | { type: "DnaRecipe" } & DnaRecipe
   | { type: "LobbyInfo" } & LobbyInfo;
+
+
+// data structure that stores counts of associations/reflections/comments/offers
+export type MessageStore = Record<DnaHashB64, CravingMessageStore>;
+
+export type CravingMessageStore = { // dna hash of the craving
+  association_count: number | undefined, // number of associations
+  latest_association_update: number | undefined, // timestamp of the latest update to the association count
+  offers_count: number | undefined, // numver of offers
+  latest_offer_update: number | undefined, // timestamp of the latest update to the offer count
+  reflections: Record<ActionHashB64, {
+    comments_count: number, // number of comments
+    latest_update: number, // timestamp of when the comments_count for this reflection hash was last updated
+  }>,
+};
+
+
 

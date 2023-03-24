@@ -1,9 +1,10 @@
 import { AsyncReadable, asyncReadable, lazyLoadAndPoll } from "@holochain-open-dev/stores";
 import { decodeEntry, LazyHoloHashMap } from "@holochain-open-dev/utils";
-import { ActionHash, AgentPubKey, encodeHashToBase64, NewEntryAction, Record } from "@holochain/client";
+import { ActionHash, AgentPubKey, encodeHashToBase64, EntryHash, NewEntryAction, Record } from "@holochain/client";
 
 import { CravingService } from "./craving-service";
 import { CommentOnReflection, CravingDnaProperties } from "./condenser/types";
+import { CravingMessageStore } from "./types";
 
 
 
@@ -29,6 +30,7 @@ export class CravingStore {
     public service: CravingService,
     public craving: CravingDnaProperties,
     public initTime: number, // timestamp in ms when the cell was installed, i.e. the OpenChain action was commited
+    public messageStore: CravingMessageStore | undefined,
     // networkSeed: string,
   ) {
     // this.networkSeed = networkSeed;
@@ -39,9 +41,113 @@ export class CravingStore {
     // console.log("&&& @CravingStore.connect(): got craving: ", craving);
     const initTime = await service.getInitTime();
 
-    return new CravingStore(service, craving, initTime);
+    // get message store for this Craving from localStorage
+    const messageStoreJson = window.localStorage.getItem(encodeHashToBase64(service.cellId[0]));
+
+    let messageStore: CravingMessageStore | undefined = undefined;
+    if (messageStoreJson) {
+      messageStore = JSON.parse(messageStoreJson);
+    }
+
+    return new CravingStore(service, craving, initTime, messageStore);
   }
 
+  /**
+   * Updates the comments count in localStorage for a reflection.
+   * If there was no entry for that reflection before, it will be added.
+   * @param relfectionHash
+   */
+  updateCommentsCount(relfectionHash: EntryHash, newCount: number) {
+    const b64hash = encodeHashToBase64(relfectionHash);
+    if (this.messageStore) {
+      this.messageStore.reflections[b64hash] = { comments_count: newCount, latest_update: Date.now() };
+    } else {
+      const messageStore: CravingMessageStore = {
+        association_count: undefined,
+        latest_association_update: undefined,
+        offers_count: undefined,
+        latest_offer_update: undefined,
+        reflections: {}
+      };
+      messageStore.reflections[b64hash] = {
+        comments_count: newCount,
+        latest_update: Date.now(),
+      };
+      this.messageStore = messageStore;
+    }
+
+    // write to localStorage
+    window.localStorage.setItem(encodeHashToBase64(this.service.cellId[0]), JSON.stringify(this.messageStore));
+  }
+
+
+  /**
+   * Updates the associations count in localStorage for the craving.
+   */
+  updateAssociationsCount(newCount: number) {
+    if (this.messageStore) {
+      this.messageStore.association_count = newCount;
+      this.messageStore.latest_association_update = Date.now();
+    } else {
+      this.messageStore = {
+        association_count: newCount,
+        latest_association_update: Date.now(),
+        offers_count: undefined,
+        latest_offer_update: undefined,
+        reflections: {}
+      };
+    }
+
+    // write to localStorage
+    window.localStorage.setItem(encodeHashToBase64(this.service.cellId[0]), JSON.stringify(this.messageStore));
+  }
+
+  /**
+   * Updates the associations count in localStorage for the craving.
+   */
+    updateReflectionsCount(reflectionHashes: ActionHash[]) {
+      if (!this.messageStore) {
+        this.messageStore = {
+          association_count: undefined,
+          latest_association_update: undefined,
+          offers_count: undefined,
+          latest_offer_update: undefined,
+          reflections: {}
+        };
+      }
+
+      reflectionHashes.forEach((hash) => {
+        const reflectionHash = encodeHashToBase64(hash)
+        if (!this.messageStore?.reflections[reflectionHash]) {
+          // if there is no entry for this reflection hash yet, create one
+          this.messageStore!.reflections[reflectionHash] = { comments_count: 0, latest_update: Date.now()};
+        }
+      })
+
+      // write to localStorage
+      window.localStorage.setItem(encodeHashToBase64(this.service.cellId[0]), JSON.stringify(this.messageStore));
+    }
+
+  /**
+   * Updates the associations count in localStorage for the craving.
+   */
+    updateOffersCount(newCount: number) {
+      if (this.messageStore) {
+        this.messageStore.offers_count = newCount;
+        this.messageStore.latest_offer_update = Date.now();
+      } else {
+        this.messageStore = {
+          association_count: undefined,
+          latest_association_update: undefined,
+          offers_count: newCount,
+          latest_offer_update: Date.now(),
+          reflections: {}
+        };
+      }
+
+      // write to localStorage
+      window.localStorage.setItem(encodeHashToBase64(this.service.cellId[0]), JSON.stringify(this.messageStore));
+    }
 
   // allAssociations = lazyLoadAndPoll(async () => {
   //   const associationRecords = await this.service.getAllAssociations();
@@ -63,6 +169,15 @@ export class CravingStore {
 
   //   }))
   // }, 1000)
+
+
+  // useful for immediately displaying the number of new associations on the craving detail card
+  // no need to also get number of drops
+  polledAssociations = lazyLoadAndPoll(() => this.service.getAllAssociations(), 2000);
+
+  // useful for immediately displaying the number of new offesr on the craving detail card
+  // no need to also get number of drops
+  polledOffers = lazyLoadAndPoll(() => this.service.getAllOffers(), 2000);
 
 
   // create instead a data structure here that also contains the info about resonances and iResonated
@@ -142,6 +257,21 @@ export class CravingStore {
     })
   });
 
+
+  /**
+   * Gets all reflections and all comments for those reflections and returns the number
+   * of reflections + comments
+   */
+  allCommentsCount = lazyLoadAndPoll(async () => {
+    const reflectionRecords = await this.service.getAllReflections();
+    let counter = 0;
+    await Promise.all(reflectionRecords.map(async (record) => {
+      const commentRecords = await this.service.getAllCommentsOnReflection(record.signed_action.hashed.hash);
+      counter += commentRecords.length;
+    }));
+
+    return counter;
+  }, 3500);
 
   allReflections = lazyLoadAndPoll(() => this.service.getAllReflections(), 1000);
 

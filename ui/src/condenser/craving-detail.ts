@@ -13,6 +13,7 @@ import { consume } from '@lit-labs/context';
 import { CondenserStore } from '../condenser-store';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '../sharedStyles';
+import { newAssociationsCount, newOffersCount, newCommentsCount, newReflectionsCount } from '../utils';
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US')
@@ -38,57 +39,86 @@ export class CravingDetail extends LitElement {
     () => this.store.allReflections
   );
 
+  private _allCommentCount = new StoreSubscriber(
+    this,
+    () => this.store.allCommentsCount
+  )
+
   private _allOffers = new StoreSubscriber(
     this,
-    () => this.store.allOffers
+    () => this.store.polledOffers
   );
 
   private _allAssociations = new StoreSubscriber(
     this,
-    () => this.store.allAssociations
+    () => this.store.polledAssociations
   );
 
-  associationsCount(): string {
+  // [number of total associations total, number of new associations]
+  associationsCount(): [string, string | undefined] {
     switch (this._allAssociations.value.status) {
       case "pending":
-        return "?";
+        return ["?", undefined];
       case "error":
-        return "?";
-      case "complete":
-        return this._allAssociations.value.value.length.toString();
+        return ["?", undefined];
+      case "complete": {
+        const currentCount = this._allAssociations.value.value.length;
+        const newCount = newAssociationsCount(this.store.service.cellId[0], currentCount);
+        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+      }
     }
   }
 
-  reflectionCount(): string {
+  reflectionCount(): [string, string | undefined] {
     switch (this._allReflections.value.status) {
       case "pending":
-        return "?";
+        return ["?", undefined];
       case "error":
-        return "?";
+        return ["?", undefined];
       case "complete":
-        return this._allReflections.value.value.length.toString();
+        const currentCount = this._allReflections.value.value.length;
+        const newCount = newReflectionsCount(this.store.service.cellId[0], currentCount);
+        // console.log("currentCount, newCount: ", currentCount, newCount);
+        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
     }
   }
 
-  offersCount(): string {
+  commentsCount(): string | undefined {
+    switch (this._allCommentCount.value.status) {
+      case "pending":
+        return undefined;
+      case "error":
+        return undefined;
+      case "complete":
+        const currentCount = this._allCommentCount.value.value;
+        const newCount = newCommentsCount(this.store.service.cellId[0], currentCount);
+        console.log("newCount: ", newCount);
+        return newCount ? newCount.toString() : undefined;
+    }
+  }
+
+  offersCount(): [string, string | undefined] {
     switch (this._allOffers.value.status) {
       case "pending":
-        return "?";
+        return ["?", undefined];
       case "error":
-        return "?";
-      case "complete":
-        return this._allOffers.value.value.length.toString();
+        return ["?", undefined];
+      case "complete": {
+        const currentCount = this._allOffers.value.value.length;
+        const newCount = newOffersCount(this.store.service.cellId[0], currentCount);
+        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+      }
     }
   }
 
   renderCounts() {
     return html`
       <div class="row" stye="align-items: center;">
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()} associations">${this.associationsCount()}</span>
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()} associations">${this.associationsCount()[0]} ${this.associationsCount()[1] ? `(+${this.associationsCount()[1]})` : ""}</span>
         <img src="associations.png" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()} reflections">${this.reflectionCount()}</span>
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()} reflections">${this.reflectionCount()[0]} ${this.reflectionCount()[1] ? `(+${this.reflectionCount()[1]})` : ""}</span>
         <img src="reflections_black.svg" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()} offers">${this.offersCount()}</span>
+        <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()} offers">${this.offersCount()[0]} ${this.offersCount()[1] ? `(+${this.offersCount()[1]})` : ""}</span>
         <img src="offers.svg" style="height: 30px;" title="${this.offersCount()} offers"/>
       </div>
     `

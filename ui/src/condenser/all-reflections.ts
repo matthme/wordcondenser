@@ -100,6 +100,7 @@ export class AllReflections extends LitElement {
       case "error":
         return html`ERROR`
       case "complete":
+        this._store.updateReflectionsCount(this._allReflections.value.value.map((record) => record.signed_action.hashed.hash));
         return this.renderList(this._allReflections.value.value);
     }
   }
