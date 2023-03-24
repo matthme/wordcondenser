@@ -11,7 +11,7 @@ import { sharedStyles } from '../sharedStyles';
 import { getHexColorForTimestamp } from '../colors';
 import { ReflectionData } from './all-reflections';
 import { CravingStore } from '../craving-store';
-import { getNickname } from '../utils';
+import { getNickname, newCommentsCount, newCommentsForReflectionCount } from '../utils';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { CommentOnReflection, CravingDnaProperties } from './types';
 import { decodeEntry } from '@holochain-open-dev/utils';
@@ -57,6 +57,14 @@ export class ReflectionElement extends LitElement {
   numberOfComments(): number | undefined {
     if (this._comments.value.status === "complete") {
       return this._comments.value.value.length
+    } else {
+      return undefined
+    }
+  }
+
+  newComments(): number | undefined {
+    if (this._comments.value.status === "complete") {
+      return newCommentsForReflectionCount(this.cravingStore.service.cellId[0], this.reflection.actionHash, this._comments.value.value.length)
     } else {
       return undefined
     }
@@ -168,7 +176,7 @@ export class ReflectionElement extends LitElement {
           <span style="display: flex; flex: 1;"></span>
           <div
             class="row icon ${this.showComments ? "icon-selected" : ""}"
-            style="aligng-items: center; cursor: pointer"
+            style="align-items: center; cursor: pointer; position: relative;"
             @click=${() => this.showComments = !this.showComments}
           >
             <span style="color: #abb5d6; margin-right: 10px; font-size: 23px;">${this.numberOfComments()}</span>
@@ -177,6 +185,8 @@ export class ReflectionElement extends LitElement {
               style="height: 30px; cursor: pointer;"
               title="comments"
             >
+            ${this.newComments() ? html`<div class="notification blue" style="position: absolute; top: 0; right: 0;" title="new comments">+${this.newComments()}</div>` : html``}
+
           </div>
         </div>
         <!-- here comes resonator -->
@@ -201,6 +211,11 @@ export class ReflectionElement extends LitElement {
       font-weight: bold;
       color: #abb5d6;
       padding: 10px;
+    }
+
+
+    .blue {
+      background: #9ecbf2;
     }
 
     .content {
@@ -247,6 +262,20 @@ export class ReflectionElement extends LitElement {
       background: #abb5d638;
       border-radius: 10px;
       padding: 8px;
+    }
+
+    .notification {
+      padding: 1px 5px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      height: 20px;
+      color: black;
+      min-width: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 1px 1px 3px #0b0d159b
     }
 
     .resonator {

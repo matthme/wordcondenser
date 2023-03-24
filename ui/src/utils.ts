@@ -1,4 +1,4 @@
-import { AgentPubKey, CellId, DnaHash, encodeHashToBase64 } from "@holochain/client";
+import { ActionHash, AgentPubKey, CellId, DnaHash, encodeHashToBase64 } from "@holochain/client";
 import { uniqueNamesGenerator, colors, animals, Config } from "unique-names-generator";
 import { CravingMessageStore } from "./types";
 
@@ -101,6 +101,30 @@ export function newReflectionsCount(cravingDnaHash: DnaHash, currentCount: numbe
   }
   return 0
 }
+
+
+/**
+ * Get the counts of new comments for a Craving.
+ * @param cravingDnaHash
+ * @param currentCount
+ * @returns
+ */
+export function newCommentsForReflectionCount(cravingDnaHash: DnaHash, reflectionHash: ActionHash, currentCount: number): number {
+  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
+  console.log("@newCommentsCount: cravingMessageStoreJson: ", cravingMessageStoreJson);
+  if (cravingMessageStoreJson) {
+    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+    const b64Hash = encodeHashToBase64(reflectionHash);
+    if (cravingMessageStore.reflections && cravingMessageStore.reflections[b64Hash]) {
+      const newComments = currentCount - cravingMessageStore.reflections[b64Hash].comments_count;
+      if (newComments > 0) {
+        return newComments
+      }
+    }
+  }
+  return 0
+}
+
 
 /**
  * Get the counts of new comments for a Craving.
