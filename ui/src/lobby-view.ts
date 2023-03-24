@@ -70,12 +70,11 @@ export class LobbyView extends LitElement {
   async leaveGroup() {
     try {
       await this._condenserStore.disableLobby(this.lobbyStore.service.cellId);
-      // update the stores now that this cell has been disabled
-      await this._condenserStore.fetchStores();
       this.dispatchEvent(new CustomEvent('request-home', {
         composed: true,
         bubbles: true,
       }));
+      window.location.reload();
     } catch(e) {
       console.log("Failed to leave group: ", e);
       alert("Failed to leave group. See console for details.");
@@ -372,17 +371,6 @@ ${this.lobbyInfo!.network_seed}
           `
         }
 
-        <div style="margin: 80px 0;">
-          <div
-            class="row leave-btn"
-            style="align-items: center; margin-top: 5px;"
-            @click=${() => this._viewMode = LobbyViewMode.LeaveGroup}
-            @keypress=${() => this._viewMode = LobbyViewMode.LeaveGroup}
-            tabindex="0"
-          >
-            <span style="color: #cd2b2b; font-size: 23px;">Leave Group</span>
-          </div>
-        </div>
       </div>
   `
   }
@@ -404,12 +392,27 @@ ${this.lobbyInfo!.network_seed}
   }
 
   render() {
+    if (this._viewMode == LobbyViewMode.LeaveGroup) {
+      return html`${this.renderLeaveGroup()}`
+    }
     return html`
+      <div
+        class="cancel-btn"
+        style="position: fixed; bottom: 0; right: 0; color: #cd2b2b; margin: 10px; display: flex; align-items: center;"
+        @click=${() => this._viewMode = LobbyViewMode.LeaveGroup}
+        @keypress=${() => this._viewMode = LobbyViewMode.LeaveGroup}
+        tabindex="0"
+      >
+        <span style="margin-right: 10px;" >Leave Group</span>
+        <img src="exit_red.svg" style="height: 30px;" />
+      </div>
+
       <profile-prompt
         style="display: flex; flex: 1; overflow-y: auto;"
       >
        ${this.renderContent()}
       </profile-prompt>
+
     `;
   }
 

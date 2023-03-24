@@ -431,7 +431,8 @@ export class CondenserStore {
       try {
         return store.get(cravingDnaHash)[1]
       } catch(e) {
-        console.error("No Lobby found for the requested craving.")
+        // This is expected if the group(s) that are/were associated to that craving is/are disabled or deleted
+        // console.warn("No Lobby found for the requested craving.")
         return [];
       }
     });

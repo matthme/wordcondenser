@@ -32,7 +32,7 @@ export class DisabledLobbyDetail extends LitElement {
 
     try {
       await this._condenserStore.enableLobby(this.cloneInfo.cell_id);
-      await this._condenserStore.fetchStores();
+      window.location.reload();
     } catch (e) {
       console.log("Failed to enable group: ", e);
       alert("failed to enable group. See console for details.");
