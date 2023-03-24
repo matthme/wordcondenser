@@ -92,7 +92,6 @@ export class CravingDetail extends LitElement {
       case "complete":
         const currentCount = this._allCommentCount.value.value;
         const newCount = newCommentsCount(this.store.service.cellId[0], currentCount);
-        console.log("newCount: ", newCount);
         return newCount ? newCount.toString() : undefined;
     }
   }
@@ -114,11 +113,25 @@ export class CravingDetail extends LitElement {
   renderCounts() {
     return html`
       <div class="row" stye="align-items: center;">
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()} associations">${this.associationsCount()[0]} ${this.associationsCount()[1] ? `(+${this.associationsCount()[1]})` : ""}</span>
+        <div style="position: relative;">
+          <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()} associations">${this.associationsCount()[0]}</span>
+          ${this.associationsCount()[1] ? html`<div class="notification yellow" style="position: absolute; top: -10px; left: 16px;" title="new associations">+${this.associationsCount()[1]}</div>` : html``}
+        </div>
         <img src="associations.png" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()} reflections">${this.reflectionCount()[0]} ${this.reflectionCount()[1] ? `(+${this.reflectionCount()[1]})` : ""}</span>
+
+        <div style="position: relative;">
+          <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()} reflections">${this.reflectionCount()[0]}</span>
+          <div style="position: absolute; top: -10px; left: 16px; display: flex; flex-direction: column;">
+            ${this.reflectionCount()[1] ? html`<div class="notification yellow" style="margin-bottom: 2px;" title="new reflections">+${this.reflectionCount()[1]}</div>` : html``}
+            ${this.commentsCount() ? html`<div class="notification blue" title="new comments">+${this.commentsCount()}</div>` : html``}
+          </div>
+        </div>
         <img src="reflections_black.svg" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
-        <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()} offers">${this.offersCount()[0]} ${this.offersCount()[1] ? `(+${this.offersCount()[1]})` : ""}</span>
+
+        <div style="position: relative;">
+          <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()} offers">${this.offersCount()[0]}</span>
+          ${this.offersCount()[1] ? html`<div class="notification yellow" style="position: absolute; top: -10px; left: 16px;" title="new offers">+${this.offersCount()[1]}</div>` : html``}
+        </div>
         <img src="offers.svg" style="height: 30px;" title="${this.offersCount()} offers"/>
       </div>
     `
@@ -218,6 +231,28 @@ export class CravingDetail extends LitElement {
       overflow-y: auto;
       margin-top: 10px;
       color: #0b0d15;
+    }
+
+    .notification {
+      padding: 1px 5px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      height: 20px;
+      color: black;
+      min-width: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 1px 1px 3px #0b0d159b
+    }
+
+    .yellow {
+      background: #ffd623;
+    }
+
+    .blue {
+      background: #9ecbf2;
     }
   `];
 }

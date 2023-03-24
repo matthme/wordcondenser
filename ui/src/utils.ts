@@ -115,7 +115,7 @@ export function newCommentsCount(cravingDnaHash: DnaHash, currentCount: number):
     const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
     if (cravingMessageStore.reflections && Object.values(cravingMessageStore.reflections).length > 0) {
       // count number of reflections
-      let numComments = Object.values(cravingMessageStore.reflections).length;
+      let numComments = 0;
       // add number of comments for reflections
       Object.values(cravingMessageStore.reflections).forEach(({ comments_count, latest_update}) => numComments += comments_count);
       const newComments = currentCount - numComments;
