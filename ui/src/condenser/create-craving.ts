@@ -135,7 +135,8 @@ export class CreateCraving extends LitElement {
         composed: true,
         bubbles: true,
         detail: {
-          clonedCell,
+          cravingCellId: clonedCell.cell_id,
+          cravingDnaProperties,
         }
       }));
       this.installing = false;

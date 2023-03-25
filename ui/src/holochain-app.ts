@@ -472,8 +472,11 @@ export class HolochainApp extends LitElement {
             </div>
           </button>
           <div style="margin-top: 20px;">
-            <create-craving @craving-created=${async () => {
-              this._dashboardMode = DashboardMode.Home;
+            <create-craving @craving-created=${async (e: CustomEvent) => {
+              this._selectedCraving = e.detail.cravingDnaProperties;
+              this._selectedCravingCellId = e.detail.cravingCellId;
+              this._dashboardMode = DashboardMode.CravingView;
+              this.handleRefresh();
               }
             }></create-craving>
           </div>
