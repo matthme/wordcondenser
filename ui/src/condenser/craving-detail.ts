@@ -119,23 +119,80 @@ export class CravingDetail extends LitElement {
     return html`
       <div class="row" stye="align-items: center;">
         <div style="position: relative;">
-          <span style="font-size: 19px; margin-right: 4px;" title="${this.associationsCount()[0]} associations">${this.associationsCount()[0]}</span>
-          ${this.associationsCount()[1] ? html`<div class="notification yellow" style="position: absolute; top: -10px; left: 16px;" title="${this.associationsCount()[1]} new association${this.associationsCount()[1] != "1" ? "s" : ""}">+${this.associationsCount()[1]}</div>` : html``}
+          <span
+            style="font-size: 19px; margin-right: 4px;"
+            title="${this.associationsCount()[0]} associations"
+          >
+          ${this.associationsCount()[0]}
+          </span>
+          ${this.associationsCount()[1]
+            ? html`
+              <div
+                class="notification yellow"
+                style="position: absolute; top: -10px; left: 16px;"
+                title="${this.associationsCount()[1]} new association${this.associationsCount()[1] != "1" ? "s" : ""}"
+              >
+                +${this.associationsCount()[1]}
+              </div>
+              `
+            : html``}
         </div>
         <img src="associations.png" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
 
         <div style="position: relative;">
-          <span style="font-size: 19px; margin-right: 4px;" title="${this.reflectionCount()[0]} reflections">${this.reflectionCount()[0]}</span>
+          <span
+            style="font-size: 19px; margin-right: 4px;"
+            title="${this.reflectionCount()[0]} reflections"
+          >
+            ${this.reflectionCount()[0]}
+          </span>
           <div style="position: absolute; top: -10px; left: 16px; display: flex; flex-direction: column;">
-            ${this.reflectionCount()[1] ? html`<div class="notification yellow" style="margin-bottom: 2px;" title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] != "1" ? "s" : ""}">+${this.reflectionCount()[1]}</div>` : html``}
-            ${this.commentsCount() ? html`<div class="notification blue" title="${this.commentsCount()} new comment${this.commentsCount() != "1" ? "s" : ""}">+${this.commentsCount()}</div>` : html``}
+            ${this.reflectionCount()[1]
+              ? html`
+                <div
+                  class="notification yellow"
+                  style="margin-bottom: 2px;"
+                  title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] != "1" ? "s" : ""}"
+                >
+                +${this.reflectionCount()[1]}
+                </div>
+                `
+              : html``
+            }
+            ${this.commentsCount()
+              ? html`
+                <div
+                  class="notification blue"
+                  title="${this.commentsCount()} new comment${this.commentsCount() != "1" ? "s" : ""}"
+                >
+                +${this.commentsCount()}
+                </div>
+                `
+              : html``
+            }
           </div>
         </div>
         <img src="reflections_black.svg" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
 
         <div style="position: relative;">
-          <span style="font-size: 19px; margin-right: 4px;" title="${this.offersCount()[0]} offers">${this.offersCount()[0]}</span>
-          ${this.offersCount()[1] ? html`<div class="notification yellow" style="position: absolute; top: -10px; left: 16px;" title="${this.offersCount()[1]} new offer${this.offersCount()[1] != "1" ? "s" : ""}">+${this.offersCount()[1]}</div>` : html``}
+          <span
+            style="font-size: 19px; margin-right: 4px;"
+            title="${this.offersCount()[0]} offers"
+          >
+          ${this.offersCount()[0]}
+          </span>
+          ${this.offersCount()[1]
+            ? html`
+              <div
+                class="notification yellow"
+                style="position: absolute; top: -10px; left: 16px;"
+                title="${this.offersCount()[1]} new offer${this.offersCount()[1] != "1" ? "s" : ""}"
+              >
+              +${this.offersCount()[1]}
+              </div>
+              `
+            : html``
+          }
         </div>
         <img src="offers.svg" style="height: 30px;" title="${this.offersCount()[0]} offers"/>
       </div>
