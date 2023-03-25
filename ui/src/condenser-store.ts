@@ -41,6 +41,7 @@ export class CondenserStore {
   private _cravingLobbyMapping: Writable<DnaHashMap<[DnaRecipe, LobbyData[]]>> // dna hash of craving as keys
     = writable(new DnaHashMap<[DnaRecipe, LobbyData[]]>);
 
+  private _filterGroup: Writable<DnaHash | undefined> = writable(undefined);
 
   constructor(
     protected appAgentWebsocket: AppAgentWebsocket,
@@ -109,6 +110,38 @@ export class CondenserStore {
       cravingLobbyMapping,
     );
   }
+
+
+  filterByGroup(lobbyDnaHash: DnaHash) {
+    if (get(this._filterGroup)) {
+      if (encodeHashToBase64(get(this._filterGroup)!) === encodeHashToBase64(lobbyDnaHash)) {
+        this._filterGroup.set(undefined);
+      } else {
+        this._filterGroup.set(lobbyDnaHash);
+      }
+    } else {
+      this._filterGroup.set(lobbyDnaHash);
+    }
+  }
+
+  clearGroupFilter() {
+    this._filterGroup.set(undefined);
+  }
+
+  /**
+   * Whether this raving is filtered out because none of the groups (lobbies) it's related to is the _filterGroup
+   * @param lobbyDnaHash
+   */
+  amIFiltered(lobbyDnaHashes: DnaHash[]): Readable<boolean> {
+    const base64Hashes = lobbyDnaHashes.map((hash) => encodeHashToBase64(hash));
+    return derived(this._filterGroup, (store) => !!store && !base64Hashes.includes(encodeHashToBase64(store)));
+  }
+
+  activeGroupFilter(): Readable<DnaHash | undefined> {
+    return derived(this._filterGroup, (store) => store);
+  }
+
+
 
   /**
    * Fetches the stores freshly. This is useful for example to make sure the stores get updated
@@ -414,6 +447,20 @@ export class CondenserStore {
   lobbyStoreReadable(cellId: CellId) {
     return derived(this._lobbies, (store) => store.get(cellId[0]));
   }
+
+  getAllLobbyDatas(): Readable<LobbyData[]> {
+    return derived(this._lobbies, (lobbies) => {
+      return Array.from(lobbies.entries()).map(([dnaHash, [lobbyStore, _profilesStore, _dnaModifiers]]) => {
+        const lobbyData: LobbyData = {
+          name: lobbyStore.lobbyName,
+          info: lobbyStore.lobbyInfo ? decodeEntry(lobbyStore.lobbyInfo) : undefined,
+          dnaHash,
+        }
+        return lobbyData
+      });
+    });
+  }
+
 
   getAllLobbies(): Readable<DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>> {
     return derived(this._lobbies, (lobbies) => lobbies);

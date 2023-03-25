@@ -54,6 +54,11 @@ export class CravingDetail extends LitElement {
     () => this.store.polledAssociations
   );
 
+  private _amIFiltered = new StoreSubscriber(
+    this,
+    () => this.condenserStore.amIFiltered(this._lobbiesForCraving.value.map((data) => data.dnaHash)),
+  )
+
   // [number of total associations total, number of new associations]
   associationsCount(): [string, string | undefined] {
     switch (this._allAssociations.value.status) {
@@ -139,6 +144,11 @@ export class CravingDetail extends LitElement {
 
 
   render() {
+
+    if (this._amIFiltered.value) {
+      return html``
+    }
+
     const timestamp = this.store.initTime
     const craving = this.store.craving;
     const date = new Date(timestamp);

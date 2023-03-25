@@ -4,6 +4,7 @@ import {
   AppAgentWebsocket,
   CellId,
   decodeHashFromBase64,
+  DnaHash,
   encodeHashToBase64,
 } from '@holochain/client';
 import { provide } from '@lit-labs/context';
@@ -84,6 +85,16 @@ export class HolochainApp extends LitElement {
     this,
     () => this.store ? this.store.getAllDisabledCravings() : undefined,
   );
+
+  private _allLobbyDatas = new StoreSubscriber(
+    this,
+    () => this.store ? this.store.getAllLobbyDatas() : undefined,
+  )
+
+  private _activeGroupFilter = new StoreSubscriber(
+    this,
+    () => this.store ? this.store.activeGroupFilter() : undefined,
+  )
 
 
   async firstUpdated() {
@@ -228,6 +239,17 @@ export class HolochainApp extends LitElement {
     })
   }
 
+  amISelected(lobbyDnaHash: DnaHash): boolean {
+    if (this._activeGroupFilter.value) {
+      console.log("@amISelected: encodeHashToBase64(this._activeGroupFilter.value): ", encodeHashToBase64(this._activeGroupFilter.value));
+      console.log("@amISelected: encodeHashToBase64(lobbyDnaHash): ", encodeHashToBase64(lobbyDnaHash));
+
+      return encodeHashToBase64(this._activeGroupFilter.value) === encodeHashToBase64(lobbyDnaHash)
+    }
+
+    return false
+  }
+
 
   renderWelcome() {
       return html`
@@ -319,6 +341,70 @@ export class HolochainApp extends LitElement {
           @keypress=${() => this._cravingMenuItem = "disabled"}
           style="font-size: 0.8em;"
         >Disabled (${Object.values(this._allDisabledCravings.value).length})</div>
+
+        <span style="display: flex; flex: 1;"></span>
+
+        <div class="row" style="width: 100%; justify-content: flex-end; margin-right: 50px; position: relative;">
+          ${this._allLobbyDatas.value.map((lobbyData) => html`
+            <div class="column" style="align-items: center;">
+              ${(lobbyData.info && lobbyData.info.logo_src)
+                ? html`
+                  <img
+                    src=${lobbyData.info.logo_src}
+                    title="Click to filter/unfilter by Group '${lobbyData.name}'"
+                    class="group-icon"
+                    alt="Icon of group with name ${lobbyData.name}"
+                    style="
+                      height: 70px;
+                      width: 70px;
+                      border-radius: 50%;
+                      margin-right: 2px;
+                      cursor: pointer;
+                      ${this.amISelected(lobbyData.dnaHash) ? 'border: 3px solid white;' : ''}
+                    "
+                    @keypress.enter=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                    @click=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                  />
+                `
+                : html`
+                  <div
+                    class="column group-icon ${this.amISelected(lobbyData.dnaHash) ? "group-icon-selected" : ""}"
+                    style="
+                      justify-content: center;
+                      height: 70px;
+                      width: 70px;
+                      border-radius: 50%;
+                      background: #929ab9;
+                      font-size: 40px;
+                      font-weight: bold;
+                      margin-right: 2px;
+                      color: black;
+                      cursor: pointer;
+                      ${this.amISelected(lobbyData.dnaHash) ? 'border: 3px solid white;' : ''}
+                    "
+                    title="Click to filter/unfilter by Group '${lobbyData.name}'"
+                    alt="Icon of group with name ${lobbyData.name}"
+                    @keypress.enter=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                    @click=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                    >
+                    <span>${lobbyData.name.slice(0,2)}</span>
+                  </div>
+                `
+              }
+
+            </div>
+          `)}
+
+          <div class="row" style="position: absolute; top: -45px; right: 10px; align-items: center;">
+            <img
+              src="filter_filled.svg"
+              style="height: 30px; margin: 3px; margin-right: 8px;"
+              title="Filter Cravings by Group"
+            >
+            <span style="color: #929ab9; font-size: 20px;">filter by Group</span>
+          </div>
+
+        </div>
       </div>
 
       ${this.renderCravingTypes()}
@@ -809,6 +895,18 @@ export class HolochainApp extends LitElement {
       padding: 15px 30px;
     }
 
+    .group-icon {
+      border: 3px solid transparent;
+    }
+
+    .group-icon:hover {
+      border: 3px solid white;
+    }
+
+    .group-icon-selected {
+      border: 3px solid transparent;
+    }
+
 
     .icon {
       background: transparent;
@@ -852,6 +950,10 @@ export class HolochainApp extends LitElement {
 
     .menu-item {
       background: #abb5d61b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 45px;
       border-radius: 15px;
       padding: 15px;
       color: #9098b3;
@@ -872,6 +974,10 @@ export class HolochainApp extends LitElement {
 
     .menu-item-selected {
       background: #abb5d671;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 45px;
       border-radius: 15px;
       padding: 15px;
       color: #9098b3;

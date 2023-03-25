@@ -111,7 +111,6 @@ export function newReflectionsCount(cravingDnaHash: DnaHash, currentCount: numbe
  */
 export function newCommentsForReflectionCount(cravingDnaHash: DnaHash, reflectionHash: ActionHash, currentCount: number): number {
   const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  console.log("@newCommentsCount: cravingMessageStoreJson: ", cravingMessageStoreJson);
   if (cravingMessageStoreJson) {
     const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
     const b64Hash = encodeHashToBase64(reflectionHash);
@@ -134,7 +133,6 @@ export function newCommentsForReflectionCount(cravingDnaHash: DnaHash, reflectio
  */
 export function newCommentsCount(cravingDnaHash: DnaHash, currentCount: number): number {
   const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  console.log("@newCommentsCount: cravingMessageStoreJson: ", cravingMessageStoreJson);
   if (cravingMessageStoreJson) {
     const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
     if (cravingMessageStore.reflections && Object.values(cravingMessageStore.reflections).length > 0) {
