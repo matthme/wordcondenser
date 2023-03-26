@@ -275,7 +275,7 @@ export class HolochainApp extends LitElement {
             <div style="margin-bottom: 10px; font-size: 25px;">💡&nbsp<b>New Version</b></div>
             <div style="font-size: 23px;">
               This new version of the Word Condenser is <b>still compatible</b> with earlier versions. If you are
-              already part of Groups in another earlier instance of the Word Condenser, <b>you can simply join
+              already part of Groups in another, earlier instance of the Word Condenser, <b>you can simply join
               the same Groups again</b> with the same 5 secret words.
             </div>
           </div>
