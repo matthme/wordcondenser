@@ -308,7 +308,14 @@ export class HolochainApp extends LitElement {
       case "available":
         return html`
           <div id="content" class="column" style="align-items: flex-start; width: 100%;">
-            <all-available-cravings></all-available-cravings>
+            <all-available-cravings
+              @installed-craving=${(e: CustomEvent) => {
+                this._selectedCravingCellId = e.detail.cellId;
+                this._selectedCraving = e.detail.craving
+                this._dashboardMode = DashboardMode.CravingView;
+                this.handleRefresh();
+              }}
+            ></all-available-cravings>
           </div>
         `
     }
@@ -558,11 +565,12 @@ export class HolochainApp extends LitElement {
             </div>
           </button>
           <div style="margin-top: 20px;">
-            <create-craving @craving-created=${async (e: CustomEvent) => {
-              this._selectedCraving = e.detail.cravingDnaProperties;
-              this._selectedCravingCellId = e.detail.cravingCellId;
-              this._dashboardMode = DashboardMode.CravingView;
-              this.handleRefresh();
+            <create-craving
+              @craving-created=${async (e: CustomEvent) => {
+                this._selectedCraving = e.detail.cravingDnaProperties;
+                this._selectedCravingCellId = e.detail.cravingCellId;
+                this._dashboardMode = DashboardMode.CravingView;
+                this.handleRefresh();
               }
             }></create-craving>
           </div>

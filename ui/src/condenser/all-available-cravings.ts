@@ -34,6 +34,10 @@ export class AllAvailableCravings extends LitElement {
 
       // console.log("@all-available-cravings: @joinCraving: Created craving cell with hash: ", encodeHashToBase64(clonedCell.cell_id[0]));
       this.dispatchEvent(new CustomEvent("installed-craving", {
+        detail: {
+          craving: dnaRecipe.properties,
+          cellId: clonedCell.cell_id,
+        },
         bubbles: true,
         composed: true,
       }));
