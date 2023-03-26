@@ -254,7 +254,7 @@ export class HolochainApp extends LitElement {
   renderWelcome() {
       return html`
         <div class="column" style="align-items: center;">
-          <div style="color: #abb5da; margin-bottom: 80px; font-size: 25px;">You are not part of any group yet. Join an existing group or create a new one.</div>
+          <div style="color: #abb5da; margin-bottom: 30px; font-size: 25px;">You are not part of any group yet. Join an existing group or create a new one.</div>
 
           <div class="row" style="align-items: center;">
 
@@ -271,6 +271,14 @@ export class HolochainApp extends LitElement {
             </button>
           </div>
 
+          <div class="light-bulb-note" style="max-width: 800px; margin-top: 30px;">
+            <div style="margin-bottom: 10px; font-size: 25px;">💡&nbsp<b>New Version</b></div>
+            <div style="font-size: 23px;">
+              This new version of the Word Condenser is <b>still compatible</b> with earlier versions. If you are
+              already part of Groups in another earlier instance of the Word Condenser, <b>you can simply join
+              the same Groups again</b> with the same 5 secret words.
+            </div>
+          </div>
 
         </div>`
   }
@@ -917,6 +925,16 @@ export class HolochainApp extends LitElement {
       background: #abb5d638;
       border-radius: 10px;
       padding: 15px 30px;
+    }
+
+    .light-bulb-note {
+      border-radius: 15px;
+      color: #bfdec1;
+      border: 3px solid #21c30062;
+      background: #2bff0017;
+      padding: 15px 20px;
+      text-align: left;
+      margin-bottom: 50px;
     }
 
     .group-icon {
