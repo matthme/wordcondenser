@@ -82,8 +82,10 @@ export class AssociationMapElement extends LitElement {
           class="row resonator ${ classMap({
             resonated: this.association.iResonated,
           })}"
+          tabindex="0"
           title=${this.association.iResonated ? "drop it?" : "add your fog to it"}
           @click=${async () => await this.handleResonator()}
+          @keypress=${async (e: KeyboardEvent) => e.key === "Enter" ? await this.handleResonator() : undefined}
         >
           <img src="drop.svg" style="height: 23px; margin-top: -2px; ${this.association.iResonated ? "" : "opacity: 0.8;"}">
           <span style="margin-left: 5px;">${this.association.resonators.length}</span>

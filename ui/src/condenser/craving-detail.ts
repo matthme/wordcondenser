@@ -219,14 +219,14 @@ export class CravingDetail extends LitElement {
         class="craving-container"
         style="display: flex; flex-direction: column"
         tabindex="0"
-        @keypress.enter=${() => this.dispatchEvent(new CustomEvent("selected-craving", {
+        @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.dispatchEvent(new CustomEvent("selected-craving", {
           detail: {
             cellId: this.store.service.cellId,
             craving,
           },
           bubbles: true,
           composed: true,
-        }))}
+        })) : undefined   }
         @click=${() => this.dispatchEvent(new CustomEvent("selected-craving", {
           detail: {
             cellId: this.store.service.cellId,

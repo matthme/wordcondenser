@@ -464,11 +464,12 @@ export class CravingView extends LitElement {
           )}
 
           <img
+            tabindex="0"
             src="share_icon.svg"
             class="icon"
             style="height: 60px; width: 60px; cursor: pointer; margin: 3px;"
-            title="Share with another group"
-            @keypress.enter=${() => this._viewMode = CravingViewMode.ShareRhyme}
+            title="Share with another Group"
+            @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this._viewMode = CravingViewMode.ShareRhyme : undefined}
             @click=${() => this._viewMode = CravingViewMode.ShareRhyme}
           >
 
@@ -487,12 +488,16 @@ export class CravingView extends LitElement {
             <create-association .cravingCellId=${this.cravingCellId}></create-association>
             <div class="row" style="justify-content: flex-end; margin-right: 20px;">
               <span
+                tabindex="0"
                 class=${this.sortAssociationsBy === "latest" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortAssociationsBy = "latest"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortAssociationsBy = "latest" : undefined}
               >latest</span>
               <span
+                tabindex="0"
                 class=${this.sortAssociationsBy === "resonanceAbsolute" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortAssociationsBy = "resonanceAbsolute"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortAssociationsBy = "resonanceAbsolute" : undefined}
               >most drops</span>
             </div>
             <association-map id="association-map" .cravingCellId=${this.cravingCellId} .sortBy=${this.sortAssociationsBy}></association-map>
@@ -509,12 +514,16 @@ export class CravingView extends LitElement {
             <create-reflection  .cravingCellId=${this.cravingCellId}></create-reflection>
             <div class="row" style="justify-content: flex-end; margin-right: 20px;">
               <span
+                tabindex="0"
                 class=${this.sortReflectionsBy === "latest" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortReflectionsBy = "latest"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortReflectionsBy = "latest" : undefined}
               >latest</span>
               <span
+                tabindex="0"
                 class=${this.sortReflectionsBy === "oldest" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortReflectionsBy = "oldest"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortReflectionsBy = "oldest" : undefined}
               >oldest</span>
             </div>
             <all-reflections .cravingCellId=${this.cravingCellId} .sortBy=${this.sortReflectionsBy}></all-reflections>
@@ -531,12 +540,16 @@ export class CravingView extends LitElement {
             <create-offer .cravingCellId=${this.cravingCellId}></create-offer>
             <div class="row" style="justify-content: flex-end; margin-right: 20px;">
               <span
+                tabindex="0"
                 class=${this.sortOffersBy === "latest" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortOffersBy = "latest"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortOffersBy = "latest" : undefined}
               >latest</span>
               <span
+                tabindex="0"
                 class=${this.sortOffersBy === "resonanceAbsolute" ? "order-selector-selected" : "order-selector"}
                 @click=${() => this.sortOffersBy = "resonanceAbsolute"}
+                @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.sortOffersBy = "resonanceAbsolute" : undefined}
               >most drops</span>
             </div>
             <all-offers id="all-offers" .cravingCellId=${this.cravingCellId} .sortBy=${this.sortOffersBy}></all-offers>
@@ -597,6 +610,10 @@ export class CravingView extends LitElement {
       color: #9ba4c2;
       padding: 20px;
       border-radius: 20px;
+    }
+
+    .btn-back:focus {
+      background-color: #ffd72384;
     }
 
     .btn-back:hover {

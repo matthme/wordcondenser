@@ -432,6 +432,10 @@ ${this.lobbyInfo!.network_seed}
         background-color: #ffd7230e;
       }
 
+      .btn-back:focus {
+        background-color: #ffd72384;
+      }
+
       .btn-back:hover {
         background-color: #ffd7231c;
       }

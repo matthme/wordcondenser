@@ -259,13 +259,13 @@ export class HolochainApp extends LitElement {
           <div class="row" style="align-items: center;">
 
             <button @click=${() => this._dashboardMode = DashboardMode.JoinLobbyView} class="btn-create-lobby">
-              <div class="row" style="position: relative; align-items: center;" title="craving for a word??">
+              <div class="row" style="position: relative; align-items: center;" title="Join an existing Group that tracks Cravings out there">
                 <span style="color: #ffd623ff; opacity: 0.85;">Join Group</span>
               </div>
             </button>
 
             <button @click=${() => this._dashboardMode = DashboardMode.CreateLobbyView} class="btn-create-lobby">
-              <div class="row" style="position: relative; align-items: center;" title="craving for a word??">
+              <div class="row" style="position: relative; align-items: center;" title="Create a new Group to track Cravings out there">
                 <span style="color: #ffd623ff; opacity: 0.85;">Create Group</span>
               </div>
             </button>
@@ -361,6 +361,7 @@ export class HolochainApp extends LitElement {
                     title="Click to filter/unfilter by Group '${lobbyData.name}'"
                     class="group-icon"
                     alt="Icon of group with name ${lobbyData.name}"
+                    tabindex="0"
                     style="
                       height: 70px;
                       width: 70px;
@@ -369,7 +370,7 @@ export class HolochainApp extends LitElement {
                       cursor: pointer;
                       ${this.amISelected(lobbyData.dnaHash) ? 'border: 3px solid white;' : ''}
                     "
-                    @keypress.enter=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                    @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.store.filterByGroup(lobbyData.dnaHash) : undefined }
                     @click=${() => this.store.filterByGroup(lobbyData.dnaHash)}
                   />
                 `
@@ -390,8 +391,9 @@ export class HolochainApp extends LitElement {
                       ${this.amISelected(lobbyData.dnaHash) ? 'border: 3px solid white;' : ''}
                     "
                     title="Click to filter/unfilter by Group '${lobbyData.name}'"
+                    tabindex="0"
                     alt="Icon of group with name ${lobbyData.name}"
-                    @keypress.enter=${() => this.store.filterByGroup(lobbyData.dnaHash)}
+                    @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.store.filterByGroup(lobbyData.dnaHash) : undefined }
                     @click=${() => this.store.filterByGroup(lobbyData.dnaHash)}
                     >
                     <span>${lobbyData.name.slice(0,2)}</span>
@@ -489,7 +491,7 @@ export class HolochainApp extends LitElement {
                 @keypress=${() => this._dashboardMode = DashboardMode.JoinLobbyView}
                 class="btn-join-group"
               >
-                <div class="row" style="position: relative; align-items: center;" title="Join an existing group that tracks cravings out there">
+                <div class="row" style="position: relative; align-items: center;" title="Join an existing Group that tracks Cravings out there">
                   <span style="color: #ffd623ff; opacity: 0.85;">Join Group</span>
                 </div>
               </button>
@@ -498,7 +500,7 @@ export class HolochainApp extends LitElement {
                 @keypress=${() => this._dashboardMode = DashboardMode.CreateLobbyView}
                 class="btn-join-group"
               >
-                <div class="row" style="position: relative; align-items: center;" title="Create a new group to track cravings out there">
+                <div class="row" style="position: relative; align-items: center;" title="Create a new Group to track Cravings out there">
                   <span style="color: #ffd623ff; opacity: 0.85;">Create Group</span>
                 </div>
               </button>
@@ -835,6 +837,10 @@ export class HolochainApp extends LitElement {
       background-color: #ffd7230e;
     }
 
+    .btn-back:focus {
+      background-color: #ffd72384;
+    }
+
     .btn-back:hover {
       background-color: #ffd7231c;
     }
@@ -855,6 +861,10 @@ export class HolochainApp extends LitElement {
       margin-right: 10px;
     }
 
+    .btn-join-group:focus {
+      background-color: #ffd72384;
+    }
+
     .btn-join-group:hover {
       background-color: #ffd7231c;
     }
@@ -871,9 +881,15 @@ export class HolochainApp extends LitElement {
       border-radius: 20px;
     }
 
+    .btn-create-craving:focus {
+      background-color: #ffd72384;
+    }
+
     .btn-create-craving:hover {
       background-color: #ffd7231c;
     }
+
+
 
     .btn-create-lobby {
       all: unset;

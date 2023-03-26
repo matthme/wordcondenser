@@ -83,8 +83,10 @@ export class OfferElement extends LitElement {
           class="row resonator ${ classMap({
             resonated: this.offer.iResonated,
           })}"
+          tabindex="0"
           title=${this.offer.iResonated ? "drop it?" : "add your fog to it"}
           @click=${async () => await this.handleResonator()}
+          @keypress=${async (e: KeyboardEvent) => e.key === "Enter" ? await this.handleResonator() : undefined}
         >
           <img src="drop.svg" style="height: 23px; margin-top: -2px; ${this.offer.iResonated ? "" : "opacity: 0.8;"}">
           <span style="margin-left: 5px;">${this.offer.resonators.length}</span>

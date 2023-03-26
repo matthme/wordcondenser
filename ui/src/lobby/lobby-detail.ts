@@ -42,14 +42,14 @@ export class LobbyDetail extends LitElement {
         class=${!!lobbyInfo ? "lobby-container" : "lobby-container-disabled"}
         style="display: flex; flex-direction: column; flex: 1;"
         tabindex="0"
-        @keypress.enter=${() => this.dispatchEvent(new CustomEvent("selected-lobby", {
+        @keypress=${(e: KeyboardEvent) => (e.key === "Enter") ? this.dispatchEvent(new CustomEvent("selected-lobby", {
           detail: {
             cellId: this.store.service.cellId,
             lobbyInfo,
           },
           bubbles: true,
           composed: true,
-        }))
+        })) : undefined
       }
         @click=${() => this.dispatchEvent(new CustomEvent("selected-lobby", {
           detail: {
