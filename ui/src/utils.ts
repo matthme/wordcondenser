@@ -144,6 +144,9 @@ export function newCommentsCount(cravingDnaHash: DnaHash, currentCount: number):
       if (newComments > 0) {
         return newComments
       }
+    } else {
+      // if there are no reflections in the cravingMessageStore yet, then all comments are new comments
+      return currentCount;
     }
   }
   return 0
