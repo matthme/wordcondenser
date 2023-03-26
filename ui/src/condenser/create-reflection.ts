@@ -131,6 +131,8 @@ export class CreateOffer extends LitElement {
             class="row ${this.isReflectionValid() ? "icon" : "disabled"}"
             style="align-items: center; margin-top: 5px; ${this.isReflectionValid() ? "" : "opacity: 0.5;"}"
             @click=${() => this.isReflectionValid() ? this.createReflection() : undefined}
+            @keypress=${(e: KeyboardEvent) => this.isReflectionValid() && e.key === "Enter" ? this.createReflection() : undefined}
+            tabindex="0"
           >
             <img style="height: 26px;" src="send_icon.svg" />
             <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;">Send</span>

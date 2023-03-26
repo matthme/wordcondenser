@@ -161,7 +161,9 @@ export class ReflectionElement extends LitElement {
                   class="icon"
                   style="height: 30px; cursor: pointer;"
                   title="minimize"
+                  tabindex="0"
                   @click=${() => this.expanded = !this.expanded}
+                  @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.expanded = !this.expanded : undefined }
                 >`
               : html`
                 <img
@@ -169,15 +171,18 @@ export class ReflectionElement extends LitElement {
                   class="icon"
                   style="height: 30px; cursor: pointer;"
                   title="expand"
+                  tabindex="0"
                   @click=${() => this.expanded = !this.expanded}
-
+                  @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.expanded = !this.expanded : undefined }
                 >`
           }
           <span style="display: flex; flex: 1;"></span>
           <div
             class="row icon ${this.showComments ? "icon-selected" : ""}"
             style="align-items: center; cursor: pointer; position: relative;"
+            tabindex="0"
             @click=${() => this.showComments = !this.showComments}
+            @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.showComments = !this.showComments : undefined }
           >
             <span style="color: #abb5d6; margin-right: 10px; font-size: 23px;">${this.numberOfComments()}</span>
             <img

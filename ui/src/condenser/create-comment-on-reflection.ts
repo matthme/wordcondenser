@@ -98,6 +98,8 @@ export class CreateCommentOnReflection extends LitElement {
             class="row ${this.isCommentValid() ? "icon" : "disabled"}"
             style="align-items: center; margin-top: 5px; ${this.isCommentValid() ? "" : "opacity: 0.5;"}"
             @click=${() => this.isCommentValid() ? this.createComment() : undefined}
+            @keypress=${(e: KeyboardEvent) => this.isCommentValid() && e.key === "Enter" ? this.createComment() : undefined}
+            tabindex="0"
           >
             <img style="height: 26px;" src="send_icon.svg" />
             <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;">Send</span>
