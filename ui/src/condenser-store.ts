@@ -304,8 +304,6 @@ export class CondenserStore {
    */
   async createCraving(properties: CravingDnaProperties, networkSeed: string, originTime: number): Promise<ClonedCell> {
 
-
-
     const cloneCellRequest = {
       role_name: "craving",
       modifiers: {

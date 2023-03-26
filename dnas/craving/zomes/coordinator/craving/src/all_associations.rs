@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use hdk::prelude::*;
 use craving_integrity::*;
 
@@ -16,32 +18,36 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
 
-    // associations should not be duplicated if multiple agents create the same association independently
-    // this function therefore returns deduplicated Records
-    // TODO!! Those records need to be filtered by time before deduping, otherwise it leads to different
-    // results about which duplicates are filtered out and which not
-    let entry_hashes_deduped: HashSet<EntryHash> = records
-        .into_iter()
-        .filter_map(|r| r) // filter out None's
-        .map(|r| r.action().clone())
-        .map(|action| action.entry_hash().cloned())
-        .filter_map(|maybe_eh| maybe_eh)
-        .map(|eh| eh.clone())
-        .collect();
+    // Those records need to be deduplicated, i.e. if there are multiple records with the same EntryHash,
+    // only the one with the earliest timestamp should be returned. If two persons independently add the
+    // same association it should only be shown once and time-wise what matters is when it was added for the
+    // first time.
+    let mut sorted_and_deduped_records: HashMap<EntryHash, Record> = HashMap::new();
 
+    for r in records {
+        if let Some(record) = r {
+            let maybe_entry_hash = record.action().entry_hash();
+            if let Some(eh) = maybe_entry_hash {
+                let maybe_duplicate_record = sorted_and_deduped_records.get(eh);
+                match maybe_duplicate_record {
+                    Some(duplicate_record) => {
+                        // keep the one with the oldest/earliest timestamp
+                        match record.action().timestamp() > duplicate_record.action().timestamp() {
+                            true => (),
+                            false => {
+                                sorted_and_deduped_records.insert(eh.clone(), record);
+                            }
+                        }
+                    },
+                    None => {
+                        sorted_and_deduped_records.insert(eh.clone(), record);
+                    }
+                }
+            }
+        }
+    }
 
-    // TODO! Make this nicer than calling get again just to get the deduped records.
-    // But records are probably cached anyway at this point so it may not be too costly
-    let get_input: Vec<GetInput> = entry_hashes_deduped
-    .into_iter()
-    .map(|entry_hash| GetInput::new(
-        entry_hash.into(),
-        GetOptions::default(),
-    ))
-    .collect();
-
-    let records_deduped = HDK.with(|hdk| hdk.borrow().get(get_input))?;
-    let records_deduped: Vec<Record> = records_deduped.into_iter().filter_map(|r| r).collect();
+    let records_deduped = sorted_and_deduped_records.into_values().collect();
 
     Ok(records_deduped)
 }

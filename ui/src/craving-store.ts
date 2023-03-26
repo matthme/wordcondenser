@@ -149,26 +149,6 @@ export class CravingStore {
       window.localStorage.setItem(encodeHashToBase64(this.service.cellId[0]), JSON.stringify(this.messageStore));
     }
 
-  // allAssociations = lazyLoadAndPoll(async () => {
-  //   const associationRecords = await this.service.getAllAssociations();
-
-  //   const myPubKey = this.service.cellId[1];
-
-  //   // here: Promise.all( ... fetch resonances for each of the records ... )
-  //   return Promise.all(associationRecords.map(async (record) => {
-  //     const resonances = await this.service.getResonatorsForEntry((record.signed_action.hashed.content as NewEntryAction).entry_hash);
-  //     const iResonated = resonances.map((hash) => JSON.stringify(hash)).includes(JSON.stringify(myPubKey));
-  //     const associationData: AssociationData = {
-  //       record,
-  //       resonators: resonances,
-  //       iResonated,
-  //       timestamp: record.signed_action.hashed.content.timestamp,
-  //     };
-
-  //     return associationData;
-
-  //   }))
-  // }, 1000)
 
 
   // useful for immediately displaying the number of new associations on the craving detail card
@@ -180,14 +160,13 @@ export class CravingStore {
   polledOffers = lazyLoadAndPoll(() => this.service.getAllOffers(), 2000);
 
 
-  // create instead a data structure here that also contains the info about resonances and iResonated
-  allAssociations = asyncReadable<Array<AssociationData>>(async (set) => {
+  allAssociations = lazyLoadAndPoll(async () => {
     const associationRecords = await this.service.getAllAssociations();
 
     const myPubKey = this.service.cellId[1];
 
     // here: Promise.all( ... fetch resonances for each of the records ... )
-    let associationDatas = await Promise.all(associationRecords.map(async (record) => {
+    return Promise.all(associationRecords.map(async (record) => {
       const resonances = await this.service.getResonatorsForEntry((record.signed_action.hashed.content as NewEntryAction).entry_hash);
       const iResonated = resonances.map((hash) => JSON.stringify(hash)).includes(JSON.stringify(myPubKey));
       const associationData: AssociationData = {
@@ -200,62 +179,8 @@ export class CravingStore {
       return associationData;
 
     }))
+  }, 1000)
 
-    set(associationDatas);
-
-    return this.service.on("signal", (signal) => {
-      // console.log("||| RECEIVED SIGNAL |||: ", signal);
-      if (signal.type === "EntryCreated" && signal.app_entry.type === "Association") {
-        const associationData: AssociationData = {
-          record: signal.record,
-          resonators: [], // if the entry has just been created there can't be any resonators yet
-          iResonated: false,
-          timestamp: signal.record.signed_action.hashed.content.timestamp,
-        }
-        associationDatas.push(associationData);
-        set(associationDatas)
-      }
-
-      if (signal.type === "LinkCreated" && "EntryToResonator" in signal.link_type) {
-        const updatedAssociationDatas = associationDatas.map((data) => {
-          if ( // if the base address of the link is the entry, update the data
-            JSON.stringify((data.record.signed_action.hashed.content as NewEntryAction).entry_hash)
-            === JSON.stringify(signal.action.hashed.content.base_address)
-          ) {
-            data.resonators.push(signal.action.hashed.content.target_address);
-            // if it was me that resonated, set iResonated to true
-            if (JSON.stringify(signal.action.hashed.content.author) === JSON.stringify(myPubKey)) {
-              data.iResonated = true;
-            }
-          }
-
-          return data;
-        });
-
-        associationDatas = updatedAssociationDatas;
-        set(associationDatas)
-      }
-
-      if (signal.type === "LinkDeleted" && "EntryToResonator" in signal.link_type) {
-
-        const updatedAssociationDatas = associationDatas.map((data) => {
-
-          if ( // if the base address of the link is the entry, update the data
-            JSON.stringify((data.record.signed_action.hashed.content as NewEntryAction).entry_hash)
-            === JSON.stringify(signal.action.hashed.content.base_address)
-          ) {
-            data.resonators = data.resonators.filter((pubKey) => encodeHashToBase64(pubKey).slice(5) !== encodeHashToBase64(myPubKey).slice(5));
-            if (JSON.stringify(signal.action.hashed.content.author) === JSON.stringify(myPubKey)) {
-              data.iResonated = false;
-            }
-          }
-          return data;
-        });
-        associationDatas = updatedAssociationDatas;
-        set(associationDatas)
-      }
-    })
-  });
 
 
   /**
@@ -327,14 +252,13 @@ export class CravingStore {
   }
 
 
-  // create instead a data structure here that also contains all the comments and resonances for an offer
-  allOffers = asyncReadable<Array<OfferData>>(async (set) => {
+  allOffers = lazyLoadAndPoll(async () => {
     const offerRecords = await this.service.getAllOffers();
 
     const myPubKey = this.service.cellId[1];
 
     // here: Promise.all( ... fetch resonances for each of the records ... )
-    let offerDatas = await Promise.all(offerRecords.map(async (record) => {
+    return Promise.all(offerRecords.map(async (record) => {
       const resonances = await this.service.getResonatorsForEntry((record.signed_action.hashed.content as NewEntryAction).entry_hash);
       const iResonated = resonances.map((hash) => JSON.stringify(hash)).includes(JSON.stringify(myPubKey));
       const offerData: OfferData = {
@@ -347,81 +271,9 @@ export class CravingStore {
       return offerData;
 
     }))
-
-    set(offerDatas);
-
-    return this.service.on("signal", (signal) => {
-      // console.log("||| RECEIVED SIGNAL |||: ", signal);
-      if (signal.type === "EntryCreated" && signal.app_entry.type === "Offer") {
-        const offerData: OfferData = {
-          record: signal.record,
-          resonators: [], // if the entry has just been created there can't be any resonators yet
-          iResonated: false,
-          timestamp: signal.record.signed_action.hashed.content.timestamp,
-        }
-        offerDatas.push(offerData);
-        set(offerDatas)
-      }
-
-      if (signal.type === "LinkCreated" && "EntryToResonator" in signal.link_type) {
-
-        // console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
-        // console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
+  }, 1000)
 
 
-        const updatedOfferDatas = offerDatas.map((data) => {
-          if ( // if the base address of the link is the entry, update the data
-            JSON.stringify((data.record.signed_action.hashed.content as NewEntryAction).entry_hash)
-            === JSON.stringify(signal.action.hashed.content.base_address)
-          ) {
-            data.resonators.push(signal.action.hashed.content.target_address);
-            // if it was me that resonated, set iResonated to true
-            if (JSON.stringify(signal.action.hashed.content.author) === JSON.stringify(myPubKey)) {
-              data.iResonated = true;
-            }
-          }
-
-          return data;
-        });
-
-        offerDatas = updatedOfferDatas;
-        set(offerDatas)
-      }
-
-      if (signal.type === "LinkDeleted" && "EntryToResonator" in signal.link_type) {
-
-        // console.log("###@@ myPubKey: ", encodeHashToBase64(myPubKey));
-        // console.log("###@@ data.resonators: ", offerDatas.map((data) => data.resonators.map((hash) => encodeHashToBase64(hash))));
-
-
-        const updatedOfferDatas = offerDatas.map((data) => {
-
-          if ( // if the base address of the link is the entry, update the data
-            JSON.stringify((data.record.signed_action.hashed.content as NewEntryAction).entry_hash)
-            === JSON.stringify(signal.action.hashed.content.base_address)
-          ) {
-            // console.log("½½½½ CONDITION MET ½½½½½½");
-            // console.log("data.resonators before: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
-            // console.log("myPubKey: ", encodeHashToBase64(myPubKey));
-            data.resonators = data.resonators.filter((pubKey) => encodeHashToBase64(pubKey).slice(5) !== encodeHashToBase64(myPubKey).slice(5));
-            // console.log("data.resonators after: ", data.resonators.map((hash) => encodeHashToBase64(hash)));
-            // console.log(data.resonators.filter((pubKey) => JSON.stringify(pubKey).slice(5) !== JSON.stringify(myPubKey)).slice(5));
-
-            if (JSON.stringify(signal.action.hashed.content.author) === JSON.stringify(myPubKey)) {
-              data.iResonated = false;
-            }
-          }
-          return data;
-        });
-
-        // console.log("@craving-store signalCallback: offerDatas before: ", offerDatas);
-        // console.log("@craving-store signalCallback: updatedOfferDatas: ", updatedOfferDatas);
-
-        offerDatas = updatedOfferDatas;
-        set(offerDatas);
-      }
-    })
-  });
 
 
 }
