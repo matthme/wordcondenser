@@ -51,7 +51,9 @@ export class AllOffers extends LitElement {
       </div>`;
 
     if (this.sortBy === "resonanceAbsolute") {
-      offerDatas = offerDatas.sort((data_a, data_b) => data_b.resonators.length - data_a.resonators.length);
+      offerDatas = offerDatas
+        .sort((data_a, data_b) => data_b.timestamp - data_a.timestamp)
+        .sort((data_a, data_b) => data_b.resonators.length - data_a.resonators.length);
     } else if (this.sortBy === "latest") {
       offerDatas = offerDatas.sort((data_a, data_b) => data_b.timestamp - data_a.timestamp);
     }
