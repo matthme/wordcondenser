@@ -38,7 +38,7 @@ pub fn get_association_by_action_hash(
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_association_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_association_hash.clone(),
     };
     get(latest_association_hash, GetOptions::default())

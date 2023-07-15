@@ -31,7 +31,7 @@ pub fn get_reflection(
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_reflection_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_reflection_hash.clone(),
     };
     get(latest_reflection_hash, GetOptions::default())

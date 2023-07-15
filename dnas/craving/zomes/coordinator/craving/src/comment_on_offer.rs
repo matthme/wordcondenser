@@ -34,7 +34,7 @@ pub fn get_comment_on_offer(
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_comment_on_offer_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_comment_on_offer_hash.clone(),
     };
     get(latest_comment_on_offer_hash, GetOptions::default())
@@ -81,7 +81,7 @@ pub fn get_comment_on_offers_for_offer(
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
+            link.target.into_any_dht_hash().unwrap(),
             GetOptions::default(),
         ))
         .collect();

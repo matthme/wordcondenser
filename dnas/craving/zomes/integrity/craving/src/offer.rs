@@ -50,7 +50,7 @@ pub fn validate_create_link_offer_updates(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let action_hash = ActionHash::from(base_address);
+    let action_hash = ActionHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _offer: crate::Offer = record
         .entry()
@@ -61,7 +61,7 @@ pub fn validate_create_link_offer_updates(
                 WasmErrorInner::Guest(String::from("Linked action must reference an entry"))
             ),
         )?;
-    let action_hash = ActionHash::from(target_address);
+    let action_hash = ActionHash::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _offer: crate::Offer = record
         .entry()
@@ -93,7 +93,7 @@ pub fn validate_create_link_all_offers(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let action_hash = ActionHash::from(target_address);
+    let action_hash = ActionHash::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _offer: crate::Offer = record
         .entry()

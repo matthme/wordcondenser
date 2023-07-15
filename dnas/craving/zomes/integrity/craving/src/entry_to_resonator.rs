@@ -5,7 +5,7 @@ pub fn validate_create_link_entry_to_resonator(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::from(EntryHash::from(target_address.clone()));
+    let target_pubkey = AgentPubKey::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     // debug!("#### Validating EntryToResonator link. Target pubkey: {:?}", target_pubkey);
     let author_pubkey = action.author;
     // debug!("#### Validating EntryToResonator link. author_pubkey: {:?}", author_pubkey);
@@ -20,7 +20,7 @@ pub fn validate_create_link_entry_to_resonator(
             ),
         );
     }
-    let entry_hash = EntryHash::from(base_address);
+    let entry_hash = EntryHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let _entry = must_get_entry(entry_hash)?.content;
     Ok(ValidateCallbackResult::Valid)
 }
@@ -31,7 +31,7 @@ pub fn validate_delete_link_entry_to_resonator(
     target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::from(EntryHash::from(target.clone()));
+    let target_pubkey = AgentPubKey::try_from(target).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     // debug!("#### Validating DeleteEntryToResonator link. Target pubkey: {:?}", target_pubkey);
     let author_pubkey = action.author;
     // debug!("#### Validating DeleteEntryToResonator link. author_pubkey: {:?}", author_pubkey);

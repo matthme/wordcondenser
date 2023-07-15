@@ -7,7 +7,7 @@ pub fn get_all_anecdotes(_: ()) -> ExternResult<Vec<Record>> {
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
+            link.target.into_any_dht_hash().unwrap(),
             GetOptions::default(),
         ))
         .collect();

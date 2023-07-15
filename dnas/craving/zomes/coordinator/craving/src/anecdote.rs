@@ -29,7 +29,7 @@ pub fn get_anecdote(original_anecdote_hash: ActionHash) -> ExternResult<Option<R
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_anecdote_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_anecdote_hash.clone(),
     };
     get(latest_anecdote_hash, GetOptions::default())

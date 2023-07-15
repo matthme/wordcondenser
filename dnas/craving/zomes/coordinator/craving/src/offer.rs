@@ -20,7 +20,7 @@ pub fn get_offer(original_offer_hash: ActionHash) -> ExternResult<Option<Record>
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_offer_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_offer_hash.clone(),
     };
     get(latest_offer_hash, GetOptions::default())

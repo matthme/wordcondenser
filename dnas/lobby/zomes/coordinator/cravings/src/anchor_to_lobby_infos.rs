@@ -20,7 +20,7 @@ pub fn get_lobby_infos_for_anchor(anchor: AgentPubKey) -> ExternResult<Vec<Recor
 
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(ActionHash::from(link.target).into(), GetOptions::default()))
+        .map(|link| GetInput::new(link.target.into_any_dht_hash().unwrap(), GetOptions::default()))
         .collect();
 
     // Get the records to filter out the deleted ones

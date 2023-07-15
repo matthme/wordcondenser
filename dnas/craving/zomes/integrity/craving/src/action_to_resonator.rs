@@ -5,7 +5,7 @@ pub fn validate_create_link_action_to_resonator(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::from(EntryHash::from(target_address.clone()));
+    let target_pubkey = AgentPubKey::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let author_pubkey = action.author;
     if target_pubkey != author_pubkey {
         return Ok(
@@ -16,7 +16,7 @@ pub fn validate_create_link_action_to_resonator(
             ),
         );
     }
-    let action_hash = ActionHash::from(base_address);
+    let action_hash = ActionHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _reflection = record
         .entry()
@@ -36,7 +36,7 @@ pub fn validate_delete_link_action_to_resonator(
     target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::from(EntryHash::from(target));
+    let target_pubkey = AgentPubKey::try_from(target).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let author_pubkey = action.author;
     if target_pubkey != author_pubkey {
         return Ok(

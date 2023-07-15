@@ -98,7 +98,7 @@ pub fn validate_create_link_all_associations(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let action_hash = ActionHash::from(target_address);
+    let action_hash = ActionHash::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _association: crate::Association = record
         .entry()

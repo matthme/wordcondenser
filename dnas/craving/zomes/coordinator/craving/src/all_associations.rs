@@ -12,7 +12,7 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
+            link.target.into_any_dht_hash().unwrap(),
             GetOptions::default(),
         ))
         .collect();
@@ -61,7 +61,7 @@ pub fn get_all_association_actions(_: ()) -> ExternResult<Vec<Record>> {
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
+            link.target.into_any_dht_hash().unwrap(),
             GetOptions::default(),
         ))
         .collect();

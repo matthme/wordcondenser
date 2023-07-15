@@ -25,7 +25,7 @@ pub fn get_resonators_for_entry(
     let links = get_links(entry_hash, LinkTypes::EntryToResonator, None)?;
     let agents: Vec<AgentPubKey> = links
         .into_iter()
-        .map(|link| AgentPubKey::from(EntryHash::from(link.target)))
+        .map(|link| link.target.into_agent_pub_key().unwrap())
         .collect();
     Ok(agents)
 }

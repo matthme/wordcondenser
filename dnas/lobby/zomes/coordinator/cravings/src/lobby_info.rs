@@ -40,9 +40,9 @@ pub fn get_lobby_info(
         );
     }
 
-    let original_lobby_info_hash = ActionHash::from(
+    let original_lobby_info_hash = ActionHash::try_from(
         anchor_links.first().unwrap().target.clone(),
-    );
+    ).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
 
     let links = get_links(
         original_lobby_info_hash.clone(),
@@ -53,7 +53,7 @@ pub fn get_lobby_info(
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_lobby_info_hash = match latest_link {
-        Some(link) => ActionHash::from(link.target.clone()),
+        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_lobby_info_hash.clone(),
     };
     get(latest_lobby_info_hash, GetOptions::default())
