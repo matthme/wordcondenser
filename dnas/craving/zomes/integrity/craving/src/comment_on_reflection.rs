@@ -24,7 +24,7 @@ pub fn validate_create_comment_on_reflection(
 
     // comments on reflections are limited to the same size as a reflection itself
     let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.properties)
+    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
         .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of offer creation: {}", err.to_string()))))?;
 
 

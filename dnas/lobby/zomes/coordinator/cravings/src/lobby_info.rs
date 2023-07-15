@@ -70,7 +70,7 @@ pub fn update_lobby_info(input: UpdateLobbyInfoInput) -> ExternResult<Record> {
     // In version 0.1.X of the Word Condenser, anyone can update the lobby info. That's to reduce friction of (out-of-band) invitations
 
     // let dna_info = dna_info()?;
-    // let lobby_dna_properties = LobbyDnaProperties::try_from(dna_info.properties)
+    // let lobby_dna_properties = LobbyDnaProperties::try_from(dna_info.modifiers.properties)
     //     .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into LobbyDnaProperties: {}", err.to_string()))))?;
 
     // let creator_pubkey: AgentPubKey = lobby_dna_properties.creator.into();
@@ -105,7 +105,7 @@ pub fn update_lobby_info(input: UpdateLobbyInfoInput) -> ExternResult<Record> {
 #[hdk_extern]
 pub fn get_lobby_name(_: ()) -> ExternResult<String> {
     let dna_info = dna_info()?;
-    let properties = LobbyDnaProperties::try_from(dna_info.properties)
+    let properties = LobbyDnaProperties::try_from(dna_info.modifiers.properties)
         .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to read lobby dna properties from dna info: {}", err.to_string()))))?;
     Ok(properties.name)
 }

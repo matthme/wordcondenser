@@ -31,7 +31,7 @@ pub fn validate_update_lobby_info(
     // really ergonomically be typed from another device but needs to be copied on the same device realisically
 
     // let dna_info = dna_info()?;
-    // let lobby_dna_properties = LobbyDnaProperties::try_from(dna_info.properties)
+    // let lobby_dna_properties = LobbyDnaProperties::try_from(dna_info.modifiers.properties)
     //     .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into LobbyDnaProperties during validation: {}", err.to_string()))))?;
 
     // let creator_pubkey: AgentPubKey = lobby_dna_properties.creator.into();

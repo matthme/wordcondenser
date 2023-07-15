@@ -11,7 +11,7 @@ pub fn validate_create_anecdote(
     anecdote: Anecdote,
 ) -> ExternResult<ValidateCallbackResult> {
     let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.properties)
+    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
         .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of anecdote creation: {}", err.to_string()))))?;
 
     match craving_dna_properties.max_anecdote_chars {

@@ -12,7 +12,7 @@ pub fn validate_create_offer(
     offer: Offer,
 ) -> ExternResult<ValidateCallbackResult> {
     let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.properties)
+    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
         .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of offer creation: {}", err.to_string()))))?;
 
     match craving_dna_properties.max_offer_chars {
