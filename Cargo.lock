@@ -380,7 +380,7 @@ name = "craving"
 version = "0.0.1"
 dependencies = [
  "craving_integrity",
- "hdk 0.3.0-beta-dev.7",
+ "hdk 0.3.0-beta-dev.8",
  "serde",
 ]
 
@@ -397,7 +397,7 @@ name = "cravings"
 version = "0.0.1"
 dependencies = [
  "cravings_integrity",
- "hdk 0.3.0-beta-dev.7",
+ "hdk 0.3.0-beta-dev.8",
  "serde",
 ]
 
@@ -917,9 +917,9 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.3.0-beta-dev.7"
+version = "0.3.0-beta-dev.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2afd4494fd611e20213496e54cd6186525eaa79f3a8b45445fb20d1e40679745"
+checksum = "ad6aa4fcf47e9bb0904d353d48f596152c903c8d35925466f8266de90d15296b"
 dependencies = [
  "getrandom",
  "hdi 0.4.0-beta-dev.5",
@@ -1773,7 +1773,7 @@ name = "profiles"
 version = "0.0.1"
 dependencies = [
  "hc_zome_profiles_coordinator",
- "hdk 0.3.0-beta-dev.7",
+ "hdk 0.3.0-beta-dev.8",
  "profiles_integrity",
  "serde",
 ]
