@@ -9,7 +9,7 @@ members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
 
 [workspace.dependencies]
 hdi = "=0.4.0-beta-dev.5"
-hdk = "=0.3.0-beta-dev.7"
+hdk = "=0.3.0-beta-dev.8"
 serde = "1"
 
 [workspace.dependencies.craving]
