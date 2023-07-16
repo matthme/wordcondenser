@@ -89,12 +89,12 @@ export class HolochainApp extends LitElement {
   private _allLobbyDatas = new StoreSubscriber(
     this,
     () => this.store ? this.store.getAllLobbyDatas() : undefined,
-  )
+  );
 
   private _activeGroupFilter = new StoreSubscriber(
     this,
     () => this.store ? this.store.activeGroupFilter() : undefined,
-  )
+  );
 
 
   async firstUpdated() {
@@ -105,6 +105,8 @@ export class HolochainApp extends LitElement {
 
     // check where to route after refresh
     const previousDashboardMode = window.localStorage.getItem("previousDashboardMode");
+
+    setInterval(async () => await this.store.fetchStores(), 10000);
 
     if (!previousDashboardMode) {
       this.loading = false;
@@ -658,7 +660,7 @@ export class HolochainApp extends LitElement {
             </div>
           </button>
 
-          <div style="color: #929ab9; position: fixed; bottom: 10px; right: 20px; font-size: 1em; opacity: 0.8;">version 0.1.X</div>
+          <div style="color: #929ab9; position: fixed; bottom: 10px; right: 20px; font-size: 1em; opacity: 0.8;">version 0.2.X</div>
 
           <a
             class="wordcondenser-link"

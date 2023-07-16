@@ -163,12 +163,12 @@ export class CondenserStore {
           dnaHash,
         }
 
-        const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] | undefined = cravingLobbyMapping.get(recipe.resulting_dna_hash);
 
-        if (existingRecipe && existingValue) {
+        try { // if cravingLobbyMapping already has a value for this key, push to it
+          const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] = cravingLobbyMapping.get(recipe.resulting_dna_hash);
           existingValue.push(lobbyData);
           cravingLobbyMapping.set(recipe.resulting_dna_hash, [existingRecipe, existingValue]);
-        } else {
+        } catch (e) { // if cravingLobbyMapping is does not have a value for this key yet, set it
           cravingLobbyMapping.set(recipe.resulting_dna_hash, [recipe, [lobbyData]]);
         }
       })
