@@ -224,12 +224,12 @@ export class HolochainApp extends LitElement {
 
   getSlogan() {
     const slogans = [
-      "« Expect to not expect - the richness you can find in life »",
       "« Let's pull our jewels into here - from our collective atmosphere »",
       "« Let's have us stick our heads together - those precious drops of words to gather »",
       "« What yet we're vaguely only seeing - let's not wait, let's speak it into being! »",
-    ]
-    return slogans[Math.floor(Math.random()*slogans.length)]
+    ];
+    const now = Date.now();
+    return slogans[Math.floor(now / 900000) % slogans.length] // same slogan for 15 minutes
   }
 
   colorSentence(sentence: string) {
