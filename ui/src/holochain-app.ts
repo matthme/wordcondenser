@@ -106,7 +106,7 @@ export class HolochainApp extends LitElement {
     // check where to route after refresh
     const previousDashboardMode = window.localStorage.getItem("previousDashboardMode");
 
-    setInterval(async () => await this.store.fetchStores(), 10000);
+    // setInterval(async () => await this.store.fetchStores(), 10000);
 
     if (!previousDashboardMode) {
       this.loading = false;
