@@ -7,11 +7,11 @@ import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
 
+import { consume } from '@lit-labs/context';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { condenserContext } from '../contexts';
 import { CravingStore } from '../craving-store';
-import { consume } from '@lit-labs/context';
 import { CondenserStore } from '../condenser-store';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '../sharedStyles';
 import { newAssociationsCount, newOffersCount, newCommentsCount, newReflectionsCount } from '../utils';
 
@@ -22,7 +22,7 @@ const timeAgo = new TimeAgo('en-US')
 export class CravingDetail extends LitElement {
   @consume({ context: condenserContext })
   condenserStore!: CondenserStore;
-  // @consume({ context: cravingStoreContext })
+
   @property()
   store!: CravingStore;
 
@@ -71,6 +71,8 @@ export class CravingDetail extends LitElement {
         const newCount = newAssociationsCount(this.store.service.cellId[0], currentCount);
         return [currentCount.toString(), newCount ? newCount.toString() : undefined];
       }
+      default:
+        return ["?", undefined];
     }
   }
 
@@ -80,11 +82,14 @@ export class CravingDetail extends LitElement {
         return ["?", undefined];
       case "error":
         return ["?", undefined];
-      case "complete":
+      case "complete": {
         const currentCount = this._allReflections.value.value.length;
         const newCount = newReflectionsCount(this.store.service.cellId[0], currentCount);
         // console.log("currentCount, newCount: ", currentCount, newCount);
         return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+      }
+      default:
+        return ["?", undefined];
     }
   }
 
@@ -94,10 +99,13 @@ export class CravingDetail extends LitElement {
         return undefined;
       case "error":
         return undefined;
-      case "complete":
+      case "complete": {
         const currentCount = this._allCommentCount.value.value;
         const newCount = newCommentsCount(this.store.service.cellId[0], currentCount);
         return newCount ? newCount.toString() : undefined;
+      }
+      default:
+        return undefined;
     }
   }
 
@@ -112,6 +120,8 @@ export class CravingDetail extends LitElement {
         const newCount = newOffersCount(this.store.service.cellId[0], currentCount);
         return [currentCount.toString(), newCount ? newCount.toString() : undefined];
       }
+      default:
+        return ["?", undefined];
     }
   }
 
@@ -130,14 +140,14 @@ export class CravingDetail extends LitElement {
               <div
                 class="notification yellow"
                 style="position: absolute; top: -10px; left: 16px;"
-                title="${this.associationsCount()[1]} new association${this.associationsCount()[1] != "1" ? "s" : ""}"
+                title="${this.associationsCount()[1]} new association${this.associationsCount()[1] !== "1" ? "s" : ""}"
               >
                 +${this.associationsCount()[1]}
               </div>
               `
             : html``}
         </div>
-        <img src="associations.png" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
+        <img src="associations.png" alt="associations icon" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
 
         <div style="position: relative;">
           <span
@@ -152,7 +162,7 @@ export class CravingDetail extends LitElement {
                 <div
                   class="notification yellow"
                   style="margin-bottom: 2px;"
-                  title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] != "1" ? "s" : ""}"
+                  title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] !== "1" ? "s" : ""}"
                 >
                 +${this.reflectionCount()[1]}
                 </div>
@@ -163,7 +173,7 @@ export class CravingDetail extends LitElement {
               ? html`
                 <div
                   class="notification blue"
-                  title="${this.commentsCount()} new comment${this.commentsCount() != "1" ? "s" : ""}"
+                  title="${this.commentsCount()} new comment${this.commentsCount() !== "1" ? "s" : ""}"
                 >
                 +${this.commentsCount()}
                 </div>
@@ -172,7 +182,7 @@ export class CravingDetail extends LitElement {
             }
           </div>
         </div>
-        <img src="reflections_black.svg" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
+        <img src="reflections_black.svg" alt="Reflections icon" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
 
         <div style="position: relative;">
           <span
@@ -186,7 +196,7 @@ export class CravingDetail extends LitElement {
               <div
                 class="notification yellow"
                 style="position: absolute; top: -10px; left: 16px;"
-                title="${this.offersCount()[1]} new offer${this.offersCount()[1] != "1" ? "s" : ""}"
+                title="${this.offersCount()[1]} new offer${this.offersCount()[1] !== "1" ? "s" : ""}"
               >
               +${this.offersCount()[1]}
               </div>
@@ -194,7 +204,7 @@ export class CravingDetail extends LitElement {
             : html``
           }
         </div>
-        <img src="offers.svg" style="height: 30px;" title="${this.offersCount()[0]} offers"/>
+        <img src="offers.svg" alt="Half filled Erlenmeyer flask to signify word offers" style="height: 30px;" title="${this.offersCount()[0]} offers"/>
       </div>
     `
   }
@@ -249,8 +259,14 @@ export class CravingDetail extends LitElement {
             ${
               this._lobbiesForCraving.value.map((lobbyData) => {
                 if (lobbyData.info?.logo_src) {
-                  return html`<img title=${lobbyData.name} src=${lobbyData.info.logo_src} style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;" />`
+                  return html`<img
+                    title=${lobbyData.name}
+                    alt="Group logo"
+                    src=${lobbyData.info.logo_src}
+                    style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;"
+                  />`
                 }
+                return html``
             })
             }
           </div>

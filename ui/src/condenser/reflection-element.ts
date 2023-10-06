@@ -6,6 +6,7 @@ import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
 
+import { decodeEntry } from '@holochain-open-dev/utils';
 import { clientContext, cravingStoreContext } from '../contexts';
 import { sharedStyles } from '../sharedStyles';
 import { getHexColorForTimestamp } from '../colors';
@@ -14,7 +15,6 @@ import { CravingStore } from '../craving-store';
 import { getNickname, newCommentsCount, newCommentsForReflectionCount } from '../utils';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { CommentOnReflection, CravingDnaProperties } from './types';
-import { decodeEntry } from '@holochain-open-dev/utils';
 
 import './create-comment-on-reflection';
 

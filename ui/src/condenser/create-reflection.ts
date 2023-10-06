@@ -134,7 +134,7 @@ export class CreateOffer extends LitElement {
             @keypress=${(e: KeyboardEvent) => this.isReflectionValid() && e.key === "Enter" ? this.createReflection() : undefined}
             tabindex="0"
           >
-            <img style="height: 26px;" src="send_icon.svg" />
+            <img style="height: 26px;" alt="Send icon" src="send_icon.svg" />
             <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;">Send</span>
           </div>
 

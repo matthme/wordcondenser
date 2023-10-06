@@ -4,9 +4,9 @@ import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 import './craving-detail';
+import { DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { CondenserStore, LobbyData } from '../condenser-store';
 import { condenserContext } from '../contexts';
-import { DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { sharedStyles } from '../sharedStyles';
 import { DnaRecipe } from '../types';
 

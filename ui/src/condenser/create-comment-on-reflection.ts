@@ -101,7 +101,7 @@ export class CreateCommentOnReflection extends LitElement {
             @keypress=${(e: KeyboardEvent) => this.isCommentValid() && e.key === "Enter" ? this.createComment() : undefined}
             tabindex="0"
           >
-            <img style="height: 26px;" src="send_icon.svg" />
+            <img style="height: 26px;" src="send_icon.svg" alt="Send icon" />
             <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;">Send</span>
           </div>
         </div>

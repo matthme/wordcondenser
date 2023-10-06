@@ -6,13 +6,13 @@ import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
 
+import { decodeEntry } from '@holochain-open-dev/utils';
+import { classMap } from 'lit/directives/class-map.js';
 import { clientContext, cravingStoreContext } from '../contexts';
 import { sharedStyles } from '../sharedStyles';
 import { getHexColorForTimestamp } from '../colors';
 import { CravingStore, OfferData } from '../craving-store';
-import { decodeEntry } from '@holochain-open-dev/utils';
 import { Offer } from './types';
-import { classMap } from 'lit/directives/class-map.js';
 
 
 /** An element of the association map for a craving.
@@ -85,10 +85,10 @@ export class OfferElement extends LitElement {
           })}"
           tabindex="0"
           title=${this.offer.iResonated ? "drop it?" : "add your fog to it"}
-          @click=${async () => await this.handleResonator()}
-          @keypress=${async (e: KeyboardEvent) => e.key === "Enter" ? await this.handleResonator() : undefined}
+          @click=${async () => this.handleResonator()}
+          @keypress=${async (e: KeyboardEvent) => e.key === "Enter" ? this.handleResonator() : undefined}
         >
-          <img src="drop.svg" style="height: 23px; margin-top: -2px; ${this.offer.iResonated ? "" : "opacity: 0.8;"}">
+          <img src="drop.svg" alt="Drop indicating how many people resonated with this offer" style="height: 23px; margin-top: -2px; ${this.offer.iResonated ? "" : "opacity: 0.8;"}">
           <span style="margin-left: 5px;">${this.offer.resonators.length}</span>
         </div>
       </div>

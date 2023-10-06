@@ -12,13 +12,13 @@ import '@material/mwc-textarea';
 import '../components/mvb-textfield';
 import '../components/mvb-textarea';
 import '../components/mvb-button';
+import { decodeEntry } from '@holochain-open-dev/utils';
+import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { classMap } from 'lit/directives/class-map.js';
 import { sharedStyles } from '../sharedStyles';
 import { CondenserStore } from '../condenser-store';
 import { clientContext, condenserContext } from '../contexts';
-import { classMap } from 'lit/directives/class-map.js';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { DnaRecipe, LobbyInfo } from '../types';
-import { decodeEntry } from '@holochain-open-dev/utils';
 import { CravingDnaProperties } from './types';
 import { MVBButton } from '../components/mvb-button';
 
@@ -70,7 +70,7 @@ export class CreateCraving extends LitElement {
 
   isCravingValid() {
     return this._title !== undefined && this._title !== "" && this._title.length <= MAX_TITLE_CHARS
-    && this._description !== undefined && this._description != "" && this._description.length <= MAX_DESCRIPTION_CHARS
+    && this._description !== undefined && this._description !== "" && this._description.length <= MAX_DESCRIPTION_CHARS
     && this._selectedLobbies.length > 0;
   }
 
@@ -203,8 +203,8 @@ export class CreateCraving extends LitElement {
                 tabindex="0"
               >
                 <!-- <div style="height: 60px; width: 60px; background: lightgreen; border-radius: 20%; margin-left: 15px;"></div> -->
-                ${ !!lobbyInfo
-                  ? html`<img src=${lobbyInfo.logo_src} style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;" />`
+                ${ lobbyInfo
+                  ? html`<img src=${lobbyInfo.logo_src} alt="Group logo" style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;" />`
                   : html`<div style="background: #929ab9; height: 60px; width: 60px; border-radius: 20%; margin-left: 15px; font-size: 40px; font-weight: bold; color: black;" >${lobbyStore.lobbyName.slice(0,2)}</div>`
                 }
                 <div
@@ -236,8 +236,10 @@ export class CreateCraving extends LitElement {
             you need to add it to at least one of your groups.<br><br>#Holochain
             <span
               style="cursor: default;"
-              @mouseover=${() => this.onFire = true}
-              @mouseout=${() => this.onFire = false}
+              @mouseover=${() => { this.onFire = true }}
+              @focus=${() => { this.onFire = true }}
+              @mouseout=${() => { this.onFire = false }}
+              @blur=${() => { this.onFire = false }}
               class=${classMap({
                 red: this.onFire,
               })}
@@ -263,7 +265,6 @@ export class CreateCraving extends LitElement {
             </mvb-textfield>
           </div>
 
-          <!-- <mwc-textfield outlined label="Title"  @input=${(e: CustomEvent) => { this._title = (e.target as any).value; } } required></mwc-textfield> -->
           <div style="margin-bottom: 15px;">
             <mvb-textarea
               style="
@@ -322,7 +323,7 @@ export class CreateCraving extends LitElement {
               .disabled=${!this.isCravingValid() && !this.installing}
             >
               <div class="row" style="align-items: center;">
-                <img src="empty_glass.svg" style="height: 50px;"/>
+                <img src="empty_glass.svg" alt="Icon of an empty Erlenmeyer flask" style="height: 50px;"/>
                 <span style="margin-left: 12px;">${this.installing ? "creating..." : "Create Craving"}</span>
               </div>
             </mvb-button>
