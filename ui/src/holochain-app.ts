@@ -10,15 +10,15 @@ import {
 import { provide } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 
+import { get, StoreSubscriber } from '@holochain-open-dev/stores';
+import { decodeEntry } from '@holochain-open-dev/utils';
+import { open } from '@tauri-apps/api/shell';
 import { clientContext, condenserContext } from './contexts';
 import { DashboardMode, LobbyInfo } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
 
-import { get, StoreSubscriber } from '@holochain-open-dev/stores';
-import { decodeEntry } from '@holochain-open-dev/utils';
 import { CravingDnaProperties } from './condenser/types';
-import { open } from '@tauri-apps/api/shell';
 
 
 import "@fontsource/poppins";
@@ -116,7 +116,7 @@ export class HolochainApp extends LitElement {
     const maybeLastRefresh = window.localStorage.getItem("lastRefresh");
 
     if (maybeLastRefresh) {
-      const lastRefresh = parseInt(maybeLastRefresh)
+      const lastRefresh = parseInt(maybeLastRefresh, 10);
       // ignore localstorage items if the last refresh is older than 2 seconds, for example when the
       // Word Condenser has just been started up after a while
       if ((Date.now() - lastRefresh) < 2000) {
@@ -147,17 +147,23 @@ export class HolochainApp extends LitElement {
             this._dashboardMode = DashboardMode.NoCookiesEVER;
             break;
 
-          case "CravingView":
+          case "CravingView": {
             const retrievedCravingDnaHash = decodeHashFromBase64(window.localStorage.getItem("selectedCravingDnaHash") as string);
             this._selectedCravingCellId = [retrievedCravingDnaHash, this.client.myPubKey];
             this._selectedCraving = JSON.parse(window.localStorage.getItem("selectedCraving") as string);
             this._dashboardMode = DashboardMode.CravingView;
             break;
+          }
 
-          case "LobbyView":
+          case "LobbyView": {
             const retrievedLobbyDnaHash = decodeHashFromBase64(window.localStorage.getItem("selectedLobbyDnaHash") as string);
             this._selectedLobbyCellId = [retrievedLobbyDnaHash, this.client.myPubKey];
             this._dashboardMode = DashboardMode.LobbyView;
+            break;
+          }
+
+          default:
+            this._dashboardMode = DashboardMode.Home;
             break;
 
         }
@@ -213,10 +219,16 @@ export class HolochainApp extends LitElement {
         window.location.reload();
         break;
 
-      case DashboardMode.LobbyView:
+      case DashboardMode.LobbyView: {
         const selectedLobbyDnaHash = encodeHashToBase64(this._selectedLobbyCellId![0]);
         window.localStorage.setItem("selectedLobbyDnaHash", selectedLobbyDnaHash);
         window.localStorage.setItem("previousDashboardMode", "LobbyView");
+        window.location.reload();
+        break;
+      }
+
+      default:
+        window.localStorage.setItem("previousDashboardMode", "Home");
         window.location.reload();
         break;
     }
@@ -237,7 +249,7 @@ export class HolochainApp extends LitElement {
 
     return sentence.split(" ").map((word) => {
       const randomColor  = colors[Math.floor(Math.random()*colors.length)];
-      return html`<span style="color: ${randomColor}">${word}&nbsp</span>`
+      return html`<span style="color: ${randomColor}">${word}&nbsp;</span>`
     })
   }
 
@@ -260,13 +272,13 @@ export class HolochainApp extends LitElement {
 
           <div class="row" style="align-items: center;">
 
-            <button @click=${() => this._dashboardMode = DashboardMode.JoinLobbyView} class="btn-create-lobby">
+            <button @click=${() => { this._dashboardMode = DashboardMode.JoinLobbyView }} class="btn-create-lobby">
               <div class="row" style="position: relative; align-items: center;" title="Join an existing Group that tracks Cravings out there">
                 <span style="color: #ffd623ff; opacity: 0.85;">Join Group</span>
               </div>
             </button>
 
-            <button @click=${() => this._dashboardMode = DashboardMode.CreateLobbyView} class="btn-create-lobby">
+            <button @click=${() => { this._dashboardMode = DashboardMode.CreateLobbyView }} class="btn-create-lobby">
               <div class="row" style="position: relative; align-items: center;" title="Create a new Group to track Cravings out there">
                 <span style="color: #ffd623ff; opacity: 0.85;">Create Group</span>
               </div>
@@ -319,6 +331,8 @@ export class HolochainApp extends LitElement {
             ></all-available-cravings>
           </div>
         `
+      default:
+        return html`Unknown Craving type`
     }
 
   }
@@ -329,24 +343,24 @@ export class HolochainApp extends LitElement {
         <div
           tabindex="0"
           class=${this._cravingMenuItem === "installed" ? "menu-item-selected" : "menu-item"}
-          @click=${() => this._cravingMenuItem = "installed"}
-          @keypress=${() => this._cravingMenuItem = "installed"}
+          @click=${() => { this._cravingMenuItem = "installed" }}
+          @keypress=${() => { this._cravingMenuItem = "installed" }}
           style="font-size: 0.8em;"
         >Installed (${this._allCravings.value.size})</div>
         <div
           title="Cravings that are tracked by at least one of your groups but that you don't have installed"
           tabindex="0"
           class=${this._cravingMenuItem === "available" ? "menu-item-selected" : "menu-item"}
-          @click=${() => this._cravingMenuItem = "available"}
-          @keypress=${() => this._cravingMenuItem = "available"}
+          @click=${() => { this._cravingMenuItem = "available" }}
+          @keypress=${() => { this._cravingMenuItem = "available" }}
           style="font-size: 0.8em;"
         >Available (${this._allAvailableCravings.value.length})</div>
         <div
           title="Cravings that you have installed in your conductor but that are disabled"
           tabindex="0"
           class=${this._cravingMenuItem === "disabled" ? "menu-item-selected" : "menu-item"}
-          @click=${() => this._cravingMenuItem = "disabled"}
-          @keypress=${() => this._cravingMenuItem = "disabled"}
+          @click=${() => { this._cravingMenuItem = "disabled" }}
+          @keypress=${() => { this._cravingMenuItem = "disabled" }}
           style="font-size: 0.8em;"
         >Disabled (${Object.values(this._allDisabledCravings.value).length})</div>
 
@@ -408,6 +422,7 @@ export class HolochainApp extends LitElement {
           <div class="row" style="position: absolute; top: -45px; right: 10px; align-items: center;">
             <img
               src="filter_filled.svg"
+              alt="Filter icon"
               style="height: 30px; margin: 3px; margin-right: 8px;"
               title="Filter Cravings by Group"
             >
@@ -444,14 +459,14 @@ export class HolochainApp extends LitElement {
       <div class="row" style="margin-bottom: 30px;">
         <div
           class=${this._menuItem === "cravings" ? "menu-item-selected" : "menu-item"}
-          @click=${() => this._menuItem = "cravings"}
-          @keypress=${() => this._menuItem = "cravings"}
+          @click=${() => { this._menuItem = "cravings" }}
+          @keypress=${() => { this._menuItem = "cravings" }}
           tabindex="0"
         >Cravings</div>
         <div
           class=${this._menuItem === "groups" ? "menu-item-selected" : "menu-item"}
-          @click=${() => this._menuItem = "groups"}
-          @keypress=${() => this._menuItem = "groups"}
+          @click=${() => { this._menuItem = "groups" }}
+          @keypress=${() => { this._menuItem = "groups" }}
           tabindex="0"
         >Groups</div>
       </div>
@@ -472,7 +487,7 @@ export class HolochainApp extends LitElement {
           <div style="padding: 40px; align-items: center;" class="column">
 
             ${
-              !!!window.localStorage.getItem("hide-logo")
+              !window.localStorage.getItem("hide-logo")
                 ? html`
                   <div style="margin-top: -50px; margin-bottom: 20px;">
                   <img
@@ -488,8 +503,8 @@ export class HolochainApp extends LitElement {
 
             <div class="row left-buttons">
               <button
-                @click=${() => this._dashboardMode = DashboardMode.JoinLobbyView}
-                @keypress=${() => this._dashboardMode = DashboardMode.JoinLobbyView}
+                @click=${() => { this._dashboardMode = DashboardMode.JoinLobbyView }}
+                @keypress=${() => { this._dashboardMode = DashboardMode.JoinLobbyView }}
                 class="btn-join-group"
               >
                 <div class="row" style="position: relative; align-items: center;" title="Join an existing Group that tracks Cravings out there">
@@ -497,8 +512,8 @@ export class HolochainApp extends LitElement {
                 </div>
               </button>
               <button
-                @click=${() => this._dashboardMode = DashboardMode.CreateLobbyView}
-                @keypress=${() => this._dashboardMode = DashboardMode.CreateLobbyView}
+                @click=${() => { this._dashboardMode = DashboardMode.CreateLobbyView }}
+                @keypress=${() => { this._dashboardMode = DashboardMode.CreateLobbyView }}
                 class="btn-join-group"
               >
                 <div class="row" style="position: relative; align-items: center;" title="Create a new Group to track Cravings out there">
@@ -510,12 +525,12 @@ export class HolochainApp extends LitElement {
             ${ !(lobbies.size === 0 && Object.values(disabledLobbies).length === 0)
               ? html`
                 <button
-                  @click=${() => this._dashboardMode = DashboardMode.CreateCravingView}
-                  @keypress=${() => this._dashboardMode = DashboardMode.CreateCravingView}
+                  @click=${() => { this._dashboardMode = DashboardMode.CreateCravingView }}
+                  @keypress=${() => { this._dashboardMode = DashboardMode.CreateCravingView }}
                   class="btn-create-craving"
                 >
                   <div class="row" style="position: relative; align-items: center;" title="craving for a word??">
-                    <img src="empty_glass.svg" style="height: 50px;"/>
+                    <img src="empty_glass.svg" alt="Icon of an empty Erlenmeyer flask" style="height: 50px;"/>
                     <span style="color: #ffd623ff; opacity: 0.85; margin-left: 12px;">Add Craving</span>
                   </div>
                 </button>
@@ -529,12 +544,13 @@ export class HolochainApp extends LitElement {
 
           <img
             class="icon"
+            alt="Setting icon"
             src="settings_icon.svg"
             style="height: 53px; position: fixed; bottom: 10px; right: 10px; cursor: pointer;"
             title="Settings"
             tabindex="0"
-            @click=${() => this._dashboardMode = DashboardMode.Settings}
-            @keypress=${() => this._dashboardMode = DashboardMode.Settings}
+            @click=${() => { this._dashboardMode = DashboardMode.Settings }}
+            @keypress=${() => { this._dashboardMode = DashboardMode.Settings }}
           />
         `
       // #################  CravingView  #######################
@@ -623,7 +639,7 @@ export class HolochainApp extends LitElement {
           </div>
         `
       // #################  LobbyView  #######################
-      case DashboardMode.LobbyView:
+      case DashboardMode.LobbyView: {
         const [lobbyStore, profilesStore] = this.store.lobbyStore(this._selectedLobbyCellId![0]);
         const lobbyInfoRecord = lobbyStore.lobbyInfo;
         const lobbyInfo: LobbyInfo | undefined = lobbyInfoRecord ? decodeEntry(lobbyInfoRecord) : undefined;
@@ -642,6 +658,7 @@ export class HolochainApp extends LitElement {
             ></lobby-view>
           </profiles-context>
         `
+      }
 
 
       // #################  Settings  #######################
@@ -675,10 +692,11 @@ export class HolochainApp extends LitElement {
 
             <div class="row" style="align-items: center; width: 100%; justify-content: center;">
               ${
-                !!window.localStorage.getItem("hide-logo")
+                window.localStorage.getItem("hide-logo")
                   ? html`
                     <img
                       src="switch_off.svg"
+                      alt="switch off button icon"
                       style="height: 50px; cursor: pointer;"
                       tabindex="0"
                       @click=${() => {
@@ -695,6 +713,7 @@ export class HolochainApp extends LitElement {
                   : html`
                     <img
                       src="switch_on.svg"
+                      alt="switch on button icon"
                       style="height: 50px; cursor: pointer;"
                       tabindex="0"
                       @click=${() => {
@@ -733,8 +752,8 @@ export class HolochainApp extends LitElement {
               class="confirm-btn"
               style="align-items: center; margin-top: 30px; margin-bottom: 80px;"
               tabindex="0"
-              @click=${() => this._dashboardMode = DashboardMode.NoCookiesEVER}
-              @keypress=${() => this._dashboardMode = DashboardMode.NoCookiesEVER}
+              @click=${() => { this._dashboardMode = DashboardMode.NoCookiesEVER }}
+              @keypress=${() => { this._dashboardMode = DashboardMode.NoCookiesEVER }}
             >
               <span style="color: #abb5d6; font-size: 1em;">Accept to not need to accept Cookies</span>
             </div>
@@ -748,7 +767,7 @@ export class HolochainApp extends LitElement {
               @click=${() => open("https://github.com/matthme/wordcondenser/issues/new")}
               @keypress=${() => open("https://github.com/matthme/wordcondenser/issues/new")}
             >
-              <img src="report_problem.svg" style="height: 40px; margin-bottom: 10px;" />
+              <img src="report_problem.svg" alt="Report problem icon" style="height: 40px; margin-bottom: 10px;" />
               <div style="color: #abb5d6; font-size: 1em; color: #ffc64c; opacity: 0.9;">Report A Problem</div>
             </div>
 
@@ -759,8 +778,11 @@ export class HolochainApp extends LitElement {
       // #################  No Cookies ever  #######################
       case DashboardMode.NoCookiesEVER:
         return html`
-          <no-cookies-ever @accepted-to-not-ever-need-to-accept-cookies=${() => this._dashboardMode = DashboardMode.Settings}></no-cookies-ever>
+          <no-cookies-ever @accepted-to-not-ever-need-to-accept-cookies=${() => { this._dashboardMode = DashboardMode.Settings }}></no-cookies-ever>
         `;
+
+      default:
+        return html`You found the bromm closet`
     }
   }
 
@@ -772,7 +794,7 @@ export class HolochainApp extends LitElement {
 
     return html`
       <main>
-        ${  !!window.localStorage.getItem("intro-seen")
+        ${  window.localStorage.getItem("intro-seen")
           ? this.renderHome()
           : html`<intro-section @intro-finished=${() => this.requestUpdate()}></intro-section>`
         }
@@ -780,6 +802,7 @@ export class HolochainApp extends LitElement {
             ? html`<img
                 class="icon"
                 src="refresh.svg"
+                alt="Refresh icon"
                 style="height: 53px; position: fixed; bottom: 10px; left: 10px; cursor: pointer;"
                 title="Refresh"
                 tabindex="0"
