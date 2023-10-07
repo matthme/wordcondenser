@@ -62,7 +62,7 @@ export function newAssociationsCount(cravingDnaHash: DnaHash, currentCount: numb
   const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
   if (cravingMessageStoreJson) {
     const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
-    if (cravingMessageStore.association_count) {
+    if (cravingMessageStore.association_count || cravingMessageStore.association_count === 0) {
       const newAssocations = currentCount - cravingMessageStore.association_count;
       if (newAssocations > 0) {
         return newAssocations
@@ -77,7 +77,7 @@ export function newOffersCount(cravingDnaHash: DnaHash, currentCount: number): n
   const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
   if (cravingMessageStoreJson) {
     const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
-    if (cravingMessageStore.offers_count) {
+    if (cravingMessageStore.offers_count || cravingMessageStore.offers_count === 0) {
       const newOffers = currentCount - cravingMessageStore.offers_count;
       if (newOffers > 0) {
         return newOffers
