@@ -272,7 +272,6 @@ export class ReflectionElement extends LitElement {
     sharedStyles,
     css`
       .title {
-        white-space: pre-line;
         text-align: left;
         font-size: 23px;
         font-weight: bold;
@@ -285,7 +284,6 @@ export class ReflectionElement extends LitElement {
       }
 
       .content {
-        white-space: pre-line;
         text-align: left;
         font-size: 19px;
         color: #abb5d6;

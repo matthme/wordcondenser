@@ -79,9 +79,7 @@ export class AssociationMapElement extends LitElement {
         style="background-color: ${color}3B;"
         title=${date.toLocaleString()}
       >
-        <div style="white-space: pre-line; text-align: left;">
-          ${association.association}
-        </div>
+        <div style="text-align: left;">${association.association}</div>
         <span style="display: flex; flex: 1;"></span>
         <div
           style="align-items: center;"

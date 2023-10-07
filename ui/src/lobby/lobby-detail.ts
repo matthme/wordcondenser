@@ -160,19 +160,9 @@ export class LobbyDetail extends LitElement {
       }
 
       .lobby-title {
-        white-space: pre-line;
         font-weight: bold;
         font-size: 28px;
         text-align: left;
-        color: #0b0d15;
-      }
-
-      .lobby-description {
-        white-space: pre-line;
-        text-align: left;
-        font-size: 19px;
-        overflow-y: auto;
-        margin-top: 10px;
         color: #0b0d15;
       }
     `,

@@ -50,22 +50,69 @@ export type EntryTypes =
   | ({ type: 'DnaRecipe' } & DnaRecipe)
   | ({ type: 'LobbyInfo' } & LobbyInfo);
 
+export interface NotificationPayload {
+  title: string;
+  body: string;
+  urgency: 'high' | 'medium' | 'low';
+}
+
+export interface CravingNotificationSettings {
+  associations: {
+    os: boolean;
+    systray: boolean;
+    inApp: boolean;
+  };
+  comments: {
+    os: boolean;
+    systray: boolean;
+    inApp: boolean;
+  };
+  reflections: {
+    os: boolean;
+    systray: boolean;
+    inApp: boolean;
+  };
+  offers: {
+    os: boolean;
+    systray: boolean;
+    inApp: boolean;
+  };
+}
+
 // data structure that stores counts of associations/reflections/comments/offers
 export type MessageStore = Record<DnaHashB64, CravingMessageStore>;
 
 export type CravingMessageStore = {
-  // dna hash of the craving
-  association_count: number | undefined; // number of associations
-  latest_association_update: number | undefined; // timestamp of the latest update to the association count
-  latest_association_read: number | undefined; // timestamp of the latest readout of to the association count --> used to decide whether to trigger OS notification
-  offers_count: number | undefined; // numver of offers
-  latest_offer_update: number | undefined; // timestamp of the latest update to the offer count
-  latest_offer_read: number | undefined; // timestamp of the latest readout of the offer count --> used to decide whether to trigger OS notification
+  /**
+   * Number of read Associations in this Craving
+   */
+  association_count: number | undefined;
+  /**
+   * Timestamp of the latest update to the association count
+   */
+  latest_association_update: number | undefined;
+  /**
+   * Number of read Offers in this Craving
+   */
+  offers_count: number | undefined; // number of offers
+  /**
+   * Timestamp of the latest update to the Offer count
+   */
+  latest_offer_update: number | undefined;
+  /**
+   * Reflections of this Craving (read)
+   */
   reflections: Record<
     ActionHashB64,
     {
-      comments_count: number; // number of comments
-      latest_update: number; // timestamp of when the comments_count for this reflection hash was last updated
+      /**
+       * Number of read comments for this Reflectoin
+       */
+      comments_count: number;
+      /**
+       * Timestamp of when the comments count for this Reflection hash was last updated
+       */
+      latest_update: number;
     }
   >;
 };

@@ -16,7 +16,7 @@ import { decodeEntry } from '@holochain-open-dev/utils';
 import { open } from '@tauri-apps/api/shell';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { clientContext, condenserContext } from './contexts';
-import { DashboardMode, LobbyInfo } from './types';
+import { DashboardMode, LobbyInfo, NotificationPayload } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
 
@@ -46,6 +46,7 @@ import './lobby-view';
 import './intro';
 import './no-cookies-ever';
 import './loading-animation';
+import { isKangaroo, notifyOS } from './utils';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -104,7 +105,8 @@ export class HolochainApp extends LitElement {
     this.client = await AppAgentWebsocket.connect('', 'word-condenser');
     this.store = await CondenserStore.connect(this.client);
 
-    if ((window as any).__HC_KANGAROO__) {
+    if (isKangaroo()) {
+      // clear the systray icon whenever the Window receives focus
       window.addEventListener('focus', async () => {
         await invoke('clear_systray_icon', {});
       });
@@ -389,6 +391,17 @@ export class HolochainApp extends LitElement {
                 this._selectedCravingCellId = e.detail.cellId;
                 this._selectedCraving = e.detail.craving;
                 this._dashboardMode = DashboardMode.CravingView;
+              }}
+              @notify-os=${async (e: CustomEvent) => {
+                try {
+                  await notifyOS(
+                    e.detail.notification,
+                    e.detail.os,
+                    e.detail.systray,
+                  );
+                } catch (err) {
+                  console.warn(`Failed to notify OS: ${err}`);
+                }
               }}
             >
             </all-cravings>

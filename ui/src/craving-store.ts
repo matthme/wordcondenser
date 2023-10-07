@@ -14,8 +14,9 @@ import {
 } from '@holochain/client';
 
 import { CravingService } from './craving-service';
-import { CommentOnReflection, CravingDnaProperties } from './condenser/types';
+import { CravingDnaProperties } from './condenser/types';
 import { CravingMessageStore } from './types';
+import { getLocalStorageItem } from './utils';
 
 export interface AssociationData {
   record: Record;
@@ -38,9 +39,8 @@ export class CravingStore {
     public service: CravingService,
     public craving: CravingDnaProperties,
     public initTime: number, // timestamp in ms when the cell was installed, i.e. the OpenChain action was commited
-    public messageStore: CravingMessageStore | undefined,
-  ) // networkSeed: string,
-  {
+    public messageStore: CravingMessageStore | undefined, // networkSeed: string,
+  ) {
     // this.networkSeed = networkSeed;
   }
 
@@ -50,14 +50,10 @@ export class CravingStore {
     const initTime = await service.getInitTime();
 
     // get message store for this Craving from localStorage
-    const messageStoreJson = window.localStorage.getItem(
+
+    const messageStore = getLocalStorageItem<CravingMessageStore>(
       encodeHashToBase64(service.cellId[0]),
     );
-
-    let messageStore: CravingMessageStore | undefined = undefined;
-    if (messageStoreJson) {
-      messageStore = JSON.parse(messageStoreJson);
-    }
 
     return new CravingStore(service, craving, initTime, messageStore);
   }

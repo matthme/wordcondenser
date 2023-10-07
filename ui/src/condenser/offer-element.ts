@@ -75,9 +75,7 @@ export class OfferElement extends LitElement {
 
     return html`
       <div class="offer" title="${date.toLocaleString()}">
-        <div style="white-space: pre-line; text-align: left;">
-          ${offer.offer}
-        </div>
+        <div style="text-align: left;">${offer.offer}</div>
         <span style="display: flex; flex: 1;"></span>
         <div
           style="align-items: center;"

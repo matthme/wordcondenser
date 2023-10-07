@@ -165,7 +165,6 @@ export class AllAvailableCravings extends LitElement {
       }
 
       .craving-title {
-        white-space: pre-line;
         font-weight: bold;
         font-size: 28px;
         text-align: left;

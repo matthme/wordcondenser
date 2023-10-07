@@ -82,14 +82,12 @@ export class AllReflections extends LitElement {
           (reflectionData_a, reflectionData_b) =>
             reflectionData_b!.timestamp - reflectionData_a!.timestamp,
         );
-        console.log('reflection datas sorted by newest?: ', reflectionDatas);
         break;
       case 'oldest':
         reflectionDatas = reflectionDatas.sort(
           (reflectionData_a, reflectionData_b) =>
             reflectionData_a!.timestamp - reflectionData_b!.timestamp,
         );
-        console.log('reflection datas sorted by oldest?: ', reflectionDatas);
         break;
       default:
         break;

@@ -3,15 +3,23 @@ import {
   AgentPubKey,
   CellId,
   DnaHash,
+  DnaHashB64,
   encodeHashToBase64,
 } from '@holochain/client';
+import { invoke } from '@tauri-apps/api';
 import {
   uniqueNamesGenerator,
   colors,
   animals,
   Config,
 } from 'unique-names-generator';
-import { CravingMessageStore } from './types';
+import {
+  CravingMessageStore,
+  CravingNotificationSettings,
+  NotificationPayload,
+} from './types';
+
+export const isKangaroo = () => (window as any).__HC_KANGAROO__;
 
 export function getNickname(pubKey: AgentPubKey, cravingTitle: string) {
   const pubKeyB64 = encodeHashToBase64(pubKey);
@@ -55,7 +63,7 @@ export function resizeAndExport(img: HTMLImageElement) {
   return canvas.toDataURL();
 }
 
-function getLocalStorageItem<T>(key: string): T | undefined {
+export function getLocalStorageItem<T>(key: string): T | undefined {
   const item: string | null = window.localStorage.getItem(key);
   return item ? JSON.parse(item) : undefined;
 }
@@ -98,6 +106,22 @@ export function newOffersCount(
     ) {
       const newOffers = currentCount - cravingMessageStore.offers_count;
       if (newOffers > 0) {
+        // if (
+        //   (!cravingMessageStore.offers.notified ||
+        //     cravingMessageStore.offers.count >
+        //       cravingMessageStore.offers.notified) &&
+        //   isKangaroo()
+        // ) {
+        //   await notifyOs(
+        //     {
+        //       title: 'New Offer',
+        //       body: 'New Offer',
+        //       urgency: 'medium',
+        //     },
+        //     false,
+        //     true,
+        //   );
+        // }
         return newOffers;
       }
     }
@@ -125,7 +149,7 @@ export function newReflectionsCount(
 }
 
 /**
- * Get the counts of new comments for a Craving.
+ * Get the counts of new comments for a single Reflection.
  * @param cravingDnaHash
  * @param currentCount
  * @returns
@@ -155,7 +179,7 @@ export function newCommentsForReflectionCount(
 }
 
 /**
- * Get the counts of new comments for a Craving.
+ * Get the counts of new comments across all Reflections of a Craving.
  * @param cravingDnaHash
  * @param currentCount
  * @returns
@@ -190,4 +214,117 @@ export function newCommentsCount(
     }
   }
   return 0;
+}
+
+export function setNotifiedAssociationsCount(
+  carvingDnaHash: DnaHashB64,
+  newCount: number,
+) {
+  window.localStorage.setItem(
+    `associationsNotified#${carvingDnaHash}`,
+    JSON.stringify(newCount),
+  );
+}
+
+export function getNotifiedAssociationsCount(carvingDnaHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`associationsNotified#${carvingDnaHash}`);
+}
+
+export function setNotifiedCommentsCount(
+  carvingDnaHash: DnaHashB64,
+  newCount: number,
+) {
+  window.localStorage.setItem(
+    `commentsNotified#${carvingDnaHash}`,
+    JSON.stringify(newCount),
+  );
+}
+
+export function getNotifiedCommentsCount(carvingDnaHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`commentsNotified#${carvingDnaHash}`);
+}
+
+export function setNotifiedOffersCount(
+  carvingDnaHash: DnaHashB64,
+  newCount: number,
+) {
+  window.localStorage.setItem(
+    `offersNotified#${carvingDnaHash}`,
+    JSON.stringify(newCount),
+  );
+}
+
+export function getNotifiedOffersCount(carvingDnaHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`offersNotified#${carvingDnaHash}`);
+}
+
+export function setNotifiedReflectionsCount(
+  carvingDnaHash: DnaHashB64,
+  newCount: number,
+) {
+  window.localStorage.setItem(
+    `reflectionsNotified#${carvingDnaHash}`,
+    JSON.stringify(newCount),
+  );
+}
+
+export function getNotifiedReflectionsCount(carvingDnaHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`reflectionsNotified#${carvingDnaHash}`);
+}
+
+export function getCravingNotificationSettings(
+  cravingDnaHash: DnaHashB64,
+): CravingNotificationSettings {
+  const settings = getLocalStorageItem<CravingNotificationSettings>(
+    `notificationSettings#${cravingDnaHash}`,
+  );
+  return (
+    settings || {
+      associations: { os: false, systray: false, inApp: true },
+      offers: { os: false, systray: true, inApp: true },
+      reflections: { os: false, systray: true, inApp: true },
+      comments: { os: false, systray: true, inApp: true },
+    }
+  );
+}
+
+export function disableCravingNotifications(cravingDnaHash: DnaHashB64): void {
+  const settings: CravingNotificationSettings = {
+    associations: { os: false, systray: false, inApp: true },
+    offers: { os: false, systray: false, inApp: true },
+    reflections: { os: false, systray: false, inApp: true },
+    comments: { os: false, systray: false, inApp: true },
+  };
+
+  window.localStorage.setItem(
+    `notificationSettings#${cravingDnaHash}`,
+    JSON.stringify(settings),
+  );
+}
+
+export function enableCravingNotifications(cravingDnaHash: DnaHashB64): void {
+  const settings: CravingNotificationSettings = {
+    associations: { os: false, systray: false, inApp: true },
+    offers: { os: false, systray: true, inApp: true },
+    reflections: { os: false, systray: true, inApp: true },
+    comments: { os: false, systray: true, inApp: true },
+  };
+
+  window.localStorage.setItem(
+    `notificationSettings#${cravingDnaHash}`,
+    JSON.stringify(settings),
+  );
+}
+
+export async function notifyOS(
+  notification: NotificationPayload,
+  os: boolean,
+  systray: boolean,
+): Promise<void> {
+  console.log(
+    `%%%%%%%%%% Notifying OS %%%%%%%%%%%%\nos: ${os}, systray: ${systray}, notification: ${JSON.stringify(
+      notification,
+    )}`,
+  );
+  return invoke('notify_os', { notification, os, systray });
 }
