@@ -34,6 +34,39 @@ export function getNickname(pubKey: AgentPubKey, cravingTitle: string) {
   return uniqueNamesGenerator(config);
 }
 
+export function inviteLinkToGroupProps(link: string) {
+  const arr = link.split('?');
+  if (arr.length !== 2) throw new Error(`Invalid invite link: ${link}`);
+
+  const arr2 = arr[1].split('://');
+  if (arr.length !== 2 || arr2[0] !== 'wordcondenser')
+    throw new Error(`Invalid invite link: ${link}`);
+
+  return inviteStringToGroupProps(arr2[1]);
+}
+
+export function groupPropsToInviteLink(name: string, networkSeed: string) {
+  return `https://wordcondenser.com/invite?wordcondenser://${groupPropsToInviteString(
+    name,
+    networkSeed,
+  )}`;
+}
+
+export function groupPropsToInviteString(name: string, networkSeed: string) {
+  return `${window.btoa(name).replace('+', '%').replace('/', '-')}#${window
+    .btoa(networkSeed)
+    .replace('+', '%')
+    .replace('/', '-')}`;
+}
+
+export function inviteStringToGroupProps(input: string): [string, string] {
+  const arr = input.split('#');
+  if (arr.length !== 2) throw new Error(`Invalid invite string: ${input}`);
+  const name = window.atob(arr[0].replace('%', '+').replace('-', '/'));
+  const networkSeed = window.atob(arr[1].replace('%', '+').replace('-', '/'));
+  return [name, networkSeed];
+}
+
 // Crop the image and return a base64 bytes string of its content
 export function resizeAndExport(img: HTMLImageElement) {
   const MAX_WIDTH = 300;

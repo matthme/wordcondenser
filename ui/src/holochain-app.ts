@@ -1022,7 +1022,7 @@ export class HolochainApp extends LitElement {
         `;
 
       default:
-        return html`You found the bromm closet`;
+        return html`You found the broom closet`;
     }
   }
 

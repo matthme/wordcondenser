@@ -685,7 +685,7 @@ export class CondenserStore {
         network_seed: networkSeed,
         properties: {
           name,
-          // creator: encodeHashToBase64(this.appAgentWebsocket.myPubKey), // not needed in WOrd Condenser 0.1.X to reduce invitation friction
+          // creator: encodeHashToBase64(this.appAgentWebsocket.myPubKey), // not needed in Word Condenser 0.1.X to reduce invitation friction
         }, // lobby name will be fixed and part of the properties
       },
       name,

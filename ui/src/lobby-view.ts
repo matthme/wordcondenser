@@ -7,8 +7,6 @@ import { localized, msg } from '@lit/localize';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { writeText } from '@tauri-apps/api/clipboard';
 
-import '@material/mwc-circular-progress';
-
 import './condenser/craving-detail';
 import './condenser/create-association';
 import './condenser/association-map';
@@ -19,6 +17,7 @@ import './condenser/reflection-element';
 import './condenser/all-reflections';
 import './condenser/create-reflection';
 import './craving-context';
+import './lobby/profiles/elements/profile-prompt';
 
 import { sharedStyles } from './sharedStyles';
 
@@ -30,6 +29,7 @@ import { LobbyStore } from './lobby-store';
 import { LobbyInfo } from './types';
 
 import './lobby/profiles/elements/edit-profile';
+import { groupPropsToInviteLink } from './utils';
 
 export enum LobbyViewMode {
   Home,
@@ -362,8 +362,9 @@ ${this.lobbyInfo!.network_seed}
           <span>${this.lobbyStore.lobbyName}</span>
           <img
             src="copy_icon.svg"
+            class="copy-img"
             style="cursor: pointer; height: 30px; margin-left: 30px;"
-            title="copy to clipboard"
+            title="Copy Group Name"
             tabindex="0"
             alt="copy group name"
             @click=${() => writeText(this.lobbyStore.lobbyName)}
@@ -386,8 +387,9 @@ ${this.lobbyInfo!.network_seed}
                 >
                 <img
                   src="copy_icon.svg"
+                  class="copy-img"
                   style="cursor: pointer; height: 30px; margin-left: 10px;"
-                  title="copy to clipboard"
+                  title="Copy Secret Words"
                   tabindex="0"
                   alt="copy secret words"
                   @click=${() => writeText(this.lobbyInfo!.network_seed)}
@@ -396,11 +398,15 @@ ${this.lobbyInfo!.network_seed}
               </div>
               <div
                 class="row böttns"
-                style="margin-bottom: 70px;"
+                style="margin-bottom: 20px;"
                 title="Click to copy the invitation to this group"
                 tabindex="0"
                 @click=${() => writeText(this.invitationText())}
-                @keypress=${() => writeText(this.invitationText())}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    writeText(this.invitationText());
+                  }
+                }}
               >
                 <img
                   src="copy_icon.svg"
@@ -410,8 +416,43 @@ ${this.lobbyInfo!.network_seed}
                   @keypress=${() => writeText(this.lobbyInfo!.network_seed)}
                 />
                 <span
-                  style="color: #abb5d6; margin-left: 10px; font-size: 23px;"
+                  style="color: #abb5d6; margin-left: 10px; font-size: 23px; margin-right: 15px;"
                   >Copy Invitation</span
+                >
+              </div>
+
+              <div
+                class="row böttns"
+                style="margin-bottom: 70px;"
+                title="Click to copy an invitation link"
+                tabindex="0"
+                @click=${() => {
+                  writeText(
+                    groupPropsToInviteLink(
+                      this.lobbyStore.lobbyName,
+                      this.lobbyInfo!.network_seed,
+                    ),
+                  );
+                }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    writeText(
+                      groupPropsToInviteLink(
+                        this.lobbyStore.lobbyName,
+                        this.lobbyInfo!.network_seed,
+                      ),
+                    );
+                  }
+                }}
+              >
+                <img
+                  src="link_icon.svg"
+                  alt="Copy icon"
+                  style="cursor: pointer; height: 30px; margin-left: 10px;"
+                />
+                <span
+                  style="color: #abb5d6; margin-left: 10px; font-size: 23px; margin-right: 15px;"
+                  >Invite Link</span
                 >
               </div>
               <div
@@ -534,7 +575,7 @@ ${this.lobbyInfo!.network_seed}
       }
 
       .böttns {
-        background: transparent;
+        background: #8991ab38;
         border-radius: 10px;
         padding: 8px;
         cursor: pointer;
@@ -542,8 +583,24 @@ ${this.lobbyInfo!.network_seed}
 
       .böttns:hover {
         background: #abb5d638;
-        border-radius: 10px;
-        padding: 8px;
+      }
+
+      .böttns:active {
+        background: #e8edfc38;
+      }
+
+      .copy-img {
+        background: #8991ab38;
+        padding: 8px 5px;
+        border-radius: 5px;
+      }
+
+      .copy-img:hover {
+        background: #abb5d638;
+      }
+
+      .copy-img:active {
+        background: #e8edfc38;
       }
 
       .leave-btn {

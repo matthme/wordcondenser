@@ -15,6 +15,8 @@ import '../components/mvb-button';
 import { sharedStyles } from '../sharedStyles';
 import { CondenserStore } from '../condenser-store';
 import { clientContext, condenserContext } from '../contexts';
+import { inviteLinkToGroupProps } from '../utils';
+import { MVBTextField } from '../components/mvb-textfield';
 
 @customElement('join-lobby')
 export class JoinLobby extends LitElement {
@@ -31,10 +33,22 @@ export class JoinLobby extends LitElement {
   _name: string | undefined;
 
   @state()
+  _groupPropsFromLink: string | undefined;
+
+  @state()
   installing: boolean = false;
 
   @state()
   onFire: boolean = false;
+
+  @state()
+  invalidLink: boolean = false;
+
+  @query('#group-name-input')
+  groupNameInput!: MVBTextField;
+
+  @query('#group-seed-input')
+  groupSeedInput!: MVBTextField;
 
   isLobbyValid() {
     return (
@@ -44,6 +58,24 @@ export class JoinLobby extends LitElement {
       this._networkSeed !== undefined &&
       this._networkSeed !== ''
     );
+  }
+
+  pasteLink(link: string) {
+    this.invalidLink = false;
+    try {
+      const [name, networkSeed] = inviteLinkToGroupProps(link);
+      if (!name || !networkSeed) {
+        this.invalidLink = true;
+        return;
+      }
+      this._name = name;
+      this._networkSeed = networkSeed;
+      this.groupNameInput.setValue(name);
+      this.groupSeedInput.setValue(networkSeed);
+    } catch (e) {
+      console.error('Failed to read link: ', e);
+      this.invalidLink = true;
+    }
   }
 
   async joinLobby() {
@@ -116,6 +148,33 @@ export class JoinLobby extends LitElement {
             >
           </div>
 
+          <h3>Paste Invite Link:</h3>
+
+          <div style="margin-bottom: 15px;">
+            <mvb-textfield
+              style="
+                --mvb-primary-color: #abb5d6;
+                --mvb-secondary-color: #838ba4;
+                --mvb-textfield-width: 800px;
+                --mvb-textfield-height: 56px;
+                margin-bottom: 15px;
+              "
+              placeholder="Invite Link"
+              @input=${(e: CustomEvent) => {
+                this.pasteLink((e.target as any).value);
+              }}
+              title="Invite Link"
+            >
+            </mvb-textfield>
+            <div class="red">${this.invalidLink ? 'Invalid Link' : ''}</div>
+          </div>
+
+          <h3>OR</h3>
+
+          <div style="color: #abb5da; text-align: left; margin-bottom: 6px;">
+            Enter Group name and secret words:
+          </div>
+
           <div style="margin-bottom: 15px;">
             <div
               style="color: #929ab9; font-size: 18px; text-align: left; margin-left: 10px;"
@@ -124,6 +183,7 @@ export class JoinLobby extends LitElement {
               invitation.
             </div>
             <mvb-textfield
+              id="group-name-input"
               style="
                 --mvb-primary-color: #abb5d6;
                 --mvb-secondary-color: #838ba4;
@@ -141,6 +201,7 @@ export class JoinLobby extends LitElement {
 
           <div style="margin-bottom: 15px;">
             <mvb-textfield
+              id="group-seed-input"
               style="
                 --mvb-primary-color: #abb5d6;
                 --mvb-secondary-color: #838ba4;
@@ -471,6 +532,10 @@ export class JoinLobby extends LitElement {
     css`
       .red {
         color: #ff5630;
+      }
+
+      h3 {
+        color: #abb5da;
       }
 
       .box {
