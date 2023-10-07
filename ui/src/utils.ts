@@ -29,14 +29,12 @@ export function resizeAndExport(img: HTMLImageElement) {
   // Change the resizing logic
   if (width > height) {
     if (width > MAX_WIDTH) {
-      height = height * (MAX_WIDTH / width);
+      height *= (MAX_WIDTH / width);
       width = MAX_WIDTH;
     }
-  } else {
-    if (height > MAX_HEIGHT) {
-      width = width * (MAX_HEIGHT / height);
+  } else if (height > MAX_HEIGHT) {
+      width *= (MAX_HEIGHT / height);
       height = MAX_HEIGHT;
-    }
   }
 
   const canvas = document.createElement('canvas');
@@ -50,21 +48,22 @@ export function resizeAndExport(img: HTMLImageElement) {
 }
 
 
-
-
-
+function getLocalStorageItem<T>(key: string): T | undefined {
+  const item: string | null = window.localStorage.getItem(key);
+  return item ? JSON.parse(item) : undefined;
+}
 
 
 // ================  unread events counts ================
 
 
 export function newAssociationsCount(cravingDnaHash: DnaHash, currentCount: number): number {
-  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  if (cravingMessageStoreJson) {
-    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+  const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(encodeHashToBase64(cravingDnaHash));
+  if (cravingMessageStore) {
     if (cravingMessageStore.association_count || cravingMessageStore.association_count === 0) {
       const newAssocations = currentCount - cravingMessageStore.association_count;
       if (newAssocations > 0) {
+
         return newAssocations
       }
     }
@@ -74,9 +73,8 @@ export function newAssociationsCount(cravingDnaHash: DnaHash, currentCount: numb
 
 
 export function newOffersCount(cravingDnaHash: DnaHash, currentCount: number): number {
-  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  if (cravingMessageStoreJson) {
-    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+  const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(encodeHashToBase64(cravingDnaHash));
+  if (cravingMessageStore) {
     if (cravingMessageStore.offers_count || cravingMessageStore.offers_count === 0) {
       const newOffers = currentCount - cravingMessageStore.offers_count;
       if (newOffers > 0) {
@@ -89,9 +87,8 @@ export function newOffersCount(cravingDnaHash: DnaHash, currentCount: number): n
 
 
 export function newReflectionsCount(cravingDnaHash: DnaHash, currentCount: number): number {
-  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  if (cravingMessageStoreJson) {
-    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+  const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(encodeHashToBase64(cravingDnaHash));
+  if (cravingMessageStore) {
     if (cravingMessageStore.reflections) {
       const newReflections = currentCount - Object.values(cravingMessageStore.reflections).length;
       if (newReflections > 0) {
@@ -110,9 +107,8 @@ export function newReflectionsCount(cravingDnaHash: DnaHash, currentCount: numbe
  * @returns
  */
 export function newCommentsForReflectionCount(cravingDnaHash: DnaHash, reflectionHash: ActionHash, currentCount: number): number {
-  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  if (cravingMessageStoreJson) {
-    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+  const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(encodeHashToBase64(cravingDnaHash));
+  if (cravingMessageStore) {
     const b64Hash = encodeHashToBase64(reflectionHash);
     if (cravingMessageStore.reflections && cravingMessageStore.reflections[b64Hash]) {
       const newComments = currentCount - cravingMessageStore.reflections[b64Hash].comments_count;
@@ -132,14 +128,13 @@ export function newCommentsForReflectionCount(cravingDnaHash: DnaHash, reflectio
  * @returns
  */
 export function newCommentsCount(cravingDnaHash: DnaHash, currentCount: number): number {
-  const cravingMessageStoreJson = window.localStorage.getItem(encodeHashToBase64(cravingDnaHash));
-  if (cravingMessageStoreJson) {
-    const cravingMessageStore: CravingMessageStore = JSON.parse(cravingMessageStoreJson);
+  const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(encodeHashToBase64(cravingDnaHash));
+  if (cravingMessageStore) {
     if (cravingMessageStore.reflections && Object.values(cravingMessageStore.reflections).length > 0) {
       // count number of reflections
       let numComments = 0;
       // add number of comments for reflections
-      Object.values(cravingMessageStore.reflections).forEach(({ comments_count, latest_update}) => numComments += comments_count);
+      Object.values(cravingMessageStore.reflections).forEach(({ comments_count, latest_update}) => { numComments += comments_count });
       const newComments = currentCount - numComments;
       if (newComments > 0) {
         return newComments

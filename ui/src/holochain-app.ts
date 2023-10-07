@@ -9,10 +9,12 @@ import {
 } from '@holochain/client';
 import { provide } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
+import { invoke } from '@tauri-apps/api';
 
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
 import { decodeEntry } from '@holochain-open-dev/utils';
 import { open } from '@tauri-apps/api/shell';
+import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import { clientContext, condenserContext } from './contexts';
 import { DashboardMode, LobbyInfo } from './types';
 import { CondenserStore } from './condenser-store';
@@ -63,6 +65,9 @@ export class HolochainApp extends LitElement {
 
   @state() _cravingMenuItem: "installed" | "available" | "disabled" = "installed";
 
+  @state()
+  _unlisten: UnlistenFn | undefined;
+
   @provide({ context: clientContext })
   @property({ type: Object })
   client!: AppAgentWebsocket;
@@ -96,12 +101,42 @@ export class HolochainApp extends LitElement {
     () => this.store ? this.store.activeGroupFilter() : undefined,
   );
 
+  disconnectedCallback(): void {
+    if (this._unlisten) this._unlisten();
+  }
 
   async firstUpdated() {
     // We pass '' as url because it will dynamically be replaced in launcher environments
     this.client = await AppAgentWebsocket.connect('', 'word-condenser');
     this.store = await CondenserStore.connect(this.client);
 
+    if ((window as any).__HC_KANGAROO__) {
+
+      window.addEventListener("focus", async () => {
+        await invoke("clear_systray_icon", {});
+      });
+
+    //   console.log("Detected kangaroo environment.");
+    //   this._unlisten = await listen("deep-link-received", async (e) => {
+    //     const deepLink = e.payload as string;
+    //     try {
+    //       const split = deepLink.split("://");
+    //       const split2 = split[1].split("/");
+
+    //       if (split2[0] === "hrl") {
+    //         await this.handleOpenHrl(
+    //           decodeHashFromBase64(split2[1]),
+    //           decodeHashFromBase64(split2[2])
+    //         );
+    //       } else if (split2[0] === "group") {
+    //         await this.handleOpenGroup(split2[1]);
+    //       }
+    //     } catch (e) {
+    //       console.error(e);
+    //       notifyError(msg("Error opening the link."));
+    //     }
+    //   });
+    }
 
     // check where to route after refresh
     const previousDashboardMode = window.localStorage.getItem("previousDashboardMode");
@@ -794,11 +829,11 @@ export class HolochainApp extends LitElement {
 
     return html`
       <main>
-        ${  window.localStorage.getItem("intro-seen")
+        ${  window.localStorage.getItem("intro-seen") || true
           ? this.renderHome()
           : html`<intro-section @intro-finished=${() => this.requestUpdate()}></intro-section>`
         }
-        ${ this._dashboardMode !== DashboardMode.Settings && window.localStorage.getItem("intro-seen")
+        ${ this._dashboardMode !== DashboardMode.Settings && window.localStorage.getItem("intro-seen") || true
             ? html`<img
                 class="icon"
                 src="refresh.svg"
