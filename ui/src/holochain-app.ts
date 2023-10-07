@@ -36,6 +36,7 @@ import './craving-view';
 import './lobby-context';
 import './lobby/create-lobby';
 import './lobby/join-lobby';
+import './lobby/join-lobby-from-link';
 import './lobby/all-lobbies';
 import './lobby/all-craving-recipes';
 import './lobby/profiles/elements/profile-prompt';
@@ -59,6 +60,8 @@ export class HolochainApp extends LitElement {
   @state() _selectedLobbyCellId: CellId | undefined = undefined;
 
   @state() _selectedCraving: CravingDnaProperties | undefined = undefined;
+
+  @state() _deepLink: string | undefined = undefined;
 
   @state() _menuItem: 'cravings' | 'groups' = 'cravings';
 
@@ -111,26 +114,10 @@ export class HolochainApp extends LitElement {
         await invoke('clear_systray_icon', {});
       });
 
-      //   console.log("Detected kangaroo environment.");
-      //   this._unlisten = await listen("deep-link-received", async (e) => {
-      //     const deepLink = e.payload as string;
-      //     try {
-      //       const split = deepLink.split("://");
-      //       const split2 = split[1].split("/");
-
-      //       if (split2[0] === "hrl") {
-      //         await this.handleOpenHrl(
-      //           decodeHashFromBase64(split2[1]),
-      //           decodeHashFromBase64(split2[2])
-      //         );
-      //       } else if (split2[0] === "group") {
-      //         await this.handleOpenGroup(split2[1]);
-      //       }
-      //     } catch (e) {
-      //       console.error(e);
-      //       notifyError(msg("Error opening the link."));
-      //     }
-      //   });
+      this._unlisten = await listen('deep-link-received', async e => {
+        this._deepLink = e.payload as string;
+        this._dashboardMode = DashboardMode.JoinLobbyFromLink;
+      });
     }
 
     // check where to route after refresh
@@ -676,8 +663,10 @@ export class HolochainApp extends LitElement {
                 @click=${() => {
                   this._dashboardMode = DashboardMode.JoinLobbyView;
                 }}
-                @keypress=${() => {
-                  this._dashboardMode = DashboardMode.JoinLobbyView;
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    this._dashboardMode = DashboardMode.JoinLobbyView;
+                  }
                 }}
                 class="btn-join-group"
               >
@@ -848,6 +837,31 @@ export class HolochainApp extends LitElement {
                 window.location.reload();
               }}
             ></join-lobby>
+          </div>
+        `;
+      // #################  JoinLobbyFromLink  #######################
+      case DashboardMode.JoinLobbyFromLink:
+        return html`
+          <button
+            @click=${() => {
+              this._dashboardMode = DashboardMode.Home;
+              this._selectedCravingCellId = undefined;
+              this._selectedCraving = undefined;
+            }}
+            class="btn-back"
+          >
+            <div class="row" style="position: relative; align-items: center;">
+              <span style="color: #ffd623ff; opacity: 0.68;">Back</span>
+            </div>
+          </button>
+          <div style="margin-top: 20px;">
+            <join-lobby-from-link
+              .deepLink=${this._deepLink}
+              @lobby-joined=${() => {
+                this._deepLink = undefined;
+                window.location.reload();
+              }}
+            ></join-lobby-from-link>
           </div>
         `;
       // #################  LobbyView  #######################

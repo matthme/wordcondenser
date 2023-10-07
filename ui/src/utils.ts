@@ -37,12 +37,15 @@ export function getNickname(pubKey: AgentPubKey, cravingTitle: string) {
 export function inviteLinkToGroupProps(link: string) {
   const arr = link.split('?');
   if (arr.length !== 2) throw new Error(`Invalid invite link: ${link}`);
+  return deepLinkToGroupProps(arr[1]);
+}
 
-  const arr2 = arr[1].split('://');
-  if (arr.length !== 2 || arr2[0] !== 'wordcondenser')
-    throw new Error(`Invalid invite link: ${link}`);
+export function deepLinkToGroupProps(deepLink: string) {
+  const arr = deepLink.split('://');
+  if (arr.length !== 2 || arr[0] !== 'wordcondenser')
+    throw new Error(`Invalid invite link: ${deepLink}`);
 
-  return inviteStringToGroupProps(arr2[1]);
+  return inviteStringToGroupProps(arr[1]);
 }
 
 export function groupPropsToInviteLink(name: string, networkSeed: string) {

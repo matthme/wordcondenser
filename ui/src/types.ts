@@ -17,6 +17,7 @@ export enum DashboardMode {
   LobbyView,
   CreateLobbyView,
   JoinLobbyView,
+  JoinLobbyFromLink,
   Settings,
   NoCookiesEVER,
 }

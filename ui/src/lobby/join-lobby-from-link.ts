@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
-import { AppAgentClient, DnaModifiers } from '@holochain/client';
+import { AppAgentClient } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -15,16 +15,19 @@ import '../components/mvb-button';
 import { sharedStyles } from '../sharedStyles';
 import { CondenserStore } from '../condenser-store';
 import { clientContext, condenserContext } from '../contexts';
-import { inviteLinkToGroupProps } from '../utils';
+import { deepLinkToGroupProps } from '../utils';
 import { MVBTextField } from '../components/mvb-textfield';
 
-@customElement('join-lobby')
-export class JoinLobby extends LitElement {
+@customElement('join-lobby-from-link')
+export class JoinLobbyFromLink extends LitElement {
   @consume({ context: clientContext })
   client!: AppAgentClient;
 
   @consume({ context: condenserContext })
   store!: CondenserStore;
+
+  @property()
+  deepLink!: string;
 
   @state()
   _networkSeed: string | undefined;
@@ -42,13 +45,29 @@ export class JoinLobby extends LitElement {
   onFire: boolean = false;
 
   @state()
-  invalidLink: boolean = false;
+  linkStatus: 'loading' | 'valid' | 'invalid' = 'loading';
 
   @query('#group-name-input')
   groupNameInput!: MVBTextField;
 
   @query('#group-seed-input')
   groupSeedInput!: MVBTextField;
+
+  firstUpdated() {
+    try {
+      const [name, networkSeed] = deepLinkToGroupProps(this.deepLink);
+      if (!name || !networkSeed) {
+        this.linkStatus = 'invalid';
+        return;
+      }
+      this._name = name;
+      this._networkSeed = networkSeed;
+      this.linkStatus = 'valid';
+    } catch (e) {
+      console.error('Failed to read link: ', e);
+      this.linkStatus = 'invalid';
+    }
+  }
 
   isLobbyValid() {
     return (
@@ -58,24 +77,6 @@ export class JoinLobby extends LitElement {
       this._networkSeed !== undefined &&
       this._networkSeed !== ''
     );
-  }
-
-  pasteLink(link: string) {
-    this.invalidLink = false;
-    try {
-      const [name, networkSeed] = inviteLinkToGroupProps(link);
-      if (!name || !networkSeed) {
-        this.invalidLink = true;
-        return;
-      }
-      this._name = name;
-      this._networkSeed = networkSeed;
-      this.groupNameInput.setValue(name);
-      this.groupSeedInput.setValue(networkSeed);
-    } catch (e) {
-      console.error('Failed to read link: ', e);
-      this.invalidLink = true;
-    }
   }
 
   async joinLobby() {
@@ -116,15 +117,42 @@ export class JoinLobby extends LitElement {
       <div style="display: flex; flex-direction: column; align-items: center;">
         <div class="box">
           <div
-            style="font-size: 40px; font-weight: bold; color: #abb5da; opacity: 0.85; margin-bottom: 30px; margin-top: 40px;"
+            style="font-size: 35px; font-weight: bold; color: #abb5da; opacity: 0.85; margin-top: 40px;"
           >
-            Join a Group
+            You have been invited to join
           </div>
+
+          ${
+            // eslint-disable-next-line no-nested-ternary
+            this.linkStatus === 'loading'
+              ? html`loading...`
+              : this.linkStatus === 'invalid'
+              ? html`<h2 class="red">Invalid Link &nbsp; :(</h2>`
+              : html`<h2 style="color: #abb5da;">${this._name}</h2>`
+          }
+
+          <div style="margin-bottom: 30px;">
+            <mvb-button
+              style="
+                --mvb-primary-color: #ffd7230e;
+                --mvb-secondary-color: #8e7d2f;
+                --mvb-button-text-color: #ffd623ff;
+                --mvb-button-disabled-text-color: #ffd72360;
+                opacity: 0.85;
+              "
+              @click=${() => this.joinLobby()}
+              .disabled=${!this.isLobbyValid() && !this.installing}
+            >
+              <div class="row" style="align-items: center;">
+                <span style="margin-left: 12px;">Join Group</span>
+              </div>
+            </mvb-button>
+          </div>
+
           <div
-            style="font-size: 19px; line-height: 30px; color: #c5cded; margin-bottom: 50px; max-width: 800px; text-align: left;"
+            style="font-size: 19px; line-height: 30px; color: #c5cded; max-width: 800px; text-align: left;"
           >
-            Join a <b>peer-to-peer network</b> that keeps track of cravings out
-            in the wild. <br /><br />#Holochain
+            #Holochain
             <span
               style="cursor: default;"
               @mouseover=${() => {
@@ -146,96 +174,6 @@ export class JoinLobby extends LitElement {
                 ? '#ButOnFire!!!'
                 : '#ItsJustYouAndYourPeers'}</span
             >
-          </div>
-
-          <h3>Paste Invite Link:</h3>
-
-          <div style="margin-bottom: 15px;">
-            <mvb-textfield
-              style="
-                --mvb-primary-color: #abb5d6;
-                --mvb-secondary-color: #838ba4;
-                --mvb-textfield-width: 800px;
-                --mvb-textfield-height: 56px;
-                margin-bottom: 15px;
-              "
-              placeholder="Invite Link"
-              @input=${(e: CustomEvent) => {
-                this.pasteLink((e.target as any).value);
-              }}
-              title="Invite Link"
-            >
-            </mvb-textfield>
-            <div class="red">${this.invalidLink ? 'Invalid Link' : ''}</div>
-          </div>
-
-          <h3>OR</h3>
-
-          <div
-            style="color: #abb5da; text-align: left; margin-bottom: 6px; font-size: 25px;"
-          >
-            Enter Group name and secret words:
-          </div>
-
-          <div style="margin-bottom: 15px;">
-            <div
-              style="color: #929ab9; font-size: 18px; text-align: left; margin-left: 10px;"
-            >
-              <b>IMPORTANT:</b> The name must exactly match the one from the
-              invitation.
-            </div>
-            <mvb-textfield
-              id="group-name-input"
-              style="
-                --mvb-primary-color: #abb5d6;
-                --mvb-secondary-color: #838ba4;
-                --mvb-textfield-width: 800px;
-                --mvb-textfield-height: 56px;
-                margin-bottom: 15px;
-              "
-              placeholder="Name of the Group"
-              @input=${(e: CustomEvent) => {
-                this._name = (e.target as any).value;
-              }}
-            >
-            </mvb-textfield>
-          </div>
-
-          <div style="margin-bottom: 15px;">
-            <mvb-textfield
-              id="group-seed-input"
-              style="
-                --mvb-primary-color: #abb5d6;
-                --mvb-secondary-color: #838ba4;
-                --mvb-textfield-width: 800px;
-                --mvb-textfield-height: 56px;
-                margin-bottom: 15px;
-              "
-              placeholder="Secret words"
-              @input=${(e: CustomEvent) => {
-                this._networkSeed = (e.target as any).value;
-              }}
-              title="The secret words to join that group"
-            >
-            </mvb-textfield>
-          </div>
-
-          <div style="margin-bottom: 10px;">
-            <mvb-button
-              style="
-                --mvb-primary-color: none;
-                --mvb-secondary-color: #ffd7230e;
-                --mvb-button-text-color: #ffd623ff;
-                --mvb-button-disabled-text-color: #ffd72360;
-                opacity: 0.85;
-              "
-              @click=${() => this.joinLobby()}
-              .disabled=${!this.isLobbyValid() && !this.installing}
-            >
-              <div class="row" style="align-items: center;">
-                <span style="margin-left: 12px;">Join Group</span>
-              </div>
-            </mvb-button>
           </div>
         </div>
       </div>
