@@ -1,11 +1,17 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { AppAgentClient, DnaHash, encodeHashToBase64, DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
+import {
+  AppAgentClient,
+  DnaHash,
+  encodeHashToBase64,
+  DnaHashB64,
+  decodeHashFromBase64,
+} from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid';
 
 import '@material/mwc-textfield';
 import '@material/mwc-textarea';
@@ -22,25 +28,20 @@ import { DnaRecipe, LobbyInfo } from '../types';
 import { CravingDnaProperties } from './types';
 import { MVBButton } from '../components/mvb-button';
 
-
 const MAX_DESCRIPTION_CHARS = 10000;
 const MAX_TITLE_CHARS = 80;
 
 @customElement('create-craving')
 export class CreateCraving extends LitElement {
-
   @consume({ context: clientContext })
   client!: AppAgentClient;
 
   @consume({ context: condenserContext })
   store!: CondenserStore;
 
-
-  private _allLobbies = new StoreSubscriber(
-    this,
-    () => this.store.getAllLobbies(),
+  private _allLobbies = new StoreSubscriber(this, () =>
+    this.store.getAllLobbies(),
   );
-
 
   @state()
   _title: string | undefined;
@@ -60,47 +61,55 @@ export class CreateCraving extends LitElement {
   @state()
   _max_reflection_chars: number | null = null;
 
-
   @state()
   installing: boolean = false;
 
   @state()
   onFire: boolean = false;
 
-
   isCravingValid() {
-    return this._title !== undefined && this._title !== "" && this._title.length <= MAX_TITLE_CHARS
-    && this._description !== undefined && this._description !== "" && this._description.length <= MAX_DESCRIPTION_CHARS
-    && this._selectedLobbies.length > 0;
+    return (
+      this._title !== undefined &&
+      this._title !== '' &&
+      this._title.length <= MAX_TITLE_CHARS &&
+      this._description !== undefined &&
+      this._description !== '' &&
+      this._description.length <= MAX_DESCRIPTION_CHARS &&
+      this._selectedLobbies.length > 0
+    );
   }
 
   titleTooLong() {
-    return this._title ? this._title.length > MAX_TITLE_CHARS : false
+    return this._title ? this._title.length > MAX_TITLE_CHARS : false;
   }
 
   descriptionTooLong() {
-    return this._description ? this._description.length > MAX_DESCRIPTION_CHARS : false
+    return this._description
+      ? this._description.length > MAX_DESCRIPTION_CHARS
+      : false;
   }
 
   async createCraving() {
     this.installing = true;
-    (this.shadowRoot?.getElementById("create-craving-button") as MVBButton).disabled = true;
+    (
+      this.shadowRoot?.getElementById('create-craving-button') as MVBButton
+    ).disabled = true;
 
     // !! IMPORTANT !! Order of attributes matter in order to get the same DNA hash
     const cravingDnaProperties: CravingDnaProperties = {
-        title: this._title!,
-        description: this._description!,
-        max_anecdote_chars: null,
-        max_association_chars: this._max_association_chars,
-        max_offer_chars: this._max_offer_chars,
-        max_reflection_chars: this._max_reflection_chars,
+      title: this._title!,
+      description: this._description!,
+      max_anecdote_chars: null,
+      max_association_chars: this._max_association_chars,
+      max_offer_chars: this._max_offer_chars,
+      max_reflection_chars: this._max_reflection_chars,
     };
 
     // console.log("@create-craving: cravingDnaProperties: ", cravingDnaProperties);
 
     try {
       const networkSeed = uuidv4();
-      const originTime = Date.now()*1000; // current epoch time in microseconds
+      const originTime = Date.now() * 1000; // current epoch time in microseconds
 
       // create cell clone for this craving
       const clonedCell = await this.store.createCraving(
@@ -115,42 +124,53 @@ export class CreateCraving extends LitElement {
         properties: cravingDnaProperties, // original poster has special rights on the Craving
         origin_time: originTime,
         membrane_proof: undefined,
-        resulting_dna_hash: clonedCell.cell_id[0]
+        resulting_dna_hash: clonedCell.cell_id[0],
       };
 
       // console.log("Creating craving with recipe: ", dnaRecipe);
 
       // create an entry in each of the lobby cells to register that Craving there
-      Promise.all(this._selectedLobbies.map(async (dnaHashB64) => {
-        const [lobbyStore, _profilesStore] = this.store.lobbyStore(decodeHashFromBase64(dnaHashB64));
-        try {
-          await lobbyStore.service.registerCraving(dnaRecipe);
-        } catch(e) {
-          console.log("ERROR: ", JSON.stringify(e).slice(50));
-          throw new Error(JSON.stringify(e));
-        }
-      }));
+      Promise.all(
+        this._selectedLobbies.map(async dnaHashB64 => {
+          const [lobbyStore, _profilesStore] = this.store.lobbyStore(
+            decodeHashFromBase64(dnaHashB64),
+          );
+          try {
+            await lobbyStore.service.registerCraving(dnaRecipe);
+          } catch (e) {
+            console.log('ERROR: ', JSON.stringify(e).slice(50));
+            throw new Error(JSON.stringify(e));
+          }
+        }),
+      );
 
-      this.dispatchEvent(new CustomEvent('craving-created', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          cravingCellId: clonedCell.cell_id,
-          cravingDnaProperties,
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('craving-created', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            cravingCellId: clonedCell.cell_id,
+            cravingDnaProperties,
+          },
+        }),
+      );
       this.installing = false;
-      (this.shadowRoot?.getElementById("create-craving-button") as MVBButton).disabled = true;
+      (
+        this.shadowRoot?.getElementById('create-craving-button') as MVBButton
+      ).disabled = true;
       // window.location.reload();
     } catch (e: any) {
-      console.log("ERROR: ", e);
-      const errorSnackbar = this.shadowRoot?.getElementById('create-error') as Snackbar;
+      console.log('ERROR: ', e);
+      const errorSnackbar = this.shadowRoot?.getElementById(
+        'create-error',
+      ) as Snackbar;
       errorSnackbar.labelText = `Error creating the craving: ${e.data.data}`;
       errorSnackbar.show();
 
       this.installing = false;
-      (this.shadowRoot?.getElementById("create-craving-button") as MVBButton).disabled = false;
-
+      (
+        this.shadowRoot?.getElementById('create-craving-button') as MVBButton
+      ).disabled = false;
     }
   }
 
@@ -159,27 +179,31 @@ export class CreateCraving extends LitElement {
     if (this._selectedLobbies.includes(hashString)) {
       const index = this._selectedLobbies.indexOf(hashString);
       this._selectedLobbies.splice(index, 1);
-      (this.shadowRoot?.getElementById(hashString) as HTMLElement).classList.remove("selected");
+      (
+        this.shadowRoot?.getElementById(hashString) as HTMLElement
+      ).classList.remove('selected');
     } else {
       this._selectedLobbies.push(hashString);
-      (this.shadowRoot?.getElementById(hashString) as HTMLElement).classList.add("selected");
+      (
+        this.shadowRoot?.getElementById(hashString) as HTMLElement
+      ).classList.add('selected');
     }
     this.requestUpdate();
     // console.log("Clicked. Length of this._selectedLobbies: ", this._selectedLobbies.length);
     // console.log("content of this._selectedLobbies: ", this._selectedLobbies);
   }
 
-
   renderLobbyList() {
-
     const allLobbies = Array.from(this._allLobbies.value.entries());
 
-    if (allLobbies.length === 0 ) {
-      return html`<span style="font-size: 1em;">No Groups found. You need to be part of a group in order to add a Craving.</span>`
+    if (allLobbies.length === 0) {
+      return html`<span style="font-size: 1em;"
+        >No Groups found. You need to be part of a group in order to add a
+        Craving.</span
+      >`;
     }
 
     return html`
-
       <div
         class="column"
         style="
@@ -189,62 +213,85 @@ export class CreateCraving extends LitElement {
           border: 1px solid #c5cded;
           border-radius: 10px;
           padding: 12px 10px;
-        ">
-        ${
-          allLobbies.map(([lobbyDnaHash, [lobbyStore, _profilesStore]]) => {
-            const lobbyInfo = lobbyStore.lobbyInfo ? decodeEntry(lobbyStore.lobbyInfo) as LobbyInfo : undefined;
+        "
+      >
+        ${allLobbies.map(([lobbyDnaHash, [lobbyStore, _profilesStore]]) => {
+          const lobbyInfo = lobbyStore.lobbyInfo
+            ? (decodeEntry(lobbyStore.lobbyInfo) as LobbyInfo)
+            : undefined;
 
-            return html`
+          return html`
+            <div
+              id=${encodeHashToBase64(lobbyDnaHash)}
+              class="group-selection-element"
+              @click=${() => this.handleSelectionClick(lobbyDnaHash)}
+              @keypress=${() => this.handleSelectionClick(lobbyDnaHash)}
+              tabindex="0"
+            >
+              <!-- <div style="height: 60px; width: 60px; background: lightgreen; border-radius: 20%; margin-left: 15px;"></div> -->
+              ${lobbyInfo
+                ? html`<img
+                    src=${lobbyInfo.logo_src}
+                    alt="Group logo"
+                    style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;"
+                  />`
+                : html`<div
+                    style="background: #929ab9; height: 60px; width: 60px; border-radius: 20%; margin-left: 15px; font-size: 40px; font-weight: bold; color: black;"
+                  >
+                    ${lobbyStore.lobbyName.slice(0, 2)}
+                  </div>`}
               <div
-                id=${encodeHashToBase64(lobbyDnaHash)}
-                class="group-selection-element"
-                @click=${() => this.handleSelectionClick(lobbyDnaHash)}
-                @keypress=${() => this.handleSelectionClick(lobbyDnaHash)}
-                tabindex="0"
-              >
-                <!-- <div style="height: 60px; width: 60px; background: lightgreen; border-radius: 20%; margin-left: 15px;"></div> -->
-                ${ lobbyInfo
-                  ? html`<img src=${lobbyInfo.logo_src} alt="Group logo" style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;" />`
-                  : html`<div style="background: #929ab9; height: 60px; width: 60px; border-radius: 20%; margin-left: 15px; font-size: 40px; font-weight: bold; color: black;" >${lobbyStore.lobbyName.slice(0,2)}</div>`
-                }
-                <div
-                  style="
+                style="
                     margin-left: 30px;
-                ">
-                  ${lobbyStore.lobbyName}
-                </div>
-
+                "
+              >
+                ${lobbyStore.lobbyName}
               </div>
-            `
-          })
-        }
+            </div>
+          `;
+        })}
       </div>
-    `
+    `;
   }
 
   render() {
     return html`
-      <mwc-snackbar id="create-error" leading>
-      </mwc-snackbar>
+      <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
       <div style="display: flex; flex-direction: column; align-items: center;">
-
         <div class="box">
-          <div style="font-size: 40px; font-weight: bold; color: #abb5da; opacity: 0.85; margin-bottom: 30px; margin-top: 40px;">Add New Craving</div>
-          <div style="font-size: 19px; line-height: 30px; color: #c5cded; margin-bottom: 50px; max-width: 800px; text-align: left;">
-            This will create a <b>new peer-to-peer network</b> just for this very craving of yours. To have others discover it,
-            you need to add it to at least one of your groups.<br><br>#Holochain
+          <div
+            style="font-size: 40px; font-weight: bold; color: #abb5da; opacity: 0.85; margin-bottom: 30px; margin-top: 40px;"
+          >
+            Add New Craving
+          </div>
+          <div
+            style="font-size: 19px; line-height: 30px; color: #c5cded; margin-bottom: 50px; max-width: 800px; text-align: left;"
+          >
+            This will create a <b>new peer-to-peer network</b> just for this
+            very craving of yours. To have others discover it, you need to add
+            it to at least one of your groups.<br /><br />#Holochain
             <span
               style="cursor: default;"
-              @mouseover=${() => { this.onFire = true }}
-              @focus=${() => { this.onFire = true }}
-              @mouseout=${() => { this.onFire = false }}
-              @blur=${() => { this.onFire = false }}
+              @mouseover=${() => {
+                this.onFire = true;
+              }}
+              @focus=${() => {
+                this.onFire = true;
+              }}
+              @mouseout=${() => {
+                this.onFire = false;
+              }}
+              @blur=${() => {
+                this.onFire = false;
+              }}
               class=${classMap({
                 red: this.onFire,
               })}
-            >${this.onFire ? "#ButOnFire!!!" : "#ItsJustYouAndYourPeers"}</span>
-
+              >${this.onFire
+                ? '#ButOnFire!!!'
+                : '#ItsJustYouAndYourPeers'}</span
+            >
           </div>
 
           <div style="margin-bottom: 15px;">
@@ -259,7 +306,7 @@ export class CreateCraving extends LitElement {
               placeholder="Title"
               @input=${(e: CustomEvent) => {
                 this._title = (e.target as any).value;
-              } }
+              }}
               title="Give your craving a title"
             >
             </mvb-textfield>
@@ -272,41 +319,48 @@ export class CreateCraving extends LitElement {
                 --mvb-secondary-color: #838ba4;
                 margin-bottom: 30px;
               "
-              @input=${(e: CustomEvent) => { this._description = (e.target as any).value;} }
+              @input=${(e: CustomEvent) => {
+                this._description = (e.target as any).value;
+              }}
               placeholder="Describe here what it is that you vaguely see - and are craving for part of our language to be..."
               title="Describe what it is that you want a word or expression for"
-              cols=57
-              rows=13
+              cols="57"
+              rows="13"
               width="760px"
               required
             ></mvb-textarea>
           </div>
 
-          ${ this.titleTooLong()
-            ? html`<div style="font-size: 19px; line-height: 30px; color: #ba3030; margin: 5px; max-width: 800px; text-align: left;">
-                    Title is too long. Must be no more than ${MAX_TITLE_CHARS} characters.
-                  </div>
-              `
-            : html``
-          }
+          ${this.titleTooLong()
+            ? html`<div
+                style="font-size: 19px; line-height: 30px; color: #ba3030; margin: 5px; max-width: 800px; text-align: left;"
+              >
+                Title is too long. Must be no more than ${MAX_TITLE_CHARS}
+                characters.
+              </div> `
+            : html``}
+          ${this.descriptionTooLong()
+            ? html`<div
+                style="font-size: 19px; line-height: 30px; color: #ba3030; margin: 5px; max-width: 800px; text-align: left;"
+              >
+                Description is too long. Must be no more than
+                ${MAX_DESCRIPTION_CHARS} characters.
+              </div> `
+            : html``}
 
-          ${ this.descriptionTooLong()
-              ? html`<div style="font-size: 19px; line-height: 30px; color: #ba3030; margin: 5px; max-width: 800px; text-align: left;">
-                    Description is too long. Must be no more than ${MAX_DESCRIPTION_CHARS} characters.
-                  </div>
-              `
-            : html``
-          }
-
-          <div style="font-size: 19px; line-height: 30px; color: #c5cded; margin-bottom: 20px; margin-top: 80px; max-width: 800px; text-align: left;">
+          <div
+            style="font-size: 19px; line-height: 30px; color: #c5cded; margin-bottom: 20px; margin-top: 80px; max-width: 800px; text-align: left;"
+          >
             Choose the group(s) you want this Craving to be discoverable for:
           </div>
 
           ${this.renderLobbyList()}
 
-
-          <div style="font-size: 18px; line-height: 30px; color: #c5cded; margin-bottom: 50px; margin-top: 10px; max-width: 800px; text-align: left;">
-            Note: You can always add this Craving to other groups later. But you need to choose at least one now.
+          <div
+            style="font-size: 18px; line-height: 30px; color: #c5cded; margin-bottom: 50px; margin-top: 10px; max-width: 800px; text-align: left;"
+          >
+            Note: You can always add this Craving to other groups later. But you
+            need to choose at least one now.
           </div>
 
           <div style="margin-bottom: 10px;">
@@ -323,54 +377,140 @@ export class CreateCraving extends LitElement {
               .disabled=${!this.isCravingValid() && !this.installing}
             >
               <div class="row" style="align-items: center;">
-                <img src="empty_glass.svg" alt="Icon of an empty Erlenmeyer flask" style="height: 50px;"/>
-                <span style="margin-left: 12px;">${this.installing ? "creating..." : "Create Craving"}</span>
+                <img
+                  src="empty_glass.svg"
+                  alt="Icon of an empty Erlenmeyer flask"
+                  style="height: 50px;"
+                />
+                <span style="margin-left: 12px;"
+                  >${this.installing ? 'creating...' : 'Create Craving'}</span
+                >
               </div>
             </mvb-button>
           </div>
-
         </div>
-
       </div>
 
-      ${
-        this.onFire
+      ${this.onFire
         ? html`
-        <div style="position: fixed; bottom: -100px; left: 50%; transform: translate(-50%, 0);">
-          <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-            width="1016px" height="493px" viewBox="0 0 1016 493" enable-background="new 0 0 1016 493" xml:space="preserve">
-            <g>
-                <path class="flame" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M260.138,279.034c0.329,2.103,0.929,3.955,3.466,1.591
-                    c1.36-1.269,2.555-2.34,2.946-4.48c0.611-3.344,1.288-6.88,4.965-9.637C262.791,267.109,258.981,271.64,260.138,279.034z"/>
-                <path class="flame one" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M642.133,261.121c-0.602,1.805,2.854,4.751,5.137,4.486
-                    c2.775-0.322,5.049-1.429,4.986-4.831c-0.051-2.835-2.447-5.298-5.188-5.287C643.428,255.591,642.939,258.697,642.133,261.121z"/>
-                <path class="flame two" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M236.169,192.895c2.469-0.638,4.981-0.998,4.781-3.98
-                    c-0.117-1.744-0.676-3.642-3.098-3.758c-2.766-0.133-4.256,1.769-4.511,3.915C233.163,190.574,234.413,192.402,236.169,192.895z"/>
-                <path class="flame" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M394.363,104.625c2.114,0.205,3.56-0.855,3.625-2.719
-                    c0.057-1.631-1.206-2.715-3.106-2.809c-1.935-0.095-2.961,0.578-3.069,2.6C391.708,103.615,392.298,104.781,394.363,104.625z"/>
-                <path class="flame one" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M257.108,216.734c1.575,0.05,2.945-0.246,2.794-2.009
-                    c-0.133-1.558-1.21-2.582-2.89-2.516c-1.492,0.059-2.595,1.087-2.394,2.435C254.774,215.686,255.437,217.224,257.108,216.734z"/>
-                <path class="flame two" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M73.648,152.806c1.225,0.057,1.942-0.5,2.374-1.896
-                    c-0.912-0.418-0.55-1.965-2.227-2.114c-1.723-0.152-2.062,1.195-2.287,2.05C71.119,152.317,72.336,152.744,73.648,152.806z"/>
-            </g>
-            <g>
-                <path class="flame one" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M217.934,126.101c-1.167-3.763-2.061-7.788-5.236-11.302
+            <div
+              style="position: fixed; bottom: -100px; left: 50%; transform: translate(-50%, 0);"
+            >
+              <svg
+                version="1.1"
+                id="Layer_1"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                x="0px"
+                y="0px"
+                width="1016px"
+                height="493px"
+                viewBox="0 0 1016 493"
+                enable-background="new 0 0 1016 493"
+                xml:space="preserve"
+              >
+                <g>
+                  <path
+                    class="flame"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M260.138,279.034c0.329,2.103,0.929,3.955,3.466,1.591
+                    c1.36-1.269,2.555-2.34,2.946-4.48c0.611-3.344,1.288-6.88,4.965-9.637C262.791,267.109,258.981,271.64,260.138,279.034z"
+                  />
+                  <path
+                    class="flame one"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M642.133,261.121c-0.602,1.805,2.854,4.751,5.137,4.486
+                    c2.775-0.322,5.049-1.429,4.986-4.831c-0.051-2.835-2.447-5.298-5.188-5.287C643.428,255.591,642.939,258.697,642.133,261.121z"
+                  />
+                  <path
+                    class="flame two"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M236.169,192.895c2.469-0.638,4.981-0.998,4.781-3.98
+                    c-0.117-1.744-0.676-3.642-3.098-3.758c-2.766-0.133-4.256,1.769-4.511,3.915C233.163,190.574,234.413,192.402,236.169,192.895z"
+                  />
+                  <path
+                    class="flame"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M394.363,104.625c2.114,0.205,3.56-0.855,3.625-2.719
+                    c0.057-1.631-1.206-2.715-3.106-2.809c-1.935-0.095-2.961,0.578-3.069,2.6C391.708,103.615,392.298,104.781,394.363,104.625z"
+                  />
+                  <path
+                    class="flame one"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M257.108,216.734c1.575,0.05,2.945-0.246,2.794-2.009
+                    c-0.133-1.558-1.21-2.582-2.89-2.516c-1.492,0.059-2.595,1.087-2.394,2.435C254.774,215.686,255.437,217.224,257.108,216.734z"
+                  />
+                  <path
+                    class="flame two"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#F58553"
+                    d="M73.648,152.806c1.225,0.057,1.942-0.5,2.374-1.896
+                    c-0.912-0.418-0.55-1.965-2.227-2.114c-1.723-0.152-2.062,1.195-2.287,2.05C71.119,152.317,72.336,152.744,73.648,152.806z"
+                  />
+                </g>
+                <g>
+                  <path
+                    class="flame one"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#DF513D"
+                    d="M217.934,126.101c-1.167-3.763-2.061-7.788-5.236-11.302
                     c0.108,2.457-0.002,4.26-0.827,5.933c-0.684,1.387-0.368,3.43-2.745,3.684c-2.311,0.248-3.482-0.874-4.668-2.691
                     c-3.922-6.005-2.688-12.452-1.678-18.786c0.745-4.666,2.17-9.221,3.387-14.22c-9.078,5.882-13.839,18.679-11.527,29.102
                     c2.305,10.385,6.331,19.888,12.472,28.634c7.29,10.382,7.329,20.787,0.019,30.697c2.168,0.269,3.337-0.783,4.553-1.723
-                    c8.892-6.871,10.305-16.748,10.146-26.877C221.712,140.951,220.195,133.394,217.934,126.101z"/>
-                <path class="flame one" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M537.457,199.138c-3.573,3.704-3.719,8.707-4.095,13.078
+                    c8.892-6.871,10.305-16.748,10.146-26.877C221.712,140.951,220.195,133.394,217.934,126.101z"
+                  />
+                  <path
+                    class="flame one"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#DF513D"
+                    d="M537.457,199.138c-3.573,3.704-3.719,8.707-4.095,13.078
                     c-0.443,5.159,2.751,9.729,6.305,13.933c1.678-4.575,1.526-8.778-0.152-13.235C537.881,208.579,536.785,203.986,537.457,199.138z"
-                    />
-                <path class="flame two" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M790.553,136.011c-1.086-0.688-1.059,0.386-1.111,0.802
+                  />
+                  <path
+                    class="flame two"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#DF513D"
+                    d="M790.553,136.011c-1.086-0.688-1.059,0.386-1.111,0.802
                     c-0.26,2.063-1.121,4.191,0.15,6.185c2.043,3.204,3.762,6.5,3.252,11.266c3.506-3.165,4.613-6.646,4.301-10.125
-                    C796.799,140.311,793.68,137.989,790.553,136.011z"/>
-                <path class="flame one" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M939.061,13.063c-2.963-0.039-4.814,2.08-4.898,5.601
-                    c-0.365,3.134,2.238,3.978,4.217,4.556c2.504,0.733,5.953-2.514,5.951-5.005C944.33,15.513,941.861,13.101,939.061,13.063z"/>
-                <path class="flame" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M553.012,173.176c-5.986,4.961-6.033,6.817-1.004,11.31
-                    C555.391,181.12,551.922,177.398,553.012,173.176z"/>
-            </g>
-            <path class="flame-main one" fill-rule="evenodd" clip-rule="evenodd" fill="#DF513D" d="M855.631,466.945C944.262,471.891,972,449.18,972,449.18
+                    C796.799,140.311,793.68,137.989,790.553,136.011z"
+                  />
+                  <path
+                    class="flame one"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#DF513D"
+                    d="M939.061,13.063c-2.963-0.039-4.814,2.08-4.898,5.601
+                    c-0.365,3.134,2.238,3.978,4.217,4.556c2.504,0.733,5.953-2.514,5.951-5.005C944.33,15.513,941.861,13.101,939.061,13.063z"
+                  />
+                  <path
+                    class="flame"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    fill="#DF513D"
+                    d="M553.012,173.176c-5.986,4.961-6.033,6.817-1.004,11.31
+                    C555.391,181.12,551.922,177.398,553.012,173.176z"
+                  />
+                </g>
+                <path
+                  class="flame-main one"
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  fill="#DF513D"
+                  d="M855.631,466.945C944.262,471.891,972,449.18,972,449.18
                 C1027,321.359,944.33,235,944.33,235c-25.416-5.286-45.699-63.5-49.117-88.546c-1.01-7.383,0.025-15.348,1.727-22.938
                 c4.066-18.146,11.555-34.489,25.205-47.463c6.234-5.924,13.301-10.446,23.752-8.588c-14.379-8.771-28.559-10.971-43.646-6.452
                 c-13.455,4.031-24.506,11.925-34.635,21.463c-10.742,10.116-19.926,21.219-25.68,34.991c-2.672,6.39-4.943,12.996-5.521,19.735
@@ -427,8 +567,12 @@ export class CreateCraving extends LitElement {
                 c27.342-0.005,54.686-0.057,82.025-0.088c16.762-0.006,53.166,0.087,54.609,0.087 M824.752,226.698c0,0.001,0.001,0.002,0.002,0.002
                 c-0.02,0.195-0.037,0.39-0.055,0.584C824.717,227.09,824.734,226.894,824.752,226.698z M574.146,136.221
                 c1.001,0.838,1.496,2.265,2.499,3.105C575.644,138.489,575.148,137.061,574.146,136.221z M47.543,347.683L47.543,347.683
-                l0.125,0.123C47.618,347.757,47.542,347.682,47.543,347.683z"/>
-            <path class="flame-main two" fill="#F26C52" d="M976.667,324.592c1.229,3.776,2.013,7.837,2.314,12.227c0,0,0.169-78.337-70.811-125.496
+                l0.125,0.123C47.618,347.757,47.542,347.682,47.543,347.683z"
+                />
+                <path
+                  class="flame-main two"
+                  fill="#F26C52"
+                  d="M976.667,324.592c1.229,3.776,2.013,7.837,2.314,12.227c0,0,0.169-78.337-70.811-125.496
                 c-12.488-10.562-22.174-23.317-29.328-37.979c-5.111-10.474-8.277-21.568-8.316-33.246c-0.061-17.212,5.729-32.611,15.887-46.398
                 c4.676-6.347,9.795-12.306,16.17-17.068c0.813-0.606,1.436-1.467,2.709-2.8c-6.471,0.968-11.582,3.497-16.594,6.001
                 c-12.121,6.057-21.768,15.038-29.004,26.446c-6.633,10.455-9.918,22.096-10.471,34.407c-0.984,21.887,5.711,41.839,15.961,60.806
@@ -471,8 +615,15 @@ export class CreateCraving extends LitElement {
                 c7.755-5.54,11.074-12.951,11.394-22.115c0.022-0.625,0.141-1.246,0.313-2.696c1.795,1.347,3.208,2.806,4.3,4.374
                 C6.589,401.313,52,444,52,444c156.805,14.154,296.961,20.449,417.648,22.161c1.765,0.024,3.536,0.051,5.292,0.074
                 c148.598,1.953,267.32-3.039,350.782-8.784c1.064-0.073,2.109-0.146,3.162-0.221C918.027,451.008,966,444,966,444
-                C987.153,425.667,981.715,361.088,976.667,324.592z"/>
-            <path class="flame-main three" opacity="0.8" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M771.154,453.647c4.645,0,9.287-0.143,13.924-0.219
+                C987.153,425.667,981.715,361.088,976.667,324.592z"
+                />
+                <path
+                  class="flame-main three"
+                  opacity="0.8"
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  fill="#F58553"
+                  d="M771.154,453.647c4.645,0,9.287-0.143,13.924-0.219
                 c-25.818-16.325-17.105-41.962-15.551-65.757c-3.521,0.37-4.951,3.345-7.004,5.331c-9.867,9.548-14.1,23.04-21.363,34.415
                 c-9.449,14.788-17.018,14.925-25.93-0.033c-2.594-4.349-4.225-4.217-7.916-1.868c-10.408,6.618-19.42,5.279-28.299-3.677
                 c-6.129-6.184-10.113-14.14-15.355-21.021c-4.699-6.163-5.984-12.75-6.344-20.355c-0.447-9.584,2.104-18.817,1.871-28.303h-0.004
@@ -498,8 +649,15 @@ export class CreateCraving extends LitElement {
                 c-0.113,1.458,0.528,2.991,0.863,4.478c6.375,28.472,19.533,53.678,33.731,78.371c4.063,7.069,6.331,14.761,4.842,22.824
                 c-3.339,18.082-11.792,33.119-25.715,44.48c-0.109,0.245-0.177,0.536-0.345,0.72c-0.098,0.107-0.362,0.044-0.551,0.057
                 c0.301-0.259,0.602-0.52,0.902-0.776c0.272-11.404,0.781-22.873-7.828-32.517c-3.199,11.496-7.804,18.17-22.956,32.627
-                c0,0-20.409,7.137,13.348,20.188C104.064,462.01,446.695,479.899,771.154,453.647z"/>
-            <path class="flame-main three" opacity="0.8" fill-rule="evenodd" clip-rule="evenodd" fill="#F58553" d="M956.425,464.105
+                c0,0-20.409,7.137,13.348,20.188C104.064,462.01,446.695,479.899,771.154,453.647z"
+                />
+                <path
+                  class="flame-main three"
+                  opacity="0.8"
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  fill="#F58553"
+                  d="M956.425,464.105
                 c-283.913,0.026-436.816-4.843-720.731-4.854c-5.471,0-10.94-0.17-16.414-0.259c17.521-8.644,29.516-19.407,35.464-33.646
                 c3.527,1.396,5.092,3.325,7.317,4.926c35.38,25.433,78.727,21.837,116.905,6.063c14.958-6.18,25.563-14.081,20.298-26.71
                 c18.336,1.768,30.708,6.852,38.003,16.78c6.811,9.263,17.117,9.926,28.419,2.379c5.181-3.462,7.175-7.52,7.832-12.224
@@ -513,24 +671,24 @@ export class CreateCraving extends LitElement {
                 c18.472-21.417,25.072-43.195,3.656-65.466c-13.239-22.289-10.814-43.785,9.086-64.394l-0.168-0.118
                 c0.767,11.759-5.291,23.314-0.978,35.305c3.61,10.039,9.313,19.199,18.593,27.751c7.567,6.975,13.455,14.467,16.165,22.727
                 c0.994,3.797,1.986,7.59,2.982,11.382c-0.127,5.22-0.251,10.438-0.38,15.66c-5.04,9.903-10.8,19.7-14.889,29.741
-                c-3.156,7.76,0.219,14.943,12.113,19.614C963.82,417.971,967.399,461.364,956.425,464.105z"/>
-          </svg>
-        </div>
-        `
-        : html``
-      }
-
-      `;
+                c-3.156,7.76,0.219,14.943,12.113,19.614C963.82,417.971,967.399,461.364,956.425,464.105z"
+                />
+              </svg>
+            </div>
+          `
+        : html``}
+    `;
   }
 
-  static styles = [sharedStyles,
+  static styles = [
+    sharedStyles,
     css`
       .red {
         color: #ff5630;
       }
 
       .box {
-      /* border: 2px solid #ffc64c94; */
+        /* border: 2px solid #ffc64c94; */
         border-radius: 25px;
         margin: 10px;
         padding: 10px 70px;
@@ -560,11 +718,10 @@ export class CreateCraving extends LitElement {
         border: 1px solid #c5cded;
       }
 
-
       .mo-fire {
         height: auto;
         position: fixed;
-        left:20%;
+        left: 20%;
         bottom: -50px;
         z-index: 4;
       }
@@ -578,8 +735,8 @@ export class CreateCraving extends LitElement {
       .mo-fire svg {
         width: 100%;
         height: auto;
-        position:relative;
-        right:40px;
+        position: relative;
+        right: 40px;
       }
       .flame {
         animation-name: flameDisappear;
@@ -593,11 +750,10 @@ export class CreateCraving extends LitElement {
         animation-delay: 1s;
         animation-duration: 3s;
       }
-      .flame.two{
+      .flame.two {
         animation-duration: 5s;
         animation-delay: 1s;
       }
-
 
       .flame-main {
         animation-name: flameMovement;
@@ -627,11 +783,11 @@ export class CreateCraving extends LitElement {
       }
       @keyframes flameMovement {
         50% {
-          transform: scale(0.98,1.0) translate(0, 2px) rotate(-1deg);
+          transform: scale(0.98, 1) translate(0, 2px) rotate(-1deg);
         }
       }
       @keyframes flameDisappear {
-        0%{
+        0% {
           transform: translate(0) rotate(180deg);
         }
         50% {
@@ -642,7 +798,6 @@ export class CreateCraving extends LitElement {
           opacity: 0;
         }
       }
-    `
-  ]
+    `,
+  ];
 }
-

@@ -3,7 +3,6 @@ import { state, customElement, property, query } from 'lit/decorators.js';
 
 @customElement('loading-animation')
 export class LoadingAnimation extends LitElement {
-
   @property()
   width: number = 100;
 
@@ -13,9 +12,23 @@ export class LoadingAnimation extends LitElement {
   render() {
     return html`
       <div class="container">
-        <img id="logo" src="word_condenser_fog.svg" style="position: absolute; bottom: 0;" />
-        <img src="word_condenser_wo_fog.svg" style="position: absolute; bottom: 0; height: 500px;" />
-        <img id="drop" src="word_condenser_drop.svg" style="position: absolute; bottom: 0; height: 500px;" />
+        <img
+          id="logo"
+          alt="Word Condenser logo"
+          src="word_condenser_fog.svg"
+          style="position: absolute; bottom: 0;"
+        />
+        <img
+          src="word_condenser_wo_fog.svg"
+          alt="Word Condenser logo"
+          style="position: absolute; bottom: 0; height: 500px;"
+        />
+        <img
+          id="drop"
+          src="word_condenser_drop.svg"
+          alt="Drop dropping out of the fog into an Erlenmeyer flask"
+          style="position: absolute; bottom: 0; height: 500px;"
+        />
       </div>
 
       <div style="opacity: 0.9; margin-top: 30px;">Loading...</div>
@@ -24,7 +37,6 @@ export class LoadingAnimation extends LitElement {
 
   static styles = [
     css`
-
       .container {
         position: relative;
         height: 800px;
@@ -35,8 +47,18 @@ export class LoadingAnimation extends LitElement {
       }
 
       @keyframes condense {
-        from {height: 650px; width: 800px; opacity: 0.3; bottom: -40px;}
-        to {height: 450px; width: 500px; opacity: 1; bottom: 20px;}
+        from {
+          height: 650px;
+          width: 800px;
+          opacity: 0.3;
+          bottom: -40px;
+        }
+        to {
+          height: 450px;
+          width: 500px;
+          opacity: 1;
+          bottom: 20px;
+        }
       }
 
       @keyframes drop {
@@ -74,9 +96,6 @@ export class LoadingAnimation extends LitElement {
         animation-duration: 3.5s;
         animation-iteration-count: infinite;
       }
-
-    `
+    `,
   ];
-
-
 }

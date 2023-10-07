@@ -1,19 +1,19 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import {
-  AppAgentClient,
-  CellId,
-} from '@holochain/client';
+import { AppAgentClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@material/mwc-circular-progress';
 
 import './association-map-element';
 import { AssociationData, CravingStore } from '../craving-store';
-import { clientContext, condenserContext, cravingStoreContext } from '../contexts';
+import {
+  clientContext,
+  condenserContext,
+  cravingStoreContext,
+} from '../contexts';
 import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
-
 
 @customElement('association-map')
 export class AssociationMap extends LitElement {
@@ -27,44 +27,48 @@ export class AssociationMap extends LitElement {
   cravingCellId!: CellId;
 
   @state()
-  sortBy: 'latest' | 'resonanceTimeRatio' | 'resonanceAbsolute' = 'resonanceAbsolute';
+  sortBy: 'latest' | 'resonanceTimeRatio' | 'resonanceAbsolute' =
+    'resonanceAbsolute';
 
   @consume({ context: cravingStoreContext })
   _store!: CravingStore;
 
   private _allAssociations = new StoreSubscriber(
     this,
-    () => this._store.allAssociations
+    () => this._store.allAssociations,
   );
 
-
-  renderList(associationDatas: Array<AssociationData>) {
+  renderList(associationDatasInput: Array<AssociationData>) {
+    let associationDatas = associationDatasInput;
     if (associationDatas.length === 0)
-      return html`
-      <div class="column" style="flex: 1; align-items: center;">
-        <div style="font-size: 23px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;">
+      return html` <div class="column" style="flex: 1; align-items: center;">
+        <div
+          style="font-size: 23px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
+        >
           No associations found for this craving.
         </div>
       </div>`;
 
-
-    if (this.sortBy === "resonanceAbsolute") {
+    if (this.sortBy === 'resonanceAbsolute') {
       associationDatas = associationDatas
         .sort((data_a, data_b) => data_b.timestamp - data_a.timestamp)
-        .sort((data_a, data_b) => data_b.resonators.length - data_a.resonators.length);
-    } else if (this.sortBy === "latest") {
-      associationDatas = associationDatas.sort((data_a, data_b) => data_b.timestamp - data_a.timestamp);
+        .sort(
+          (data_a, data_b) =>
+            data_b.resonators.length - data_a.resonators.length,
+        );
+    } else if (this.sortBy === 'latest') {
+      associationDatas = associationDatas.sort(
+        (data_a, data_b) => data_b.timestamp - data_a.timestamp,
+      );
     }
-
 
     return html`
       <div style="display: flex; flex-direction: column; margin: 8px;">
         ${associationDatas.map(
-          (association) => {
-            return html`<association-map-element
+          association =>
+            html`<association-map-element
               .association=${association}
-            ></association-map-element>`
-          }
+            ></association-map-element>`,
         )}
       </div>
     `;
@@ -72,20 +76,20 @@ export class AssociationMap extends LitElement {
 
   render() {
     switch (this._allAssociations.value.status) {
-      case "pending":
+      case 'pending':
         return html`loading...`;
-      case "error":
-        return html`ERROR`
-      case "complete":
+      case 'error':
+        return html`ERROR`;
+      case 'complete':
         // update associations count in localStorage
-        this._store.updateAssociationsCount(this._allAssociations.value.value.length);
+        this._store.updateAssociationsCount(
+          this._allAssociations.value.value.length,
+        );
         return this.renderList(this._allAssociations.value.value);
+      default:
+        return html`That's an unexpected state.`;
     }
   }
 
-
-  static styles = [
-    sharedStyles,
-    css``
-  ];
+  static styles = [sharedStyles, css``];
 }

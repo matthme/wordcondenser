@@ -28,34 +28,33 @@ export class CreateOffer extends LitElement {
   @property({ type: Object })
   cravingCellId!: CellId;
 
-
   @state()
   _reflection: string | undefined;
 
   @state()
   _title: string | undefined;
 
-  @query("#title-field")
+  @query('#title-field')
   titleField!: MVBTextField;
 
-  @query("#reflection-field")
+  @query('#reflection-field')
   reflectionField!: MVBTextArea;
 
   isReflectionValid() {
-    return true && this._reflection !== undefined && this._reflection.length > 2;
+    return (
+      true && this._reflection !== undefined && this._reflection.length > 2
+    );
   }
 
   isTitleValid() {
     return true && this._title !== undefined && this._title.length > 2;
   }
 
-
   async createReflection() {
     const reflection: Reflection = {
       title: this._title!,
       reflection: this._reflection!,
     };
-
 
     try {
       const record: Record = await this.client.callZome({
@@ -66,35 +65,37 @@ export class CreateOffer extends LitElement {
         payload: reflection,
       });
 
-      this.dispatchEvent(new CustomEvent('reflection-created', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          reflectionHash: record.signed_action.hashed.hash
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('reflection-created', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            reflectionHash: record.signed_action.hashed.hash,
+          },
+        }),
+      );
       this._reflection = undefined;
       this._title = undefined;
-      this.reflectionField.textAreaField.value = "";
-      this.titleField.inputField.value = "";
-
+      this.reflectionField.textAreaField.value = '';
+      this.titleField.inputField.value = '';
     } catch (e: any) {
-      const errorSnackbar = this.shadowRoot?.getElementById('create-error') as Snackbar;
+      const errorSnackbar = this.shadowRoot?.getElementById(
+        'create-error',
+      ) as Snackbar;
       errorSnackbar.labelText = `Error creating the reflection: ${e.data.data}`;
       errorSnackbar.show();
     }
   }
 
   render() {
-    return html`
-      <mwc-snackbar id="create-error" leading>
-      </mwc-snackbar>
+    return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
-
-          <mvb-textfield
-            id="title-field"
-            style="
+      <div
+        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;"
+      >
+        <mvb-textfield
+          id="title-field"
+          style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
               --mvb-textfield-width: 825px;
@@ -102,74 +103,83 @@ export class CreateOffer extends LitElement {
               --border-width: 2px;
               margin-bottom: 10px;
             "
-            placeholder="Title"
-            @input=${(e: CustomEvent) => {
-              this._title = (e.target as any).value;
-            }}
-            title="Title for easy discovery of reflections"
-            required
-          ></mvb-textfield>
-          <mvb-textarea
-            id="reflection-field"
-            style="
+          placeholder="Title"
+          @input=${(e: CustomEvent) => {
+            this._title = (e.target as any).value;
+          }}
+          title="Title for easy discovery of reflections"
+          required
+        ></mvb-textfield>
+        <mvb-textarea
+          id="reflection-field"
+          style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
               --border-width: 1px;
               margin-bottom: 15px;
             "
-            cols="59"
-            placeholder="Reflection"
-            width="780px"
-            @input=${(e: CustomEvent) => {
-              this._reflection = (e.target as any).value;
-            }}
-            title="Any"
-            required
-          ></mvb-textarea>
+          cols="59"
+          placeholder="Reflection"
+          width="780px"
+          @input=${(e: CustomEvent) => {
+            this._reflection = (e.target as any).value;
+          }}
+          title="Any"
+          required
+        ></mvb-textarea>
 
-          <div
-            class="row ${this.isReflectionValid() ? "icon" : "disabled"}"
-            style="align-items: center; margin-top: 5px; ${this.isReflectionValid() ? "" : "opacity: 0.5;"}"
-            @click=${() => this.isReflectionValid() ? this.createReflection() : undefined}
-            @keypress=${(e: KeyboardEvent) => this.isReflectionValid() && e.key === "Enter" ? this.createReflection() : undefined}
-            tabindex="0"
+        <div
+          class="row ${this.isReflectionValid() ? 'icon' : 'disabled'}"
+          style="align-items: center; margin-top: 5px; ${this.isReflectionValid()
+            ? ''
+            : 'opacity: 0.5;'}"
+          @click=${() =>
+            this.isReflectionValid() ? this.createReflection() : undefined}
+          @keypress=${(e: KeyboardEvent) =>
+            this.isReflectionValid() && e.key === 'Enter'
+              ? this.createReflection()
+              : undefined}
+          tabindex="0"
+        >
+          <img style="height: 26px;" alt="Send icon" src="send_icon.svg" />
+          <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;"
+            >Send</span
           >
-            <img style="height: 26px;" alt="Send icon" src="send_icon.svg" />
-            <span style="color: #abb5d6; margin-left: 5px; font-size: 23px;">Send</span>
-          </div>
-
-    </div>`;
+        </div>
+      </div>`;
   }
 
-  static styles = [sharedStyles, css`
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      margin-top: 10px;
-      margin-right: 12px;
-      margin-bottom: 20px;
-    }
+  static styles = [
+    sharedStyles,
+    css`
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-top: 10px;
+        margin-right: 12px;
+        margin-bottom: 20px;
+      }
 
-    .disabled {
+      .disabled {
         background: transparent;
         border-radius: 10px;
         padding: 8px;
         cursor: pointer;
-    }
+      }
 
-    .icon {
-      background: transparent;
-      border-radius: 10px;
-      padding: 8px;
-      cursor: pointer;
-    }
+      .icon {
+        background: transparent;
+        border-radius: 10px;
+        padding: 8px;
+        cursor: pointer;
+      }
 
-    .icon:hover {
-      background: #abb5d638;
-      border-radius: 10px;
-      padding: 8px;
-    }
-
-  `];
+      .icon:hover {
+        background: #abb5d638;
+        border-radius: 10px;
+        padding: 8px;
+      }
+    `,
+  ];
 }

@@ -26,10 +26,8 @@ export class CreateOffer extends LitElement {
   @property({ type: Object })
   cravingCellId!: CellId;
 
-
   @state()
   _offer: string | undefined;
-
 
   isOfferValid() {
     return true && this._offer !== undefined && this._offer.length > 2;
@@ -37,8 +35,8 @@ export class CreateOffer extends LitElement {
 
   async createOffer() {
     const offer: Offer = {
-        offer: this._offer!,
-        explanation: undefined,
+      offer: this._offer!,
+      explanation: undefined,
     };
 
     try {
@@ -50,19 +48,24 @@ export class CreateOffer extends LitElement {
         payload: offer,
       });
 
-      this.dispatchEvent(new CustomEvent('offer-created', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          offerHash: record.signed_action.hashed.hash
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('offer-created', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            offerHash: record.signed_action.hashed.hash,
+          },
+        }),
+      );
       this._offer = undefined;
 
-      (this.shadowRoot?.getElementById("offer-textfield") as MVBTextField).clear();
-
+      (
+        this.shadowRoot?.getElementById('offer-textfield') as MVBTextField
+      ).clear();
     } catch (e: any) {
-      const errorSnackbar = this.shadowRoot?.getElementById('create-error') as Snackbar;
+      const errorSnackbar = this.shadowRoot?.getElementById(
+        'create-error',
+      ) as Snackbar;
       errorSnackbar.labelText = `Error creating the offer: ${e.data.data}`;
       errorSnackbar.show();
       throw new Error(`Failed to create offer: ${e}`);
@@ -70,12 +73,11 @@ export class CreateOffer extends LitElement {
   }
 
   render() {
-    return html`
-      <mwc-snackbar id="create-error" leading>
-      </mwc-snackbar>
+    return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
-
+      <div
+        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;"
+      >
         <div class="row" style="display: flex; align-items: center;">
           <mvb-textfield
             id="offer-textfield"
@@ -92,7 +94,8 @@ export class CreateOffer extends LitElement {
             }}
             title="Got a precious drop of liquified grammatical potential? Share it, make it real!"
             required
-            @keypress=${(e: KeyboardEvent) => e.key === 'Enter' ? this.createOffer() : undefined}
+            @keypress=${(e: KeyboardEvent) =>
+              e.key === 'Enter' ? this.createOffer() : undefined}
           ></mvb-textfield>
           <btn-round
             style="margin-left: 10px; font-size: 18px"
@@ -100,9 +103,9 @@ export class CreateOffer extends LitElement {
             .disabled=${!this.isOfferValid()}
             @click=${() => this.createOffer()}
           >
-          Add
+            Add
           </btn-round>
         </div>
-    </div>`;
+      </div>`;
   }
 }

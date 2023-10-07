@@ -33,6 +33,7 @@
     "silly-password-generator": "1.0.21",
     "emittery": "^1.0.1",
     "lit": "^2.6.1",
+    "lit-svelte-stores": "^0.2.1",
     "lodash-es": "^4.17.21",
     "md5": "^2.3.0",
     "javascript-time-ago": "2.5.9",

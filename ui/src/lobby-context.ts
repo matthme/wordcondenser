@@ -1,16 +1,12 @@
-import { css, html, LitElement, PropertyValues } from "lit";
-import {
-  consume,
-  ContextProvider,
-} from "@lit-labs/context";
-import { customElement, property, state } from "lit/decorators.js";
-import { StoreSubscriber } from "lit-svelte-stores";
+import { css, html, LitElement, PropertyValues } from 'lit';
+import { consume, ContextProvider } from '@lit-labs/context';
+import { get } from '@holochain-open-dev/stores';
+import { CellId } from '@holochain/client';
+import { customElement, property, state } from 'lit/decorators.js';
+import { StoreSubscriber } from 'lit-svelte-stores';
 
-import { CondenserStore } from "./condenser-store";
-import { CellId } from "@holochain/client";
-import { condenserContext, lobbyStoreContext } from "./contexts";
-import { get } from "@holochain-open-dev/stores";
-
+import { CondenserStore } from './condenser-store';
+import { condenserContext, lobbyStoreContext } from './contexts';
 
 @customElement('lobby-context')
 export class LobbyContext extends LitElement {
@@ -21,18 +17,20 @@ export class LobbyContext extends LitElement {
   @property()
   lobbyCellId!: CellId;
 
-
-  _lobbyStore = new StoreSubscriber(this, () => this.condenserStore.lobbyStoreReadable(this.lobbyCellId));
+  _lobbyStore = new StoreSubscriber(this, () =>
+    this.condenserStore.lobbyStoreReadable(this.lobbyCellId),
+  );
 
   _lobbyProvider!: ContextProvider<typeof lobbyStoreContext>;
-
 
   connectedCallback() {
     super.connectedCallback();
 
-    const [lobbyStore, profilesStore, dnaModifiers] = get(this.condenserStore.lobbyStoreReadable(this.lobbyCellId));
+    const [lobbyStore, profilesStore, dnaModifiers] = get(
+      this.condenserStore.lobbyStoreReadable(this.lobbyCellId),
+    );
 
-    console.log("@connectedCallback: cravingStore: ", lobbyStore);
+    console.log('@connectedCallback: cravingStore: ', lobbyStore);
 
     this._lobbyProvider = new ContextProvider(
       this,
@@ -44,7 +42,7 @@ export class LobbyContext extends LitElement {
   updated(changedValues: PropertyValues) {
     super.updated(changedValues);
 
-    if (changedValues.has("lobbyCellId")) {
+    if (changedValues.has('lobbyCellId')) {
       this._lobbyProvider.setValue(this._lobbyStore.value![0]);
     }
   }

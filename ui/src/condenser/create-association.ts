@@ -26,20 +26,19 @@ export class CreateAssociation extends LitElement {
   @property({ type: Object })
   cravingCellId!: CellId;
 
-
   @state()
   _association: string | undefined;
 
-
   isAssociationValid() {
-    return true && this._association !== undefined && this._association.length > 2;
+    return (
+      true && this._association !== undefined && this._association.length > 2
+    );
   }
 
   async createAssociation() {
     const association: Association = {
-        association: this._association!,
+      association: this._association!,
     };
-
 
     try {
       const record: Record = await this.client.callZome({
@@ -52,30 +51,34 @@ export class CreateAssociation extends LitElement {
 
       // console.log("@create-association: Created association.");
 
-      this.dispatchEvent(new CustomEvent('association-created', {
-        composed: true,
-        bubbles: true,
-        detail: {
-          associationHash: record.signed_action.hashed.hash
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('association-created', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            associationHash: record.signed_action.hashed.hash,
+          },
+        }),
+      );
 
-      (this.shadowRoot?.getElementById("association-textfield") as MVBTextField).clear();
-
+      (
+        this.shadowRoot?.getElementById('association-textfield') as MVBTextField
+      ).clear();
     } catch (e: any) {
-      const errorSnackbar = this.shadowRoot?.getElementById('create-error') as Snackbar;
+      const errorSnackbar = this.shadowRoot?.getElementById(
+        'create-error',
+      ) as Snackbar;
       errorSnackbar.labelText = `Error creating the association: ${e.data.data}`;
       errorSnackbar.show();
     }
   }
 
   render() {
-    return html`
-      <mwc-snackbar id="create-error" leading>
-      </mwc-snackbar>
+    return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
-
+      <div
+        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;"
+      >
         <div class="row" style="display: flex; align-items: center;">
           <mvb-textfield
             id="association-textfield"
@@ -92,7 +95,8 @@ export class CreateAssociation extends LitElement {
             }}
             title="Type a word that you associate with the craving's description"
             required
-            @keypress=${(e: KeyboardEvent) => e.key === 'Enter' ? this.createAssociation() : undefined}
+            @keypress=${(e: KeyboardEvent) =>
+              e.key === 'Enter' ? this.createAssociation() : undefined}
           ></mvb-textfield>
           <btn-round
             style="margin-left: 10px; font-size: 18px"
@@ -100,9 +104,9 @@ export class CreateAssociation extends LitElement {
             .disabled=${!this.isAssociationValid()}
             @click=${() => this.createAssociation()}
           >
-          Add
+            Add
           </btn-round>
         </div>
-    </div>`;
+      </div>`;
   }
 }

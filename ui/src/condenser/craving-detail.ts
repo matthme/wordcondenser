@@ -13,10 +13,15 @@ import { condenserContext } from '../contexts';
 import { CravingStore } from '../craving-store';
 import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
-import { newAssociationsCount, newOffersCount, newCommentsCount, newReflectionsCount } from '../utils';
+import {
+  newAssociationsCount,
+  newOffersCount,
+  newCommentsCount,
+  newReflectionsCount,
+} from '../utils';
 
 TimeAgo.addDefaultLocale(en);
-const timeAgo = new TimeAgo('en-US')
+const timeAgo = new TimeAgo('en-US');
 
 @customElement('craving-detail')
 export class CravingDetail extends LitElement {
@@ -29,79 +34,91 @@ export class CravingDetail extends LitElement {
   @state()
   _editing = false;
 
-  private _lobbiesForCraving = new StoreSubscriber(
-    this,
-    () => this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
+  private _lobbiesForCraving = new StoreSubscriber(this, () =>
+    this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
   );
 
   private _allReflections = new StoreSubscriber(
     this,
-    () => this.store.allReflections
+    () => this.store.allReflections,
   );
 
   private _allCommentCount = new StoreSubscriber(
     this,
-    () => this.store.allCommentsCount
-  )
-
-  private _allOffers = new StoreSubscriber(
-    this,
-    () => this.store.polledOffers
+    () => this.store.allCommentsCount,
   );
+
+  private _allOffers = new StoreSubscriber(this, () => this.store.polledOffers);
 
   private _allAssociations = new StoreSubscriber(
     this,
-    () => this.store.polledAssociations
+    () => this.store.polledAssociations,
   );
 
-  private _amIFiltered = new StoreSubscriber(
-    this,
-    () => this.condenserStore.amIFiltered(this._lobbiesForCraving.value.map((data) => data.dnaHash)),
-  )
+  private _amIFiltered = new StoreSubscriber(this, () =>
+    this.condenserStore.amIFiltered(
+      this._lobbiesForCraving.value.map(data => data.dnaHash),
+    ),
+  );
 
   // [number of total associations total, number of new associations]
   associationsCount(): [string, string | undefined] {
     switch (this._allAssociations.value.status) {
-      case "pending":
-        return ["?", undefined];
-      case "error":
-        return ["?", undefined];
-      case "complete": {
+      case 'pending':
+        return ['?', undefined];
+      case 'error':
+        return ['?', undefined];
+      case 'complete': {
         const currentCount = this._allAssociations.value.value.length;
-        const newCount = newAssociationsCount(this.store.service.cellId[0], currentCount);
-        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+        const newCount = newAssociationsCount(
+          this.store.service.cellId[0],
+          currentCount,
+        );
+        return [
+          currentCount.toString(),
+          newCount ? newCount.toString() : undefined,
+        ];
       }
       default:
-        return ["?", undefined];
+        return ['?', undefined];
     }
   }
 
   reflectionCount(): [string, string | undefined] {
     switch (this._allReflections.value.status) {
-      case "pending":
-        return ["?", undefined];
-      case "error":
-        return ["?", undefined];
-      case "complete": {
+      case 'pending':
+        return ['?', undefined];
+      case 'error':
+        return ['?', undefined];
+      case 'complete': {
         const currentCount = this._allReflections.value.value.length;
-        const newCount = newReflectionsCount(this.store.service.cellId[0], currentCount);
+        const newCount = newReflectionsCount(
+          this.store.service.cellId[0],
+          currentCount,
+        );
         // console.log("currentCount, newCount: ", currentCount, newCount);
-        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+        return [
+          currentCount.toString(),
+          newCount ? newCount.toString() : undefined,
+        ];
       }
       default:
-        return ["?", undefined];
+        return ['?', undefined];
     }
   }
 
   commentsCount(): string | undefined {
     switch (this._allCommentCount.value.status) {
-      case "pending":
+      case 'pending':
         return undefined;
-      case "error":
+      case 'error':
         return undefined;
-      case "complete": {
+      case 'complete': {
         const currentCount = this._allCommentCount.value.value;
-        const newCount = newCommentsCount(this.store.service.cellId[0], currentCount);
+        const newCount = newCommentsCount(
+          this.store.service.cellId[0],
+          currentCount,
+        );
         return newCount ? newCount.toString() : undefined;
       }
       default:
@@ -111,17 +128,23 @@ export class CravingDetail extends LitElement {
 
   offersCount(): [string, string | undefined] {
     switch (this._allOffers.value.status) {
-      case "pending":
-        return ["?", undefined];
-      case "error":
-        return ["?", undefined];
-      case "complete": {
+      case 'pending':
+        return ['?', undefined];
+      case 'error':
+        return ['?', undefined];
+      case 'complete': {
         const currentCount = this._allOffers.value.value.length;
-        const newCount = newOffersCount(this.store.service.cellId[0], currentCount);
-        return [currentCount.toString(), newCount ? newCount.toString() : undefined];
+        const newCount = newOffersCount(
+          this.store.service.cellId[0],
+          currentCount,
+        );
+        return [
+          currentCount.toString(),
+          newCount ? newCount.toString() : undefined,
+        ];
       }
       default:
-        return ["?", undefined];
+        return ['?', undefined];
     }
   }
 
@@ -133,21 +156,29 @@ export class CravingDetail extends LitElement {
             style="font-size: 19px; margin-right: 4px;"
             title="${this.associationsCount()[0]} associations"
           >
-          ${this.associationsCount()[0]}
+            ${this.associationsCount()[0]}
           </span>
           ${this.associationsCount()[1]
             ? html`
-              <div
-                class="notification yellow"
-                style="position: absolute; top: -10px; left: 16px;"
-                title="${this.associationsCount()[1]} new association${this.associationsCount()[1] !== "1" ? "s" : ""}"
-              >
-                +${this.associationsCount()[1]}
-              </div>
+                <div
+                  class="notification yellow"
+                  style="position: absolute; top: -10px; left: 16px;"
+                  title="${this.associationsCount()[1]} new association${this.associationsCount()[1] !==
+                  '1'
+                    ? 's'
+                    : ''}"
+                >
+                  +${this.associationsCount()[1]}
+                </div>
               `
             : html``}
         </div>
-        <img src="associations.png" alt="associations icon" style="height: 30px; margin-right: 6px;" title="${this.associationsCount()} associations"/>
+        <img
+          src="associations.png"
+          alt="associations icon"
+          style="height: 30px; margin-right: 6px;"
+          title="${this.associationsCount()} associations"
+        />
 
         <div style="position: relative;">
           <span
@@ -156,67 +187,83 @@ export class CravingDetail extends LitElement {
           >
             ${this.reflectionCount()[0]}
           </span>
-          <div style="position: absolute; top: -10px; left: 16px; display: flex; flex-direction: column;">
+          <div
+            style="position: absolute; top: -10px; left: 16px; display: flex; flex-direction: column;"
+          >
             ${this.reflectionCount()[1]
               ? html`
-                <div
-                  class="notification yellow"
-                  style="margin-bottom: 2px;"
-                  title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] !== "1" ? "s" : ""}"
-                >
-                +${this.reflectionCount()[1]}
-                </div>
+                  <div
+                    class="notification yellow"
+                    style="margin-bottom: 2px;"
+                    title="${this.reflectionCount()[1]} new reflection${this.reflectionCount()[1] !==
+                    '1'
+                      ? 's'
+                      : ''}"
+                  >
+                    +${this.reflectionCount()[1]}
+                  </div>
                 `
-              : html``
-            }
+              : html``}
             ${this.commentsCount()
               ? html`
-                <div
-                  class="notification blue"
-                  title="${this.commentsCount()} new comment${this.commentsCount() !== "1" ? "s" : ""}"
-                >
-                +${this.commentsCount()}
-                </div>
+                  <div
+                    class="notification blue"
+                    title="${this.commentsCount()} new comment${this.commentsCount() !==
+                    '1'
+                      ? 's'
+                      : ''}"
+                  >
+                    +${this.commentsCount()}
+                  </div>
                 `
-              : html``
-            }
+              : html``}
           </div>
         </div>
-        <img src="reflections_black.svg" alt="Reflections icon" style="height: 30px; margin-right: 6px;" title="${this.reflectionCount()} reflections"/>
+        <img
+          src="reflections_black.svg"
+          alt="Reflections icon"
+          style="height: 30px; margin-right: 6px;"
+          title="${this.reflectionCount()} reflections"
+        />
 
         <div style="position: relative;">
           <span
             style="font-size: 19px; margin-right: 4px;"
             title="${this.offersCount()[0]} offers"
           >
-          ${this.offersCount()[0]}
+            ${this.offersCount()[0]}
           </span>
           ${this.offersCount()[1]
             ? html`
-              <div
-                class="notification yellow"
-                style="position: absolute; top: -10px; left: 16px;"
-                title="${this.offersCount()[1]} new offer${this.offersCount()[1] !== "1" ? "s" : ""}"
-              >
-              +${this.offersCount()[1]}
-              </div>
+                <div
+                  class="notification yellow"
+                  style="position: absolute; top: -10px; left: 16px;"
+                  title="${this.offersCount()[1]} new offer${this.offersCount()[1] !==
+                  '1'
+                    ? 's'
+                    : ''}"
+                >
+                  +${this.offersCount()[1]}
+                </div>
               `
-            : html``
-          }
+            : html``}
         </div>
-        <img src="offers.svg" alt="Half filled Erlenmeyer flask to signify word offers" style="height: 30px;" title="${this.offersCount()[0]} offers"/>
+        <img
+          src="offers.svg"
+          alt="Half filled Erlenmeyer flask to signify word offers"
+          style="height: 30px;"
+          title="${this.offersCount()[0]} offers"
+        />
       </div>
-    `
+    `;
   }
 
-
   render() {
-
     if (this._amIFiltered.value) {
-      return html``
+      return html``;
     }
 
-    const timestamp = this.store.initTime
+    const timestamp = this.store.initTime;
     const craving = this.store.craving;
     const date = new Date(timestamp);
 
@@ -229,113 +276,129 @@ export class CravingDetail extends LitElement {
         class="craving-container"
         style="display: flex; flex-direction: column"
         tabindex="0"
-        @keypress=${(e: KeyboardEvent) => e.key === "Enter" ? this.dispatchEvent(new CustomEvent("selected-craving", {
-          detail: {
-            cellId: this.store.service.cellId,
-            craving,
-          },
-          bubbles: true,
-          composed: true,
-        })) : undefined   }
-        @click=${() => this.dispatchEvent(new CustomEvent("selected-craving", {
-          detail: {
-            cellId: this.store.service.cellId,
-            craving,
-          },
-          bubbles: true,
-          composed: true,
-        }))}
+        @keypress=${(e: KeyboardEvent) =>
+          e.key === 'Enter'
+            ? this.dispatchEvent(
+                new CustomEvent('selected-craving', {
+                  detail: {
+                    cellId: this.store.service.cellId,
+                    craving,
+                  },
+                  bubbles: true,
+                  composed: true,
+                }),
+              )
+            : undefined}
+        @click=${() =>
+          this.dispatchEvent(
+            new CustomEvent('selected-craving', {
+              detail: {
+                cellId: this.store.service.cellId,
+                craving,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          )}
       >
-        <div class="row" style="text-align: right; font-size: 14px; color: black; width: 100%; margin-bottom: 10px;">
+        <div
+          class="row"
+          style="text-align: right; font-size: 14px; color: black; width: 100%; margin-bottom: 10px;"
+        >
           ${this.renderCounts()}
           <span style="display: flex; flex: 1;"></span>
-          <span style="font-size: 14px;">installed ${timeAgo.format(date)}</span>
+          <span style="font-size: 14px;"
+            >installed ${timeAgo.format(date)}</span
+          >
         </div>
         <div class="craving-title">${craving.title}</div>
         <div class="craving-description">${craving.description}</div>
 
-        <div class="column" style="flex: 1; align-items: flex-end; width: 100%;">
-          <div class="row" style="margin-top: 5px; justify-content: flex-end; margin-right: -15px; overflow-x: auto;">
-            ${
-              this._lobbiesForCraving.value.map((lobbyData) => {
-                if (lobbyData.info?.logo_src) {
-                  return html`<img
-                    title=${lobbyData.name}
-                    alt="Group logo"
-                    src=${lobbyData.info.logo_src}
-                    style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;"
-                  />`
-                }
-                return html``
-            })
-            }
+        <div
+          class="column"
+          style="flex: 1; align-items: flex-end; width: 100%;"
+        >
+          <div
+            class="row"
+            style="margin-top: 5px; justify-content: flex-end; margin-right: -15px; overflow-x: auto;"
+          >
+            ${this._lobbiesForCraving.value.map(lobbyData => {
+              if (lobbyData.info?.logo_src) {
+                return html`<img
+                  title=${lobbyData.name}
+                  alt="Group logo"
+                  src=${lobbyData.info.logo_src}
+                  style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;"
+                />`;
+              }
+              return html``;
+            })}
           </div>
         </div>
-
       </div>
     `;
   }
 
-
-
-  static styles = [sharedStyles,
+  static styles = [
+    sharedStyles,
     css`
-    .craving-container {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      width: 380px;
-      height: 260px;
-      margin: 10px;
-      background: #818cae;
-      border-radius: 10px;
-      box-shadow: 2px 2px 4px 3px #1e253d;
-      padding: 18px 30px 3px 30px;
-      cursor: pointer;
-    }
+      .craving-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 380px;
+        height: 260px;
+        margin: 10px;
+        background: #818cae;
+        border-radius: 10px;
+        box-shadow: 2px 2px 4px 3px #1e253d;
+        padding: 18px 30px 3px 30px;
+        cursor: pointer;
+      }
 
-    .craving-container:hover {
-      background: #9098b3;
-    }
+      .craving-container:hover {
+        background: #9098b3;
+      }
 
-    .craving-title {
-      white-space: pre-line;
-      font-weight: bold;
-      font-size: 28px;
-      text-align: left;
-      color: #0b0d15;
-    }
+      .craving-title {
+        white-space: pre-line;
+        font-weight: bold;
+        font-size: 28px;
+        text-align: left;
+        color: #0b0d15;
+      }
 
-    .craving-description {
-      white-space: normal;
-      text-align: left;
-      font-size: 19px;
-      height: 120px;
-      overflow-y: auto;
-      margin-top: 10px;
-      color: #0b0d15;
-    }
+      .craving-description {
+        white-space: normal;
+        text-align: left;
+        font-size: 19px;
+        height: 120px;
+        overflow-y: auto;
+        margin-top: 10px;
+        color: #0b0d15;
+      }
 
-    .notification {
-      padding: 1px 5px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 10px;
-      height: 20px;
-      color: black;
-      min-width: 18px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 1px 1px 3px #0b0d159b
-    }
+      .notification {
+        padding: 1px 5px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 10px;
+        height: 20px;
+        color: black;
+        min-width: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 1px 1px 3px #0b0d159b;
+      }
 
-    .yellow {
-      background: #ffd623;
-    }
+      .yellow {
+        background: #ffd623;
+      }
 
-    .blue {
-      background: #9ecbf2;
-    }
-  `];
+      .blue {
+        background: #9ecbf2;
+      }
+    `,
+  ];
 }

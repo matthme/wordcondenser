@@ -1,39 +1,38 @@
-import {
-  decodeEntry,
-} from "@holochain-open-dev/utils";
+import { decodeEntry } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
   Record,
   AppAgentClient,
   AppAgentCallZomeRequest,
-  RoleName,
   CellId,
   encodeHashToBase64,
-} from "@holochain/client";
-import { UnsubscribeFunction } from "emittery";
-import { Profile, ProfilesSignal } from "./types";
+} from '@holochain/client';
+import { UnsubscribeFunction } from 'emittery';
+import { Profile, ProfilesSignal } from './types';
 
 export interface ProfilesEvents {
-  ["signal"]: ProfilesSignal;
+  ['signal']: ProfilesSignal;
 }
 
 export class ProfilesClient {
   constructor(
     public client: AppAgentClient,
     public cellId: CellId,
-    public zomeName = "profiles"
+    public zomeName = 'profiles',
   ) {}
 
   on<Name extends keyof ProfilesEvents>(
     eventName: Name | readonly Name[],
-    listener: (eventData: ProfilesEvents[Name]) => void | Promise<void>
+    listener: (eventData: ProfilesEvents[Name]) => void | Promise<void>,
   ): UnsubscribeFunction {
-    return this.client.on(eventName, async (signal) => {
+    return this.client.on(eventName, async signal => {
       if (
-        encodeHashToBase64(signal.cell_id[0]) === encodeHashToBase64(this.cellId[0])
-        && encodeHashToBase64(signal.cell_id[1]) === encodeHashToBase64(this.cellId[1])
+        encodeHashToBase64(signal.cell_id[0]) ===
+          encodeHashToBase64(this.cellId[0]) &&
+        encodeHashToBase64(signal.cell_id[1]) ===
+          encodeHashToBase64(this.cellId[1]) &&
         // signal.cell_id.map((hash) => encodeHashToBase64(hash)) == this.cellId.map((hash) => encodeHashToBase64(hash))) &&
-        && this.zomeName === signal.zome_name
+        this.zomeName === signal.zome_name
       ) {
         listener(signal.payload as ProfilesSignal);
       }
@@ -47,11 +46,11 @@ export class ProfilesClient {
    * @returns the profile of the agent, if they have created one
    */
   async getAgentProfile(
-    agentPubKey: AgentPubKey
+    agentPubKey: AgentPubKey,
   ): Promise<Profile | undefined> {
     const record: Record | undefined = await this.callZome(
-      "get_agent_profile",
-      agentPubKey
+      'get_agent_profile',
+      agentPubKey,
     );
 
     return record ? decodeEntry(record) : undefined;
@@ -64,7 +63,7 @@ export class ProfilesClient {
    * @returns the agents with the nickname starting with nicknameFilter
    */
   async searchAgents(nicknameFilter: string): Promise<AgentPubKey[]> {
-    return this.callZome("search_agents", nicknameFilter);
+    return this.callZome('search_agents', nicknameFilter);
   }
 
   /**
@@ -73,7 +72,7 @@ export class ProfilesClient {
    * @returns the agent public keys of all agents that have created a profile
    */
   async getAgentsWithProfile(): Promise<AgentPubKey[]> {
-    return this.callZome("get_agents_with_profile", null);
+    return this.callZome('get_agents_with_profile', null);
   }
 
   /**
@@ -82,7 +81,7 @@ export class ProfilesClient {
    * @param profile the profile to create
    */
   async createProfile(profile: Profile): Promise<void> {
-    return this.callZome("create_profile", profile);
+    return this.callZome('create_profile', profile);
   }
 
   /**
@@ -91,7 +90,7 @@ export class ProfilesClient {
    * @param profile the profile to create
    */
   async updateProfile(profile: Profile): Promise<void> {
-    return this.callZome("update_profile", profile);
+    return this.callZome('update_profile', profile);
   }
 
   private callZome(fn_name: string, payload: any) {

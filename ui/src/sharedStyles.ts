@@ -1,11 +1,10 @@
-import { css } from "lit";
+import { css } from 'lit';
 
 export const sharedStyles = css`
-
   .column {
-      display: flex;
-      flex-direction: column;
-    }
+    display: flex;
+    flex-direction: column;
+  }
 
   .row {
     display: flex;
@@ -39,5 +38,4 @@ export const sharedStyles = css`
     max-height: 100%;
     overflow-y: auto;
   }
-
 `;

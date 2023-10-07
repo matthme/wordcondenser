@@ -1,45 +1,63 @@
-import { derived, get, Readable, writable, Writable } from "@holochain-open-dev/stores";
-import { decodeEntry, DnaHashMap } from "@holochain-open-dev/utils";
-import { DnaModifiers, AppAgentWebsocket, CellId, CellType, ClonedCell, DnaHash, encodeHashToBase64, Record as HolochainRecord } from "@holochain/client";
+import {
+  derived,
+  get,
+  Readable,
+  writable,
+  Writable,
+} from '@holochain-open-dev/stores';
+import { decodeEntry, DnaHashMap } from '@holochain-open-dev/utils';
+import {
+  DnaModifiers,
+  AppAgentWebsocket,
+  CellId,
+  CellType,
+  ClonedCell,
+  DnaHash,
+  encodeHashToBase64,
+} from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
+import md5 from 'md5';
 
-import { CravingService } from "./craving-service";
-import { CravingStore } from "./craving-store";
-import { CravingDnaProperties } from "./condenser/types";
-import { LobbyService } from "./lobby-service";
-import { LobbyStore } from "./lobby-store";
-import { ProfilesClient } from "./lobby/profiles/profiles-client";
-import { ProfilesStore } from "./lobby/profiles/profiles-store";
-import { DnaRecipe, LobbyInfo } from "./types";
-
-import md5 from "md5";
-
+import { CravingService } from './craving-service';
+import { CravingStore } from './craving-store';
+import { CravingDnaProperties } from './condenser/types';
+import { LobbyService } from './lobby-service';
+import { LobbyStore } from './lobby-store';
+import { ProfilesClient } from './lobby/profiles/profiles-client';
+import { ProfilesStore } from './lobby/profiles/profiles-store';
+import { DnaRecipe, LobbyInfo } from './types';
 
 export interface CravingData {
-  title: string, // in case it is not installed, we have info about the title from the DnaRecipe
-  dnaHash: DnaHash, // DNA hash of the craving
-  enabled: boolean, // is this craving installed and enabled?
-  installed: boolean, // is this craving installed?
-  lobbies: LobbyData[], // which lobbies is this craving referenced/listed in?
+  title: string; // in case it is not installed, we have info about the title from the DnaRecipe
+  dnaHash: DnaHash; // DNA hash of the craving
+  enabled: boolean; // is this craving installed and enabled?
+  installed: boolean; // is this craving installed?
+  lobbies: LobbyData[]; // which lobbies is this craving referenced/listed in?
 }
-
 
 export interface LobbyData {
-  name: string,
-  info: LobbyInfo | undefined,
-  dnaHash: DnaHash, // DNA hash of the lobby cell
+  name: string;
+  info: LobbyInfo | undefined;
+  dnaHash: DnaHash; // DNA hash of the lobby cell
 }
 
-
 export class CondenserStore {
+  private _installedCravings: Writable<DnaHashMap<CravingStore>> = writable(
+    new DnaHashMap<CravingStore>(),
+  );
 
-  private _installedCravings: Writable<DnaHashMap<CravingStore>> = writable(new DnaHashMap<CravingStore>());
-  private _disabledCravings: Writable<Record<string, ClonedCell>> = writable({}); // keys are the clone's names
-  private _lobbies: Writable<DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>> = writable(new DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>());
+  private _disabledCravings: Writable<Record<string, ClonedCell>> = writable(
+    {},
+  ); // keys are the clone's names
+
+  private _lobbies: Writable<
+    DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>
+  > = writable(new DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>());
+
   private _disabledLobbies: Writable<Record<string, ClonedCell>> = writable({});
 
-  private _cravingLobbyMapping: Writable<DnaHashMap<[DnaRecipe, LobbyData[]]>> // dna hash of craving as keys
-    = writable(new DnaHashMap<[DnaRecipe, LobbyData[]]>);
+  private _cravingLobbyMapping: Writable<DnaHashMap<[DnaRecipe, LobbyData[]]>> = // dna hash of craving as keys
+    writable(new DnaHashMap<[DnaRecipe, LobbyData[]]>());
 
   private _filterGroup: Writable<DnaHash | undefined> = writable(undefined);
 
@@ -56,50 +74,63 @@ export class CondenserStore {
     this._lobbies.set(lobbies);
     this._disabledLobbies.set(disabledLobbies);
     this._cravingLobbyMapping.set(cravingLobbyMapping);
-      // console.log("@CondenserStore constructor: installedCravings: ", installedCravings.values());
-      // console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
+    // console.log("@CondenserStore constructor: installedCravings: ", installedCravings.values());
+    // console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
   }
 
-  static async connect(
-    appAgentWebsocket: AppAgentWebsocket
-  ) {
+  static async connect(appAgentWebsocket: AppAgentWebsocket) {
     // console.log("%%% Connecting to CondenserStore... %%%");
 
-    const [installedCravings, disabledCravings, lobbies, disabledLobbies] = await this.fetchCells(appAgentWebsocket);
+    const [installedCravings, disabledCravings, lobbies, disabledLobbies] =
+      await this.fetchCells(appAgentWebsocket);
     // console.log("%%% @connect(): installedCravings: ", installedCravings);
     // console.log("%%% @connect(): disabledCravings: ", disabledCravings);
 
-    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>;
+    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>();
 
-    await Promise.all(Array.from(lobbies.entries()).map(async ([dnaHash, [lobbyStore, _profilesStore]]) => {
-      const allRecipeRecords = await lobbyStore.service.getAllCravingRecipes();
-      const allRecipes = allRecipeRecords.map((record) => decodeEntry(record) as DnaRecipe);
+    await Promise.all(
+      Array.from(lobbies.entries()).map(
+        async ([dnaHash, [lobbyStore, _profilesStore]]) => {
+          const allRecipeRecords =
+            await lobbyStore.service.getAllCravingRecipes();
+          const allRecipes = allRecipeRecords.map(
+            record => decodeEntry(record) as DnaRecipe,
+          );
 
+          // create a mapping beteen cravings and the lobbies this craving is shared with
+          allRecipes.forEach(recipe => {
+            const lobbyData: LobbyData = {
+              name: lobbyStore.lobbyName,
+              info: lobbyStore.lobbyInfo
+                ? decodeEntry(lobbyStore.lobbyInfo)
+                : undefined,
+              dnaHash,
+            };
 
-      // create a mapping beteen cravings and the lobbies this craving is shared with
-      allRecipes.forEach((recipe) => {
-        const lobbyData: LobbyData = {
-          name: lobbyStore.lobbyName,
-          info: lobbyStore.lobbyInfo ? decodeEntry(lobbyStore.lobbyInfo) : undefined,
-          dnaHash,
-        }
+            try {
+              // if cravingLobbyMapping already has a value for this key, push to it
+              const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] =
+                cravingLobbyMapping.get(recipe.resulting_dna_hash);
+              existingValue.push(lobbyData);
+              cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                existingRecipe,
+                existingValue,
+              ]);
+            } catch (e) {
+              // if cravingLobbyMapping is does not have a value for this key yet, set it
+              cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                recipe,
+                [lobbyData],
+              ]);
+            }
+          });
 
-        try { // if cravingLobbyMapping already has a value for this key, push to it
-          const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] = cravingLobbyMapping.get(recipe.resulting_dna_hash);
-          existingValue.push(lobbyData);
-          cravingLobbyMapping.set(recipe.resulting_dna_hash, [existingRecipe, existingValue]);
-        } catch (e) { // if cravingLobbyMapping is does not have a value for this key yet, set it
-          cravingLobbyMapping.set(recipe.resulting_dna_hash, [recipe, [lobbyData]]);
-        }
-      })
-
-      // filter recipes by the ones that are not installed
-
-
-    }));
+          // filter recipes by the ones that are not installed
+        },
+      ),
+    );
 
     // console.log("@connect: cravingLobbyMapping: ", cravingLobbyMapping);
-
 
     return new CondenserStore(
       appAgentWebsocket,
@@ -111,10 +142,12 @@ export class CondenserStore {
     );
   }
 
-
   filterByGroup(lobbyDnaHash: DnaHash) {
     if (get(this._filterGroup)) {
-      if (encodeHashToBase64(get(this._filterGroup)!) === encodeHashToBase64(lobbyDnaHash)) {
+      if (
+        encodeHashToBase64(get(this._filterGroup)!) ===
+        encodeHashToBase64(lobbyDnaHash)
+      ) {
         this._filterGroup.set(undefined);
       } else {
         this._filterGroup.set(lobbyDnaHash);
@@ -133,15 +166,16 @@ export class CondenserStore {
    * @param lobbyDnaHash
    */
   amIFiltered(lobbyDnaHashes: DnaHash[]): Readable<boolean> {
-    const base64Hashes = lobbyDnaHashes.map((hash) => encodeHashToBase64(hash));
-    return derived(this._filterGroup, (store) => !!store && !base64Hashes.includes(encodeHashToBase64(store)));
+    const base64Hashes = lobbyDnaHashes.map(hash => encodeHashToBase64(hash));
+    return derived(
+      this._filterGroup,
+      store => !!store && !base64Hashes.includes(encodeHashToBase64(store)),
+    );
   }
 
   activeGroupFilter(): Readable<DnaHash | undefined> {
-    return derived(this._filterGroup, (store) => store);
+    return derived(this._filterGroup, store => store);
   }
-
-
 
   /**
    * Fetches the stores freshly. This is useful for example to make sure the stores get updated
@@ -149,33 +183,50 @@ export class CondenserStore {
    *
    */
   async fetchStores() {
-    const [installedCravings, disabledCravings, lobbies, disabledLobbies] = await CondenserStore.fetchCells(this.appAgentWebsocket);
+    const [installedCravings, disabledCravings, lobbies, disabledLobbies] =
+      await CondenserStore.fetchCells(this.appAgentWebsocket);
 
-    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>;
+    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>();
 
-    await Promise.all(Array.from(lobbies.entries()).map(async ([dnaHash, [lobbyStore, _profilesStore]]) => {
-      const allRecipeRecords = await lobbyStore.service.getAllCravingRecipes();
-      const allRecipes = allRecipeRecords.map((record) => decodeEntry(record) as DnaRecipe);
-      allRecipes.forEach((recipe) => {
-        const lobbyData: LobbyData = {
-          name: lobbyStore.lobbyName,
-          info: lobbyStore.lobbyInfo ? decodeEntry(lobbyStore.lobbyInfo) : undefined,
-          dnaHash,
-        }
+    await Promise.all(
+      Array.from(lobbies.entries()).map(
+        async ([dnaHash, [lobbyStore, _profilesStore]]) => {
+          const allRecipeRecords =
+            await lobbyStore.service.getAllCravingRecipes();
+          const allRecipes = allRecipeRecords.map(
+            record => decodeEntry(record) as DnaRecipe,
+          );
+          allRecipes.forEach(recipe => {
+            const lobbyData: LobbyData = {
+              name: lobbyStore.lobbyName,
+              info: lobbyStore.lobbyInfo
+                ? decodeEntry(lobbyStore.lobbyInfo)
+                : undefined,
+              dnaHash,
+            };
 
-
-        try { // if cravingLobbyMapping already has a value for this key, push to it
-          const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] = cravingLobbyMapping.get(recipe.resulting_dna_hash);
-          existingValue.push(lobbyData);
-          cravingLobbyMapping.set(recipe.resulting_dna_hash, [existingRecipe, existingValue]);
-        } catch (e) { // if cravingLobbyMapping is does not have a value for this key yet, set it
-          cravingLobbyMapping.set(recipe.resulting_dna_hash, [recipe, [lobbyData]]);
-        }
-      })
-    }));
+            try {
+              // if cravingLobbyMapping already has a value for this key, push to it
+              const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] =
+                cravingLobbyMapping.get(recipe.resulting_dna_hash);
+              existingValue.push(lobbyData);
+              cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                existingRecipe,
+                existingValue,
+              ]);
+            } catch (e) {
+              // if cravingLobbyMapping is does not have a value for this key yet, set it
+              cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                recipe,
+                [lobbyData],
+              ]);
+            }
+          });
+        },
+      ),
+    );
 
     // console.log("@fetchStores: cravingLobbyMapping: ", cravingLobbyMapping);
-
 
     this._installedCravings.set(installedCravings);
     this._disabledCravings.set(disabledCravings);
@@ -190,15 +241,16 @@ export class CondenserStore {
    * @param appAgentWebsocket
    * @returns
    */
-  static async fetchCells(appAgentWebsocket: AppAgentWebsocket)
-    : Promise<
+  static async fetchCells(
+    appAgentWebsocket: AppAgentWebsocket,
+  ): Promise<
     [
       DnaHashMap<CravingStore>,
       Record<string, ClonedCell>,
       DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>,
-      Record<string, ClonedCell>
-    ]>
-     {
+      Record<string, ClonedCell>,
+    ]
+  > {
     const installedCravings = new DnaHashMap<CravingStore>();
     const disabledCravings: Record<string, ClonedCell> = {};
     const lobbies = new DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>();
@@ -207,75 +259,89 @@ export class CondenserStore {
     const appInfo = await appAgentWebsocket.appInfo();
     // console.log("%%% AppInfo: ", appInfo);
     const cravingCells = appInfo.cell_info.craving;
-    await Promise.all(cravingCells.map(async (cellInfo) => {
-      // console.log("@CondenserStore.connect(): Found cell: ", cellInfo);
-      if (CellType.Cloned in cellInfo) {
+    await Promise.all(
+      cravingCells.map(async cellInfo => {
+        // console.log("@CondenserStore.connect(): Found cell: ", cellInfo);
+        if (CellType.Cloned in cellInfo) {
+          const cloneInfo = cellInfo[CellType.Cloned];
+          const cellId = cloneInfo.cell_id;
 
-        const cloneInfo = cellInfo[CellType.Cloned];
-        const cellId = cloneInfo.cell_id;
+          // For every craving cell, create a CravingStore and add it to the DnaHashMap, if the cell is running
+          // if the craving cell is enabled
+          if (cloneInfo.enabled) {
+            const cravingService = new CravingService(
+              appAgentWebsocket,
+              'craving',
+              cellId,
+            );
 
-
-        // For every craving cell, create a CravingStore and add it to the DnaHashMap, if the cell is running
-        // if the craving cell is enabled
-        if (cloneInfo.enabled) {
-          const cravingService = new CravingService(
-            appAgentWebsocket,
-            "craving",
-            cellId,
-          );
-
-          // const networkSeed = cellInfo[CellType.Cloned].dna_modifiers.network_seed;
-          try {
-            let cravingStore = await CravingStore.connect(cravingService);
-            installedCravings.set(cellId[0], cravingStore);
-          } catch (e) {
-            console.warn(`Failed to connect to craving store: ${JSON.stringify(e)}`);
-          }
-        } else { // if the craving cell is disabled
+            // const networkSeed = cellInfo[CellType.Cloned].dna_modifiers.network_seed;
+            try {
+              const cravingStore = await CravingStore.connect(cravingService);
+              installedCravings.set(cellId[0], cravingStore);
+            } catch (e) {
+              console.warn(
+                `Failed to connect to craving store: ${JSON.stringify(e)}`,
+              );
+            }
+          } else {
+            // if the craving cell is disabled
             // Here either take the name of the group from the dna properties or from the clone name
-          disabledCravings[cloneInfo.name] = cloneInfo;
+            disabledCravings[cloneInfo.name] = cloneInfo;
+          }
         }
-      }
-    }));
-
+      }),
+    );
 
     const lobbyCells = appInfo.cell_info.lobby;
-    await Promise.all(lobbyCells.map(async (cellInfo) => {
-      // console.log("@CondenserStore.connect(): Found cell: ", cellInfo);
-      if (CellType.Cloned in cellInfo) {
+    await Promise.all(
+      lobbyCells.map(async cellInfo => {
+        // console.log("@CondenserStore.connect(): Found cell: ", cellInfo);
+        if (CellType.Cloned in cellInfo) {
+          const cloneInfo = cellInfo[CellType.Cloned];
+          const cellId = cloneInfo.cell_id;
 
-        const cloneInfo = cellInfo[CellType.Cloned];
-        const cellId = cloneInfo.cell_id;
+          if (cloneInfo.enabled) {
+            // For every lobby cell, create a LobbyStore and add it to the DnaHashMap
+            const lobbyService = new LobbyService(
+              appAgentWebsocket,
+              'cravings',
+              cellId,
+            );
 
-        if (cloneInfo.enabled) {
-          // For every lobby cell, create a LobbyStore and add it to the DnaHashMap
-          const lobbyService = new LobbyService(
-            appAgentWebsocket,
-            "cravings",
-            cellId,
-          );
+            try {
+              const lobbyStore = await LobbyStore.connect(lobbyService);
 
-          try {
-            let lobbyStore = await LobbyStore.connect(lobbyService);
+              const profilesService = new ProfilesClient(
+                appAgentWebsocket,
+                cellId,
+              );
+              const profilesStore = new ProfilesStore(profilesService, {
+                additionalFields: ['A little something about you'],
+              });
 
-            const profilesService = new ProfilesClient(appAgentWebsocket, cellId);
-            const profilesStore = new ProfilesStore(profilesService, { additionalFields: ["A little something about you"]});
-
-            lobbies.set(cellId[0], [lobbyStore, profilesStore, cloneInfo.dna_modifiers]);
-          } catch(e) {
-            console.warn(`Failed to set up lobby and profiles store: ${JSON.stringify(e)}`);
+              lobbies.set(cellId[0], [
+                lobbyStore,
+                profilesStore,
+                cloneInfo.dna_modifiers,
+              ]);
+            } catch (e) {
+              console.warn(
+                `Failed to set up lobby and profiles store: ${JSON.stringify(
+                  e,
+                )}`,
+              );
+            }
+          } else {
+            // Here either take the name of the group from the dna properties or from the clone name
+            disabledLobbies[cloneInfo.name] = cloneInfo;
           }
-        } else {
-          // Here either take the name of the group from the dna properties or from the clone name
-          disabledLobbies[cloneInfo.name] = cloneInfo;
         }
+      }),
+    );
 
-        }
-    }));
-
-    return [installedCravings, disabledCravings, lobbies, disabledLobbies]
+    return [installedCravings, disabledCravings, lobbies, disabledLobbies];
   }
-
 
   /** Here comes the Cravings logic */
 
@@ -284,15 +350,15 @@ export class CondenserStore {
   }
 
   cravingStore(cellId: CellId) {
-    return derived(this._installedCravings, (store) => store.get(cellId[0]));
+    return derived(this._installedCravings, store => store.get(cellId[0]));
   }
 
   getAllInstalledCravings(): Readable<DnaHashMap<CravingStore>> {
-    return derived(this._installedCravings, (cravings) => cravings);
+    return derived(this._installedCravings, cravings => cravings);
   }
 
   getAllDisabledCravings(): Readable<Record<string, ClonedCell>> {
-    return derived(this._disabledCravings, (cravings) => cravings);
+    return derived(this._disabledCravings, cravings => cravings);
   }
 
   /**
@@ -302,10 +368,13 @@ export class CondenserStore {
    * @param networkSeed
    * @returns
    */
-  async createCraving(properties: CravingDnaProperties, networkSeed: string, originTime: number): Promise<ClonedCell> {
-
+  async createCraving(
+    properties: CravingDnaProperties,
+    networkSeed: string,
+    originTime: number,
+  ): Promise<ClonedCell> {
     const cloneCellRequest = {
-      role_name: "craving",
+      role_name: 'craving',
       modifiers: {
         network_seed: networkSeed,
         properties,
@@ -314,30 +383,29 @@ export class CondenserStore {
       name: properties.title,
     };
 
-
     // console.log("@createCraving: clonecellrequest: ", cloneCellRequest);
     const requestHash = md5(JSON.stringify(cloneCellRequest));
     // console.log("@createCraving: Hash of create clone cell request: ", requestHash)
 
-    const cellInfo = await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
+    const cellInfo =
+      await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
 
     const cellId = cellInfo.cell_id;
 
     // console.log(`@condenser-store: created craving with dna hash: ${encodeHashToBase64(cellId[0])}`);
 
-    let cravingService = new CravingService(
+    const cravingService = new CravingService(
       this.appAgentWebsocket,
-      "craving",
+      'craving',
       cellId,
     );
 
-    let cravingStore = await CravingStore.connect(cravingService);
+    const cravingStore = await CravingStore.connect(cravingService);
 
-    this._installedCravings.update((store) => store.set(cellId[0], cravingStore));
+    this._installedCravings.update(store => store.set(cellId[0], cravingStore));
 
     return cellInfo;
   }
-
 
   /**
    * Share an existing craving with another group
@@ -346,14 +414,18 @@ export class CondenserStore {
    * @param lobbyCellId
    * @returns
    */
-  async shareCraving(cravingCellId: CellId, lobbyDnaHashes: DnaHash[]): Promise<void> {
-
+  async shareCraving(
+    cravingCellId: CellId,
+    lobbyDnaHashes: DnaHash[],
+  ): Promise<void> {
     const recipe = this.getCravingRecipe(cravingCellId);
 
-    await Promise.all(lobbyDnaHashes.map(async (dnaHash) => {
-      const [lobbyStore, _profileStore] = this.lobbyStore(dnaHash);
-      await lobbyStore.service.registerCraving(recipe);
-    }))
+    await Promise.all(
+      lobbyDnaHashes.map(async dnaHash => {
+        const [lobbyStore, _profileStore] = this.lobbyStore(dnaHash);
+        await lobbyStore.service.registerCraving(recipe);
+      }),
+    );
 
     window.location.reload();
   }
@@ -366,13 +438,11 @@ export class CondenserStore {
    */
 
   async joinCraving(dnaRecipe: DnaRecipe): Promise<ClonedCell> {
-
     // console.log(`JOINING CRAVING WITH RECIPE: ${JSON.stringify(dnaRecipe)}`);
     // console.log(`JOINING CRAVING WITH resulting dna hash: ${encodeHashToBase64(dnaRecipe.resulting_dna_hash)}`);
 
-
     const cloneCellRequest = {
-      role_name: "craving",
+      role_name: 'craving',
       modifiers: {
         network_seed: dnaRecipe.network_seed,
         properties: dnaRecipe.properties,
@@ -385,8 +455,8 @@ export class CondenserStore {
     const requestHash = md5(JSON.stringify(cloneCellRequest));
     // console.log("@joinCraving: Hash of create clone cell request: ", requestHash)
 
-    const cellInfo = await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
-
+    const cellInfo =
+      await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
 
     const cellId = cellInfo.cell_id;
 
@@ -394,15 +464,15 @@ export class CondenserStore {
 
     // console.log("@CondenserStore: @joinCraving: Created clone cell: ", cellInfo);
 
-    let cravingService = new CravingService(
+    const cravingService = new CravingService(
       this.appAgentWebsocket,
-      "craving",
+      'craving',
       cellId,
     );
 
-    let cravingStore = await CravingStore.connect(cravingService);
+    const cravingStore = await CravingStore.connect(cravingService);
 
-    this._installedCravings.update((store) => store.set(cellId[0], cravingStore));
+    this._installedCravings.update(store => store.set(cellId[0], cravingStore));
 
     return cellInfo;
   }
@@ -418,23 +488,26 @@ export class CondenserStore {
       clone_cell_id: cellId,
     });
 
-    alert(`Disabled Craving. To delete it permanently, delete the corresponding cloned cell with the DNA hash\n\n"${encodeHashToBase64(cellId[0])}"\n\nin the Holochain Launcher Admin.\n\nWARNING: If you delete a Craving permanently, you won't ever be able to rejoin it with this installation of the Word Condenser.`);
+    alert(
+      `Disabled Craving. To delete it permanently, delete the corresponding cloned cell with the DNA hash\n\n"${encodeHashToBase64(
+        cellId[0],
+      )}"\n\nin the Holochain Launcher Admin.\n\nWARNING: If you delete a Craving permanently, you won't ever be able to rejoin it with this installation of the Word Condenser.`,
+    );
   }
 
-    /**
+  /**
    * Enables the craving
    *
    * @param cellId
    *
    */
-    async enableCraving(cellId: CellId) {
-      await this.appAgentWebsocket.enableCloneCell({
-        clone_cell_id: cellId,
-      });
+  async enableCraving(cellId: CellId) {
+    await this.appAgentWebsocket.enableCloneCell({
+      clone_cell_id: cellId,
+    });
 
-      alert(`Enabled Craving.`);
-    }
-
+    alert(`Enabled Craving.`);
+  }
 
   /** Here comes the Lobby logic */
 
@@ -443,39 +516,44 @@ export class CondenserStore {
   }
 
   lobbyStoreReadable(cellId: CellId) {
-    return derived(this._lobbies, (store) => store.get(cellId[0]));
+    return derived(this._lobbies, store => store.get(cellId[0]));
   }
 
   getAllLobbyDatas(): Readable<LobbyData[]> {
-    return derived(this._lobbies, (lobbies) => {
-      return Array.from(lobbies.entries()).map(([dnaHash, [lobbyStore, _profilesStore, _dnaModifiers]]) => {
-        const lobbyData: LobbyData = {
-          name: lobbyStore.lobbyName,
-          info: lobbyStore.lobbyInfo ? decodeEntry(lobbyStore.lobbyInfo) : undefined,
-          dnaHash,
-        }
-        return lobbyData
-      });
-    });
+    return derived(this._lobbies, lobbies =>
+      Array.from(lobbies.entries()).map(
+        ([dnaHash, [lobbyStore, _profilesStore, _dnaModifiers]]) => {
+          const lobbyData: LobbyData = {
+            name: lobbyStore.lobbyName,
+            info: lobbyStore.lobbyInfo
+              ? decodeEntry(lobbyStore.lobbyInfo)
+              : undefined,
+            dnaHash,
+          };
+          return lobbyData;
+        },
+      ),
+    );
   }
 
-
-  getAllLobbies(): Readable<DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>> {
-    return derived(this._lobbies, (lobbies) => lobbies);
+  getAllLobbies(): Readable<
+    DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>
+  > {
+    return derived(this._lobbies, lobbies => lobbies);
   }
 
   getDisabledLobbies(): Readable<Record<string, ClonedCell>> {
-    return derived(this._disabledLobbies, (lobbies) => lobbies);
+    return derived(this._disabledLobbies, lobbies => lobbies);
   }
 
   getLobbiesForCraving(cravingDnaHash: DnaHash): Readable<LobbyData[]> {
     // console.log("@getLobbiesForCraving: get(this._cravingLobbyMapping)", get(this._cravingLobbyMapping));
     // console.log("@getLobbiesForCraving: got cravingDnaHash: ", cravingDnaHash);
     // console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
-    return derived(this._cravingLobbyMapping, (store) => {
+    return derived(this._cravingLobbyMapping, store => {
       try {
-        return store.get(cravingDnaHash)[1]
-      } catch(e) {
+        return store.get(cravingDnaHash)[1];
+      } catch (e) {
         // This is expected if the group(s) that are/were associated to that craving is/are disabled or deleted
         // console.warn("No Lobby found for the requested craving.")
         return [];
@@ -487,23 +565,37 @@ export class CondenserStore {
    * Gets the cravings that are available but neither installed nor disabled.
    */
   getAvailableCravings(): Readable<Array<[DnaHash, [DnaRecipe, LobbyData[]]]>> {
-    return derived(this._cravingLobbyMapping, (mapping) => {
-      const installedCravingsHashes = Array.from(get(this._installedCravings).values()).map((store) => store.service.cellId[0])
-        .map((hash) => JSON.stringify(hash));
-      const disabledCravingsHashes = Object.values(get(this._disabledCravings)).map((cloneInfo) => cloneInfo.cell_id[0])
-        .map((hash) => JSON.stringify(hash));
+    return derived(this._cravingLobbyMapping, mapping => {
+      const installedCravingsHashes = Array.from(
+        get(this._installedCravings).values(),
+      )
+        .map(store => store.service.cellId[0])
+        .map(hash => JSON.stringify(hash));
+      const disabledCravingsHashes = Object.values(get(this._disabledCravings))
+        .map(cloneInfo => cloneInfo.cell_id[0])
+        .map(hash => JSON.stringify(hash));
 
-      return Array.from(mapping.entries()).filter(([dnaHash, [_recipe, _lobbyDatas]]) => {
-        const stringifiedHash = JSON.stringify(dnaHash);
-        return !installedCravingsHashes.includes(stringifiedHash) && !disabledCravingsHashes.includes(stringifiedHash)
-      })
-    })
+      return Array.from(mapping.entries()).filter(
+        ([dnaHash, [_recipe, _lobbyDatas]]) => {
+          const stringifiedHash = JSON.stringify(dnaHash);
+          return (
+            !installedCravingsHashes.includes(stringifiedHash) &&
+            !disabledCravingsHashes.includes(stringifiedHash)
+          );
+        },
+      );
+    });
   }
 
-  async createLobby(networkSeed: string, name: string, description: string, unenforcedRules: string | undefined, logoSrc: string): Promise<CellId> {
-
+  async createLobby(
+    networkSeed: string,
+    name: string,
+    description: string,
+    unenforcedRules: string | undefined,
+    logoSrc: string,
+  ): Promise<CellId> {
     const cellInfo = await this.appAgentWebsocket.createCloneCell({
-      role_name: "lobby",
+      role_name: 'lobby',
       modifiers: {
         network_seed: networkSeed,
         properties: {
@@ -512,33 +604,41 @@ export class CondenserStore {
         }, // lobby name will be fixed and part of the properties
       },
       name,
-    })
+    });
 
     const cellId = cellInfo.cell_id;
 
     // console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
 
-    let lobbyService = new LobbyService(
+    const lobbyService = new LobbyService(
       this.appAgentWebsocket,
-      "cravings",
+      'cravings',
       cellId,
     );
 
     // console.log("@CondenserStore: @createLobby: Created lobbyService: ", lobbyService);
 
-    const lobbyInfoRecord = await lobbyService.createLobbyInfo(description, logoSrc, unenforcedRules, networkSeed);
+    const lobbyInfoRecord = await lobbyService.createLobbyInfo(
+      description,
+      logoSrc,
+      unenforcedRules,
+      networkSeed,
+    );
 
     // console.log("@CondenserStore: @createLobby: Created LobbyInfo: ", lobbyInfoRecord);
 
     const lobbyStore = await LobbyStore.connect(lobbyService);
 
     const profilesService = new ProfilesClient(this.appAgentWebsocket, cellId);
-    const profilesStore = new ProfilesStore(profilesService, { additionalFields: ["A little something about you"]});
+    const profilesStore = new ProfilesStore(profilesService, {
+      additionalFields: ['A little something about you'],
+    });
 
     // console.log("@CondenserStore: @createLobby: Created ProfilesStore: ", profilesStore);
 
-
-    this._lobbies.update((store) => store.set(cellId[0], [lobbyStore, profilesStore, cellInfo.dna_modifiers]));
+    this._lobbies.update(store =>
+      store.set(cellId[0], [lobbyStore, profilesStore, cellInfo.dna_modifiers]),
+    );
 
     return cellId;
   }
@@ -548,7 +648,11 @@ export class CondenserStore {
       clone_cell_id: cellId,
     });
 
-    alert(`Disabled Group. To delete it permanently, delete the corresponding cloned cell with the DNA hash\n\n"${encodeHashToBase64(cellId[0])}"\n\nin the Holochain Launcher Admin.\n\nWARNING: If you delete a Group permanently, you won't ever be able to rejoin it with this installation of the Word Condenser.`);
+    alert(
+      `Disabled Group. To delete it permanently, delete the corresponding cloned cell with the DNA hash\n\n"${encodeHashToBase64(
+        cellId[0],
+      )}"\n\nin the Holochain Launcher Admin.\n\nWARNING: If you delete a Group permanently, you won't ever be able to rejoin it with this installation of the Word Condenser.`,
+    );
   }
 
   async enableLobby(cellId: CellId) {
@@ -560,22 +664,23 @@ export class CondenserStore {
   }
 
   async joinLobby(networkSeed: string, name: string): Promise<CellId> {
-
     // Check that the same lobby does not already exist
     const existingLobbies = Array.from(get(this._lobbies).values());
-
 
     // If there is already a lobby with the same name and network seed, then throw an error.
     // This should in pricniple be handled by the conductor but is not the case at the moment (https://github.com/holochain/holochain/issues/1969)
     existingLobbies.forEach(([_lobbyStore, _profilesStore, dnaModifiers]) => {
-      if (dnaModifiers.network_seed === networkSeed && (decode(dnaModifiers.properties) as any).name === name) {
-        alert("This Group is already installed in your conductor!");
-        throw new Error("Group already installed.");
+      if (
+        dnaModifiers.network_seed === networkSeed &&
+        (decode(dnaModifiers.properties) as any).name === name
+      ) {
+        alert('This Group is already installed in your conductor!');
+        throw new Error('Group already installed.');
       }
-    })
+    });
 
     const cellInfo = await this.appAgentWebsocket.createCloneCell({
-      role_name: "lobby",
+      role_name: 'lobby',
       modifiers: {
         network_seed: networkSeed,
         properties: {
@@ -584,15 +689,15 @@ export class CondenserStore {
         }, // lobby name will be fixed and part of the properties
       },
       name,
-    })
+    });
 
     const cellId = cellInfo.cell_id;
 
     // console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
 
-    let lobbyService = new LobbyService(
+    const lobbyService = new LobbyService(
       this.appAgentWebsocket,
-      "cravings",
+      'cravings',
       cellId,
     );
 
@@ -601,18 +706,26 @@ export class CondenserStore {
     // wait 2 seconds in order to get the chance to fetch the lobby info from another peer
     setTimeout(async () => {
       const lobbyStore = await LobbyStore.connect(lobbyService);
-      const profilesService = new ProfilesClient(this.appAgentWebsocket, cellId);
-      const profilesStore = new ProfilesStore(profilesService, { additionalFields: ["A little something about you"]});
-      this._lobbies.update((store) => store.set(cellId[0], [lobbyStore, profilesStore, cellInfo.dna_modifiers]));
+      const profilesService = new ProfilesClient(
+        this.appAgentWebsocket,
+        cellId,
+      );
+      const profilesStore = new ProfilesStore(profilesService, {
+        additionalFields: ['A little something about you'],
+      });
+      this._lobbies.update(store =>
+        store.set(cellId[0], [
+          lobbyStore,
+          profilesStore,
+          cellInfo.dna_modifiers,
+        ]),
+      );
     }, 2000);
 
     return cellId;
   }
 
-
-
   /** Here comes the logic to get Cravings filtered by lobby a.k.a group */
-
 
   // async lobbiesForCraving(cravingDnaHash: DnaHash): Promise<Array<LobbyData>> {
   //   // take the dna hash of the craving and check whether it is part of a lobby's cravings
@@ -666,7 +779,6 @@ export class CondenserStore {
   //     }
   //   });
 
-
   //   // // deduplicate cravingRecipeRecords to have a list of deduplicated DNA hahses
   //   // const flattenedDnaHashes = cravingRecipeRecords.flat().map((record) => (decodeEntry(record) as DnaRecipe).resulting_dna_hash);
   //   // const uniqueDnaHashes = [...new Set(flattenedDnaHashes)];
@@ -684,9 +796,7 @@ export class CondenserStore {
   //   composed: true,
   // }))}
 
-
   // getAllCravings(): Readable<DnaHashMap<CravingStore>> {
   //   return derived(this._cravings, (cravings) => cravings);
   // }
-
 }

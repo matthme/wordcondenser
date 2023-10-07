@@ -1,6 +1,13 @@
-import { Record, ActionHash, EntryHash, AgentPubKey, SignedActionHashed, Create, Delete, Update, CreateLink, DeleteLink } from '@holochain/client';
-
-
+import {
+  Record,
+  ActionHash,
+  SignedActionHashed,
+  Create,
+  Delete,
+  Update,
+  CreateLink,
+  DeleteLink,
+} from '@holochain/client';
 
 // !! IMPORTANT !! Order of the attributes matter in order to get the same DNA hash!
 export interface CravingDnaProperties {
@@ -23,9 +30,9 @@ export interface Reflection {
 }
 
 export interface UpdateReflectionInput {
-  original_reflection_hash: ActionHash,
-  previous_reflection_hash: ActionHash,
-  updated_reflection: Reflection,
+  original_reflection_hash: ActionHash;
+  previous_reflection_hash: ActionHash;
+  updated_reflection: Reflection;
 }
 
 export interface Association {
@@ -42,11 +49,10 @@ export interface CommentOnOffer {
 }
 
 export interface UpdateCommentOnOfferInput {
-  original_comment_on_offer_hash: ActionHash,
-  previous_comment_on_offer_hash: ActionHash,
-  updated_comment_on_offer: CommentOnReflection,
+  original_comment_on_offer_hash: ActionHash;
+  previous_comment_on_offer_hash: ActionHash;
+  updated_comment_on_offer: CommentOnReflection;
 }
-
 
 export interface CommentOnReflection {
   reflection_hash: ActionHash;
@@ -54,23 +60,20 @@ export interface CommentOnReflection {
 }
 
 export interface UpdateCommentOnReflectionInput {
-  original_comment_on_reflection_hash: ActionHash,
-  previous_comment_on_reflection_hash: ActionHash,
-  updated_comment_on_reflection: CommentOnReflection,
+  original_comment_on_reflection_hash: ActionHash;
+  previous_comment_on_reflection_hash: ActionHash;
+  updated_comment_on_reflection: CommentOnReflection;
 }
-
-
-
 
 export type CravingSignal =
   | {
-      type: "EntryCreated";
+      type: 'EntryCreated';
       action: SignedActionHashed<Create>;
       record: Record;
       app_entry: EntryTypes;
     }
   | {
-      type: "EntryUpdated";
+      type: 'EntryUpdated';
       action: SignedActionHashed<Update>;
       record: Record;
       app_entry: EntryTypes;
@@ -78,27 +81,25 @@ export type CravingSignal =
       original_app_entry: EntryTypes;
     }
   | {
-      type: "EntryDeleted";
+      type: 'EntryDeleted';
       action: SignedActionHashed<Delete>;
       original_app_entry: EntryTypes;
     }
   | {
-      type: "LinkCreated";
+      type: 'LinkCreated';
       action: SignedActionHashed<CreateLink>;
       link_type: Object; // for example {EntryToResonator: null}
     }
   | {
-      type: "LinkDeleted";
+      type: 'LinkDeleted';
       action: SignedActionHashed<DeleteLink>;
       link_type: Object;
     };
 
-
 export type EntryTypes =
-  | { type: "Offer" } & Offer
-  | { type: "Reflection" } & Reflection
-  | { type: "Association" } & Association
-  | { type: "Anecdote" } & Anecdote
-  | { type: "CommentOnOffer" } & CommentOnOffer
-  | { type: "CommentOnReflection" } & CommentOnReflection;
-
+  | ({ type: 'Offer' } & Offer)
+  | ({ type: 'Reflection' } & Reflection)
+  | ({ type: 'Association' } & Association)
+  | ({ type: 'Anecdote' } & Anecdote)
+  | ({ type: 'CommentOnOffer' } & CommentOnOffer)
+  | ({ type: 'CommentOnReflection' } & CommentOnReflection);

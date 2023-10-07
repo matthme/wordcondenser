@@ -15,17 +15,19 @@ import { decodeEntry } from '@holochain-open-dev/utils';
 import './association-map-element';
 import { CravingStore } from '../craving-store';
 import { Reflection } from './types';
-import { clientContext, condenserContext, cravingStoreContext } from '../contexts';
+import {
+  clientContext,
+  condenserContext,
+  cravingStoreContext,
+} from '../contexts';
 import { CondenserStore } from '../condenser-store';
 
-
 export interface ReflectionData {
-  reflection: Reflection,
-  timestamp: number,
-  author: AgentPubKey,
-  actionHash: ActionHash,
+  reflection: Reflection;
+  timestamp: number;
+  author: AgentPubKey;
+  actionHash: ActionHash;
 }
-
 
 @customElement('all-reflections')
 export class AllReflections extends LitElement {
@@ -39,55 +41,67 @@ export class AllReflections extends LitElement {
   cravingCellId!: CellId;
 
   @state()
-  sortBy: 'latest' | "oldest" | 'mostComments' = 'latest';
+  sortBy: 'latest' | 'oldest' | 'mostComments' = 'latest';
 
   @consume({ context: cravingStoreContext })
   _store!: CravingStore;
 
   private _allReflections = new StoreSubscriber(
     this,
-    () => this._store.allReflections
+    () => this._store.allReflections,
   );
 
   renderList(reflections: Array<Record>) {
     if (reflections.length === 0)
-    return html`<div style="font-size: 23px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
-      >No reflections found for this craving.</div
-      >`;
+      return html`<div
+        style="font-size: 23px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
+      >
+        No reflections found for this craving.
+      </div>`;
 
-    let reflectionDatas: (ReflectionData | undefined)[] = reflections.map((record) => {
-      const reflection = record ? (decodeEntry(record) as Reflection) : undefined;
+    let reflectionDatas: (ReflectionData | undefined)[] = reflections
+      .map(record => {
+        const reflection = record
+          ? (decodeEntry(record) as Reflection)
+          : undefined;
 
-      return reflection
-        ? {
-          reflection,
-          timestamp: record.signed_action.hashed.content.timestamp,
-          author: record.signed_action.hashed.content.author,
-          actionHash: record.signed_action.hashed.hash,
-        }
-        : undefined;
-    })
-    .filter((data) => !!data)
-
+        return reflection
+          ? {
+              reflection,
+              timestamp: record.signed_action.hashed.content.timestamp,
+              author: record.signed_action.hashed.content.author,
+              actionHash: record.signed_action.hashed.hash,
+            }
+          : undefined;
+      })
+      .filter(data => !!data);
 
     switch (this.sortBy) {
-      case "latest":
-        reflectionDatas = reflectionDatas.sort((reflectionData_a, reflectionData_b) => reflectionData_b!.timestamp - reflectionData_a!.timestamp);
-        console.log("reflection datas sorted by newest?: ", reflectionDatas);
+      case 'latest':
+        reflectionDatas = reflectionDatas.sort(
+          (reflectionData_a, reflectionData_b) =>
+            reflectionData_b!.timestamp - reflectionData_a!.timestamp,
+        );
+        console.log('reflection datas sorted by newest?: ', reflectionDatas);
         break;
-      case "oldest":
-        reflectionDatas = reflectionDatas.sort((reflectionData_a, reflectionData_b) => reflectionData_a!.timestamp - reflectionData_b!.timestamp);
-        console.log("reflection datas sorted by oldest?: ", reflectionDatas);
-
-      }
+      case 'oldest':
+        reflectionDatas = reflectionDatas.sort(
+          (reflectionData_a, reflectionData_b) =>
+            reflectionData_a!.timestamp - reflectionData_b!.timestamp,
+        );
+        console.log('reflection datas sorted by oldest?: ', reflectionDatas);
+        break;
+      default:
+        break;
+    }
 
     return html`
       <div style="display: flex; flex-direction: column">
         ${reflectionDatas.map(
-          (reflection) =>
+          reflection =>
             html`<reflection-element
               .reflection=${reflection}
-            ></reflection-element>`
+            ></reflection-element>`,
         )}
       </div>
     `;
@@ -95,13 +109,19 @@ export class AllReflections extends LitElement {
 
   render() {
     switch (this._allReflections.value.status) {
-      case "pending":
+      case 'pending':
         return html`loading...`;
-      case "error":
-        return html`ERROR`
-      case "complete":
-        this._store.updateReflectionsCount(this._allReflections.value.value.map((record) => record.signed_action.hashed.hash));
+      case 'error':
+        return html`ERROR`;
+      case 'complete':
+        this._store.updateReflectionsCount(
+          this._allReflections.value.value.map(
+            record => record.signed_action.hashed.hash,
+          ),
+        );
         return this.renderList(this._allReflections.value.value);
+      default:
+        return html`Impossibility Error.`;
     }
   }
 }

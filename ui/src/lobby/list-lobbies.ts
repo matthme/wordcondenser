@@ -17,23 +17,23 @@ export class ListLobbies extends LitElement {
   @consume({ context: condenserContext })
   _store!: CondenserStore;
 
-  private _allLobbies = new StoreSubscriber(
-    this,
-    () => this._store.getAllLobbies(),
+  private _allLobbies = new StoreSubscriber(this, () =>
+    this._store.getAllLobbies(),
   );
 
   renderList(lobbies: DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>) {
-
-    if (lobbies.size === 0) return html`<span style="color: #9098b3;">No lobbies found.</span>`;
-
+    if (lobbies.size === 0)
+      return html`<span style="color: #9098b3;">No lobbies found.</span>`;
 
     return html`
       <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
         ${Array.from(lobbies.values())
-          .sort(([store_a, _a, __a], [store_b, _b, __b]) => store_b.lobbyInfo!.signed_action.hashed.content.timestamp - store_a.lobbyInfo!.signed_action.hashed.content.timestamp)
-          .map((store) =>
-          html`<lobby-detail .store=${store}></lobby-detail>`
-        )}
+          .sort(
+            ([store_a, _a, __a], [store_b, _b, __b]) =>
+              store_b.lobbyInfo!.signed_action.hashed.content.timestamp -
+              store_a.lobbyInfo!.signed_action.hashed.content.timestamp,
+          )
+          .map(store => html`<lobby-detail .store=${store}></lobby-detail>`)}
       </div>
     `;
   }
