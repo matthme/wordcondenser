@@ -115,9 +115,17 @@ export class HolochainApp extends LitElement {
       });
 
       this._unlisten = await listen('deep-link-received', async e => {
+        console.log('Received deepLink: ', e.payload);
         this._deepLink = e.payload as string;
         this._dashboardMode = DashboardMode.JoinLobbyFromLink;
       });
+
+      const initialDeepLink = window.localStorage.getItem('initialDeepLink');
+      if (initialDeepLink) {
+        this._deepLink = initialDeepLink;
+        this._dashboardMode = DashboardMode.JoinLobbyFromLink;
+        window.localStorage.removeItem('initialDeepLink');
+      }
     }
 
     // check where to route after refresh

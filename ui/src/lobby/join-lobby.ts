@@ -15,7 +15,7 @@ import '../components/mvb-button';
 import { sharedStyles } from '../sharedStyles';
 import { CondenserStore } from '../condenser-store';
 import { clientContext, condenserContext } from '../contexts';
-import { inviteLinkToGroupProps } from '../utils';
+import { deepLinkToGroupProps, inviteLinkToGroupProps } from '../utils';
 import { MVBTextField } from '../components/mvb-textfield';
 
 @customElement('join-lobby')
@@ -73,8 +73,16 @@ export class JoinLobby extends LitElement {
       this.groupNameInput.setValue(name);
       this.groupSeedInput.setValue(networkSeed);
     } catch (e) {
-      console.error('Failed to read link: ', e);
-      this.invalidLink = true;
+      try {
+        const [name, networkSeed] = deepLinkToGroupProps(link);
+        this._name = name;
+        this._networkSeed = networkSeed;
+        this.groupNameInput.setValue(name);
+        this.groupSeedInput.setValue(networkSeed);
+      } catch (err) {
+        console.error(`Failed to read link: ${link}\nErrors: ${e}\n${err}`);
+        this.invalidLink = true;
+      }
     }
   }
 
