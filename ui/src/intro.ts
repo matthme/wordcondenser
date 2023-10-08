@@ -40,16 +40,19 @@ export class IntroSection extends LitElement {
         style="align-items: center; max-width: 1100px; flex: 1; margin: auto;"
       >
         <div class="section" style="margin-bottom: 70px;">
-          I will now lead you through a short intro explaining the most
-          important things about the
+          I will now lead you through an intro explaining the most important
+          things about the
           <a href="https://wordcondenser.com" target="_blank">Word Condenser</a
           >.
         </div>
 
-        <div class="note" style="background: #a9000033; margin-bottom: 100px;">
-          💡 That's one of those <b><i>very rare</i></b> moments where you
-          should <b><i>actually</i></b> resist your temptation to skip the
-          intro.
+        <div class="light-bulb-note" style="margin-bottom: 100px;">
+          💡 The Word Condenser is built with
+          <a href="https://holochain.org" target="_blank">Holochain</a> and is
+          therefore fully peer-to-peer. If you haven't been exposed to Holochain
+          before it's worth taking the time to read the intro since Holochain
+          apps tend to work refreshingly different than apps we're currently
+          used to.
         </div>
 
         <div
@@ -170,11 +173,9 @@ export class IntroSection extends LitElement {
 
           <div class="section">In order to "join" a <span style="color: #FFC64C;">Craving</span> - that peer-to-peer
              network forming around a word that is about to find its way into our collective consciousness - you need to know
-            a secret, unique "network seed" that has been randomly generated when the <span style="color: #FFC64C;">Craving</span> was created.</div>
+              a secret, unique "network seed" that has been randomly generated when the <span style="color: #FFC64C;">Craving</span> was created.</div>
 
           <img src="craving_explainer.svg" alt="A visualization of how a peer-to-peer network is formed around a Craving and a secret is required to join it." style="margin-bottom: 30px;" />
-
-          <div class="section">In this current version of the Word Condenser, <b><i>anyone</i></b> that happens to know this secret network seed can join the <span style="color: #FFC64C;">Craving</span>.</div>
 
           <div class="light-bulb-note" style="margin-top: 20px;">
             💡&nbsp;<b>peer-to-peer network</b><br><br>
@@ -182,7 +183,7 @@ export class IntroSection extends LitElement {
             just between their very computers and the warm and kind humans sitting in front of them.<br><br>
             No need at all for anyone sitting in between with a big server and asking for fees or just silently selling
             those people's <a href="https://lessshitmorebeauty.com" target="_blank">excrements</a> (others call it data) to advertisers, thus binding our most valuable resource -
-             our shared time and attention - and holding hostage our vast latent collective capacity to get together and ROCK THIS PLANET!!
+             our shared time and attention - and holding hostage our vast latent collective capacity to get together and rock the challenges ahead of us.
           </i></div>
 
           <div class="row" style="margin-bottom: 50px;">
@@ -258,10 +259,9 @@ export class IntroSection extends LitElement {
         </div>
 
         <div class="section">
-          And again,
           <b
-            ><i>anyone</i> who knows both, the name of the Group and the 5
-            secret words can join this Group.</b
+            >Anyone who knows both, the name of the Group and the 5 secret words
+            can join this Group.</b
           >
         </div>
 
@@ -630,6 +630,7 @@ export class IntroSection extends LitElement {
         border-radius: 15px;
         font-size: 0.9em;
         color: #cf4545;
+        background: #a9000033;
         border: 4px solid #7d1d1d;
         padding: 15px 20px;
         text-align: left;

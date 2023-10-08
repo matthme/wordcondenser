@@ -1045,14 +1045,13 @@ export class HolochainApp extends LitElement {
 
     return html`
       <main>
-        ${window.localStorage.getItem('intro-seen') || true
+        ${window.localStorage.getItem('intro-seen')
           ? this.renderHome()
           : html`<intro-section
               @intro-finished=${() => this.requestUpdate()}
             ></intro-section>`}
-        ${(this._dashboardMode !== DashboardMode.Settings &&
-          window.localStorage.getItem('intro-seen')) ||
-        true
+        ${this._dashboardMode !== DashboardMode.Settings &&
+        window.localStorage.getItem('intro-seen')
           ? html`<img
               class="icon"
               src="refresh.svg"
