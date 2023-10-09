@@ -56,17 +56,29 @@ export function groupPropsToInviteLink(name: string, networkSeed: string) {
 }
 
 export function groupPropsToInviteString(name: string, networkSeed: string) {
-  return `${window.btoa(name).replace('+', '%').replace('/', '-')}#${window
+  return `${window.btoa(name).replace('+', '&').replace('/', '-')}#${window
     .btoa(networkSeed)
-    .replace('+', '%')
+    .replace('+', '&')
     .replace('/', '-')}`;
 }
 
 export function inviteStringToGroupProps(input: string): [string, string] {
   const arr = input.split('#');
   if (arr.length !== 2) throw new Error(`Invalid invite string: ${input}`);
-  const name = window.atob(arr[0].replace('%', '+').replace('-', '/'));
-  const networkSeed = window.atob(arr[1].replace('%', '+').replace('-', '/'));
+  let name;
+  let networkSeed;
+  try {
+    name = window.atob(arr[0].replace('&', '+').replace('-', '/'));
+    networkSeed = window.atob(arr[1].replace('&', '+').replace('-', '/'));
+  } catch (e) {
+    // Windows encodes '#' wrong to '/#', therefore also try
+    name = window.atob(
+      arr[0].replace('/#', '#').replace('&', '+').replace('-', '/'),
+    );
+    networkSeed = window.atob(
+      arr[1].replace('/#', '#').replace('&', '+').replace('-', '/'),
+    );
+  }
   return [name, networkSeed];
 }
 

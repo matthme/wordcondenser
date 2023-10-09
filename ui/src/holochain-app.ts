@@ -118,6 +118,9 @@ export class HolochainApp extends LitElement {
         console.log('Received deepLink: ', e.payload);
         this._deepLink = e.payload as string;
         this._dashboardMode = DashboardMode.JoinLobbyFromLink;
+        // remove intialDeepLink property (required for macOS, since initialDeepLink is
+        // written to the window object with each event)
+        window.localStorage.removeItem('initialDeepLink');
       });
 
       const initialDeepLink = window.localStorage.getItem('initialDeepLink');
