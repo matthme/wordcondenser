@@ -65,20 +65,18 @@ export function groupPropsToInviteString(name: string, networkSeed: string) {
 export function inviteStringToGroupProps(input: string): [string, string] {
   const arr = input.split('#');
   if (arr.length !== 2) throw new Error(`Invalid invite string: ${input}`);
-  let name;
-  let networkSeed;
-  try {
-    name = window.atob(arr[0].replace('&', '+').replace('-', '/'));
-    networkSeed = window.atob(arr[1].replace('&', '+').replace('-', '/'));
-  } catch (e) {
-    // Windows encodes '#' wrong to '/#', therefore also try
-    name = window.atob(
-      arr[0].replace('/#', '#').replace('&', '+').replace('-', '/'),
-    );
-    networkSeed = window.atob(
-      arr[1].replace('/#', '#').replace('&', '+').replace('-', '/'),
-    );
+
+  let encodedName = arr[0];
+  if (encodedName.endsWith('/')) {
+    encodedName = encodedName.slice(0, -1);
   }
+  const encodedNetworkSeed = arr[1];
+
+  const name = window.atob(encodedName.replace('&', '+').replace('-', '/'));
+  const networkSeed = window.atob(
+    encodedNetworkSeed.replace('&', '+').replace('-', '/'),
+  );
+
   return [name, networkSeed];
 }
 
