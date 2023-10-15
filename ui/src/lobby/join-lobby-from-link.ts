@@ -148,7 +148,9 @@ export class JoinLobbyFromLink extends LitElement {
               .disabled=${!this.isLobbyValid() && !this.installing}
             >
               <div class="row" style="align-items: center;">
-                <span style="margin-left: 12px;">Join Group</span>
+                <span style="margin-left: 12px;"
+                  >${this.installing ? 'joining...' : 'Join Group'}</span
+                >
               </div>
             </mvb-button>
           </div>

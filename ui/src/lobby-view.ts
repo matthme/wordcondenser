@@ -286,6 +286,7 @@ ${this.lobbyInfo!.network_seed}
                     font-weight: bold;
                     justify-content: center;
                     align-items: center;
+                    margin: 30px;
                   "
                   alt="Group logo placeholder"
                 >
