@@ -391,6 +391,7 @@ export class HolochainApp extends LitElement {
                 this._dashboardMode = DashboardMode.CravingView;
               }}
               @notify-os=${async (e: CustomEvent) => {
+                console.log('Trying to notify OS');
                 try {
                   await notifyOS(
                     e.detail.notification,
@@ -987,9 +988,11 @@ export class HolochainApp extends LitElement {
                 window.localStorage.removeItem('intro-seen');
                 this.requestUpdate();
               }}
-              @keypress=${() => {
-                window.localStorage.removeItem('intro-seen');
-                this.requestUpdate();
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  window.localStorage.removeItem('intro-seen');
+                  this.requestUpdate();
+                }
               }}
             >
               <span style="color: #abb5d6; font-size: 1em;"
@@ -1073,7 +1076,28 @@ export class HolochainApp extends LitElement {
               @click=${() => this.handleRefresh()}
               @keypress=${() => this.handleRefresh()}
             />`
-          : ``}
+          : html``}
+        ${window.localStorage.getItem('intro-seen')
+          ? html``
+          : html`
+              <div
+                class="confirm-btn"
+                style="align-items: center; margin-top: 30px; position: fixed; bottom: 20px; left: 20px; "
+                tabindex="0"
+                @click=${() => {
+                  window.localStorage.setItem('intro-seen', 'true');
+                  this.handleRefresh();
+                }}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter') {
+                    window.localStorage.setItem('intro-seen', 'true');
+                    this.handleRefresh();
+                  }
+                }}
+              >
+                <span style="color: #abb5d6; font-size: 1em;">Skip Intro</span>
+              </div>
+            `}
       </main>
     `;
   }

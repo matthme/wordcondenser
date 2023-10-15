@@ -28,6 +28,11 @@
 
   <body>
     <holochain-app></holochain-app>
+    <script>
+      const initialDeepLink = window.localStorage.getItem('initalDeepLink');
+      // eslint-disable-next-line no-console
+      console.log('initialDeepLink: ', initialDeepLink);
+    </script>
     <script type="module" src="./src/holochain-app.ts"></script>
   </body>
 </html>
