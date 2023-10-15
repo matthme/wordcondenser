@@ -3,6 +3,7 @@ import {
   get,
   lazyLoadAndPoll,
   Readable,
+  Unsubscriber,
   writable,
   Writable,
 } from '@holochain-open-dev/stores';
@@ -27,7 +28,7 @@ import { LobbyStore } from './lobby-store';
 import { ProfilesClient } from './lobby/profiles/profiles-client';
 import { ProfilesStore } from './lobby/profiles/profiles-store';
 import { DnaRecipe, LobbyInfo } from './types';
-import { getLocalStorageItem } from './utils';
+import { getLocalStorageItem, notifyOS } from './utils';
 
 export interface CravingData {
   title: string; // in case it is not installed, we have info about the title from the DnaRecipe
@@ -67,6 +68,8 @@ export class CondenserStore {
 
   private _filterGroup: Writable<DnaHash | undefined> = writable(undefined);
 
+  private _pollingUnsubscriber: Unsubscriber | undefined;
+
   constructor(
     protected appAgentWebsocket: AppAgentWebsocket,
     installedCravings: DnaHashMap<CravingStore>,
@@ -82,6 +85,7 @@ export class CondenserStore {
     this._lobbies.set(lobbies);
     this._disabledLobbies.set(disabledLobbies);
     this._cravingLobbyMapping.set(cravingLobbyMapping);
+    this.reSubscribeToPolling();
     // console.log("@CondenserStore constructor: installedCravings: ", installedCravings.values());
     // console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
   }
@@ -387,6 +391,23 @@ export class CondenserStore {
     return derived(this._disabledCravings, cravings => cravings);
   }
 
+  reSubscribeToPolling() {
+    if (this._pollingUnsubscriber) this._pollingUnsubscriber();
+
+    let unsubscribers: Array<Unsubscriber> = [];
+
+    Array.from(get(this._installedCravings).values()).forEach(store => {
+      const unsubscribe1 = store.associationsCount.subscribe(() => undefined);
+      const unsubscribe2 = store.offersCount.subscribe(() => undefined);
+      const unsubscribe3 = store.allReflectionsCount.subscribe(() => undefined);
+      const unsubscribe4 = store.allCommentsCount.subscribe(() => undefined);
+      unsubscribers = [unsubscribe1, unsubscribe2, unsubscribe3, unsubscribe4];
+    });
+    this._pollingUnsubscriber = () => {
+      unsubscribers.forEach(unsubscribe => unsubscribe());
+    };
+  }
+
   /**
    * Create a new craving as the original poster
    *
@@ -429,6 +450,8 @@ export class CondenserStore {
     const cravingStore = await CravingStore.connect(cravingService);
 
     this._installedCravings.update(store => store.set(cellId[0], cravingStore));
+
+    this.reSubscribeToPolling();
 
     return cellInfo;
   }
@@ -499,6 +522,8 @@ export class CondenserStore {
     const cravingStore = await CravingStore.connect(cravingService);
 
     this._installedCravings.update(store => store.set(cellId[0], cravingStore));
+
+    this.reSubscribeToPolling();
 
     return cellInfo;
   }
@@ -633,15 +658,30 @@ export class CondenserStore {
             ...allRecipeDnaHashes,
           ];
 
-          allRecipeDnaHashes.forEach(dnaHash => {
+          allRecipeDnaHashes.forEach(async dnaHash => {
             const cravingDiscovered = getLocalStorageItem<number>(
               `cravingDiscovered#${encodeHashToBase64(dnaHash)}`,
             );
-            if (!cravingDiscovered)
+            if (!cravingDiscovered) {
+              // This is a new Craving :) Send OS notification and add to discoveredCravings
+              try {
+                await notifyOS(
+                  {
+                    title: 'New Craving',
+                    body: 'A new Craving is available.',
+                    urgency: 'medium',
+                  },
+                  false,
+                  true,
+                );
+              } catch (e) {
+                console.warn(`Failed to send OS notification: ${e}`);
+              }
               window.localStorage.setItem(
                 `cravingDiscovered#${encodeHashToBase64(dnaHash)}`,
                 JSON.stringify(Date.now()),
               );
+            }
           });
         },
       ),

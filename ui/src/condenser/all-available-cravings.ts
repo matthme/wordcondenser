@@ -42,7 +42,6 @@ export class AllAvailableCravings extends LitElement {
   _unseenCravings: Array<DnaHashB64> = [];
 
   async firstUpdated() {
-    console.log('FIRSTUPDATED::::');
     await this._store.fetchStores();
     this._allAvailableCravings.value.forEach(
       ([dnaHash, [_cravingCreationTime, _dnaRecipe, _lobbyDatas]]) => {
@@ -58,7 +57,7 @@ export class AllAvailableCravings extends LitElement {
         }
       },
     );
-    window.setInterval(async () => {
+    this._fetchStoreInterval = window.setInterval(async () => {
       await this._store.fetchStores();
     }, 5000);
     this.requestUpdate();
@@ -109,8 +108,6 @@ export class AllAvailableCravings extends LitElement {
           No available cravings found that you did not already join.
         </div>
       </div>`;
-
-    console.log('CRAVING CREATION TIMES: ', availableCravings);
 
     return html`
       <div style="display: flex; flex-direction: row; flex-wrap: wrap;">

@@ -1,9 +1,5 @@
-import {
-  AsyncReadable,
-  asyncReadable,
-  lazyLoadAndPoll,
-} from '@holochain-open-dev/stores';
-import { decodeEntry, LazyHoloHashMap } from '@holochain-open-dev/utils';
+import { AsyncReadable, lazyLoadAndPoll } from '@holochain-open-dev/stores';
+import { LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
@@ -16,7 +12,24 @@ import {
 import { CravingService } from './craving-service';
 import { CravingDnaProperties } from './condenser/types';
 import { CravingMessageStore } from './types';
-import { getLocalStorageItem } from './utils';
+import {
+  getCravingNotificationSettings,
+  getLocalStorageItem,
+  getNotifiedAssociationsCount,
+  getNotifiedCommentsCount,
+  getNotifiedOffersCount,
+  getNotifiedReflectionsCount,
+  isKangaroo,
+  newAssociationsCount,
+  newCommentsCount,
+  newOffersCount,
+  newReflectionsCount,
+  notifyOS,
+  setNotifiedAssociationsCount,
+  setNotifiedCommentsCount,
+  setNotifiedOffersCount,
+  setNotifiedReflectionsCount,
+} from './utils';
 
 export interface AssociationData {
   record: Record;
@@ -172,17 +185,6 @@ export class CravingStore {
     );
   }
 
-  // useful for immediately displaying the number of new associations on the craving detail card
-  // no need to also get number of drops
-  polledAssociations = lazyLoadAndPoll(
-    () => this.service.getAllAssociations(),
-    2000,
-  );
-
-  // useful for immediately displaying the number of new offesr on the craving detail card
-  // no need to also get number of drops
-  polledOffers = lazyLoadAndPoll(() => this.service.getAllOffers(), 2000);
-
   allAssociations = lazyLoadAndPoll(async () => {
     const associationRecords = await this.service.getAllAssociations();
 
@@ -207,7 +209,99 @@ export class CravingStore {
         return associationData;
       }),
     );
-  }, 1000);
+  }, 1500);
+
+  // useful for immediately displaying the number of new associations on the craving detail card
+  // no need to also get number of drops
+  // returns [{total count}, {count of new associations}]
+  associationsCount = lazyLoadAndPoll(async () => {
+    const allAssociations = await this.service.getAllAssociations();
+    const cravingDnaHash = this.service.cellId[0];
+    const currentCount = allAssociations.length;
+    const newCount = newAssociationsCount(this.service.cellId[0], currentCount);
+
+    const notifiedCount =
+      getNotifiedAssociationsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+
+    if (isKangaroo() && currentCount > notifiedCount) {
+      const notificationSettings = getCravingNotificationSettings(
+        encodeHashToBase64(cravingDnaHash),
+      );
+      if (
+        notificationSettings.associations.os ||
+        notificationSettings.associations.systray
+      ) {
+        try {
+          const notification = {
+            title: 'New Association',
+            body: 'New Association',
+            urgency: 'medium' as 'medium' | 'high' | 'low',
+          };
+          await notifyOS(
+            notification,
+            notificationSettings.associations.os,
+            notificationSettings.associations.systray,
+          );
+          setNotifiedAssociationsCount(
+            encodeHashToBase64(cravingDnaHash),
+            currentCount,
+          );
+        } catch (err) {
+          console.warn(`Failed to notify OS: ${err}`);
+        }
+      }
+    }
+    return [
+      currentCount.toString(),
+      newCount ? newCount.toString() : undefined,
+    ] as [string, string | undefined];
+  }, 2000);
+
+  // useful for immediately displaying the number of new offesr on the craving detail card
+  // no need to also get number of drops
+  // returns [{total count}, {count of new offers}]
+  offersCount = lazyLoadAndPoll(async () => {
+    const allOffers = await this.service.getAllOffers();
+    const cravingDnaHash = this.service.cellId[0];
+    const currentCount = allOffers.length;
+    const newCount = newOffersCount(cravingDnaHash, currentCount);
+    const notifiedCount =
+      getNotifiedOffersCount(encodeHashToBase64(cravingDnaHash)) || 0;
+
+    if (isKangaroo() && currentCount > notifiedCount) {
+      const notificationSettings = getCravingNotificationSettings(
+        encodeHashToBase64(cravingDnaHash),
+      );
+      if (
+        notificationSettings.offers.os ||
+        notificationSettings.offers.systray
+      ) {
+        try {
+          const notification = {
+            title: 'New Offer',
+            body: 'New Offer',
+            urgency: 'medium' as 'medium' | 'high' | 'low',
+          };
+          await notifyOS(
+            notification,
+            notificationSettings.offers.os,
+            notificationSettings.offers.systray,
+          );
+          setNotifiedOffersCount(
+            encodeHashToBase64(cravingDnaHash),
+            currentCount,
+          );
+        } catch (err) {
+          console.warn(`Failed to notify OS: ${err}`);
+        }
+      }
+    }
+
+    return [
+      currentCount.toString(),
+      newCount ? newCount.toString() : undefined,
+    ] as [string, string | undefined];
+  }, 2000);
 
   /**
    * Gets all reflections and all comments for those reflections and returns the number
@@ -215,23 +309,104 @@ export class CravingStore {
    */
   allCommentsCount = lazyLoadAndPoll(async () => {
     const reflectionRecords = await this.service.getAllReflections();
-    let counter = 0;
+    let currentCount = 0;
     await Promise.all(
       reflectionRecords.map(async record => {
         const commentRecords = await this.service.getAllCommentsOnReflection(
           record.signed_action.hashed.hash,
         );
-        counter += commentRecords.length;
+        currentCount += commentRecords.length;
       }),
     );
 
-    return counter;
+    const cravingDnaHash = this.service.cellId[0];
+    const newCount = newCommentsCount(cravingDnaHash, currentCount);
+    const notifiedCount =
+      getNotifiedCommentsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+    if (isKangaroo() && currentCount > notifiedCount) {
+      const notificationSettings = getCravingNotificationSettings(
+        encodeHashToBase64(cravingDnaHash),
+      );
+      if (
+        notificationSettings.comments.os ||
+        notificationSettings.comments.systray
+      ) {
+        try {
+          const notification = {
+            title: 'New Comment',
+            body: 'New Comment',
+            urgency: 'medium' as 'medium' | 'high' | 'low',
+          };
+          await notifyOS(
+            notification,
+            notificationSettings.comments.os,
+            notificationSettings.comments.systray,
+          );
+          setNotifiedCommentsCount(
+            encodeHashToBase64(cravingDnaHash),
+            currentCount,
+          );
+        } catch (err) {
+          console.warn(`Failed to notify OS: ${err}`);
+        }
+      }
+    }
+    return [
+      currentCount.toString(),
+      newCount ? newCount.toString() : undefined,
+    ] as [string, string | undefined];
   }, 3500);
 
   allReflections = lazyLoadAndPoll(
     () => this.service.getAllReflections(),
-    1000,
+    1500,
   );
+
+  // useful for immediately displaying the number of new associations on the craving detail card
+  // no need to also get number of drops
+  // returns [{total count}, {count of new associations}]
+  allReflectionsCount = lazyLoadAndPoll(async () => {
+    const allReflections = await this.service.getAllReflections();
+    const cravingDnaHash = this.service.cellId[0];
+    const currentCount = allReflections.length;
+    const newCount = newReflectionsCount(this.service.cellId[0], currentCount);
+
+    const notifiedCount =
+      getNotifiedReflectionsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+
+    if (isKangaroo() && currentCount > notifiedCount) {
+      const notificationSettings = getCravingNotificationSettings(
+        encodeHashToBase64(cravingDnaHash),
+      );
+      if (
+        notificationSettings.reflections.os ||
+        notificationSettings.reflections.systray
+      ) {
+        try {
+          const notification = {
+            title: 'New Reflection',
+            body: 'New Reflection',
+            urgency: 'medium' as 'medium' | 'high' | 'low',
+          };
+          await notifyOS(
+            notification,
+            notificationSettings.reflections.os,
+            notificationSettings.reflections.systray,
+          );
+          setNotifiedReflectionsCount(
+            encodeHashToBase64(cravingDnaHash),
+            currentCount,
+          );
+        } catch (err) {
+          console.warn(`Failed to notify OS: ${err}`);
+        }
+      }
+    }
+    return [
+      currentCount.toString(),
+      newCount ? newCount.toString() : undefined,
+    ] as [string, string | undefined];
+  }, 2000);
 
   // // create instead a data structure here that also contains all the comments and resonances for a reflection
   // allReflections = asyncReadable<Array<Record>>(async (set) => {

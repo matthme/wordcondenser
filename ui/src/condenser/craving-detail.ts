@@ -49,9 +49,9 @@ export class CravingDetail extends LitElement {
     this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
   );
 
-  private _allReflections = new StoreSubscriber(
+  private _allReflectionsCount = new StoreSubscriber(
     this,
-    () => this.store.allReflections,
+    () => this.store.allReflectionsCount,
   );
 
   private _allCommentCount = new StoreSubscriber(
@@ -59,11 +59,14 @@ export class CravingDetail extends LitElement {
     () => this.store.allCommentsCount,
   );
 
-  private _allOffers = new StoreSubscriber(this, () => this.store.polledOffers);
-
-  private _allAssociations = new StoreSubscriber(
+  private _offersCount = new StoreSubscriber(
     this,
-    () => this.store.polledAssociations,
+    () => this.store.offersCount,
+  );
+
+  private _associationsCount = new StoreSubscriber(
+    this,
+    () => this.store.associationsCount,
   );
 
   private _amIFiltered = new StoreSubscriber(this, () =>
@@ -74,53 +77,13 @@ export class CravingDetail extends LitElement {
 
   // [number of total associations total, number of new associations]
   associationsCount(): [string, string | undefined] {
-    switch (this._allAssociations.value.status) {
+    switch (this._associationsCount.value.status) {
       case 'pending':
         return ['?', undefined];
       case 'error':
         return ['?', undefined];
       case 'complete': {
-        const cravingDnaHash = this.store.service.cellId[0];
-        const currentCount = this._allAssociations.value.value.length;
-        const newCount = newAssociationsCount(
-          this.store.service.cellId[0],
-          currentCount,
-        );
-        const notifiedCount =
-          getNotifiedAssociationsCount(encodeHashToBase64(cravingDnaHash)) || 0;
-        if (isKangaroo() && currentCount > notifiedCount) {
-          const notificationSettings = getCravingNotificationSettings(
-            encodeHashToBase64(cravingDnaHash),
-          );
-          if (
-            notificationSettings.associations.os ||
-            notificationSettings.associations.systray
-          ) {
-            this.dispatchEvent(
-              new CustomEvent('notify-os', {
-                detail: {
-                  notification: {
-                    title: 'New Association',
-                    body: 'New Association',
-                    urgency: 'medium',
-                  },
-                  os: notificationSettings.associations.os,
-                  systray: notificationSettings.associations.systray,
-                },
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }
-          setNotifiedAssociationsCount(
-            encodeHashToBase64(cravingDnaHash),
-            currentCount,
-          );
-        }
-        return [
-          currentCount.toString(),
-          newCount ? newCount.toString() : undefined,
-        ];
+        return this._associationsCount.value.value;
       }
       default:
         return ['?', undefined];
@@ -128,56 +91,22 @@ export class CravingDetail extends LitElement {
   }
 
   reflectionCount(): [string, string | undefined] {
-    switch (this._allReflections.value.status) {
+    switch (this._allReflectionsCount.value.status) {
       case 'pending':
         return ['?', undefined];
       case 'error':
         return ['?', undefined];
-      case 'complete': {
-        const cravingDnaHash = this.store.service.cellId[0];
-        const currentCount = this._allReflections.value.value.length;
-        const newCount = newReflectionsCount(cravingDnaHash, currentCount);
-        const notifiedCount =
-          getNotifiedReflectionsCount(encodeHashToBase64(cravingDnaHash)) || 0;
-        if (isKangaroo() && currentCount > notifiedCount) {
-          const notificationSettings = getCravingNotificationSettings(
-            encodeHashToBase64(cravingDnaHash),
-          );
-          if (
-            notificationSettings.reflections.os ||
-            notificationSettings.reflections.systray
-          ) {
-            this.dispatchEvent(
-              new CustomEvent('notify-os', {
-                detail: {
-                  notification: {
-                    title: 'New Reflection',
-                    body: 'New Reflection',
-                    urgency: 'medium',
-                  },
-                  os: notificationSettings.reflections.os,
-                  systray: notificationSettings.reflections.systray,
-                },
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }
-          setNotifiedReflectionsCount(
-            encodeHashToBase64(cravingDnaHash),
-            currentCount,
-          );
-        }
-        return [
-          currentCount.toString(),
-          newCount ? newCount.toString() : undefined,
-        ];
-      }
+      case 'complete':
+        return this._allReflectionsCount.value.value;
       default:
         return ['?', undefined];
     }
   }
 
+  /**
+   *
+   * @returns number of new comments as a string
+   */
   commentsCount(): string | undefined {
     switch (this._allCommentCount.value.status) {
       case 'pending':
@@ -185,41 +114,7 @@ export class CravingDetail extends LitElement {
       case 'error':
         return undefined;
       case 'complete': {
-        const cravingDnaHash = this.store.service.cellId[0];
-        const currentCount = this._allCommentCount.value.value;
-        const newCount = newCommentsCount(cravingDnaHash, currentCount);
-        const notifiedCount =
-          getNotifiedCommentsCount(encodeHashToBase64(cravingDnaHash)) || 0;
-        if (isKangaroo() && currentCount > notifiedCount) {
-          const notificationSettings = getCravingNotificationSettings(
-            encodeHashToBase64(cravingDnaHash),
-          );
-          if (
-            notificationSettings.comments.os ||
-            notificationSettings.comments.systray
-          ) {
-            this.dispatchEvent(
-              new CustomEvent('notify-os', {
-                detail: {
-                  notification: {
-                    title: 'New Comment',
-                    body: 'New Comment',
-                    urgency: 'medium',
-                  },
-                  os: notificationSettings.comments.os,
-                  systray: notificationSettings.comments.systray,
-                },
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }
-          setNotifiedCommentsCount(
-            encodeHashToBase64(cravingDnaHash),
-            currentCount,
-          );
-        }
-        return newCount ? newCount.toString() : undefined;
+        return this._allCommentCount.value.value[1];
       }
       default:
         return undefined;
@@ -227,52 +122,13 @@ export class CravingDetail extends LitElement {
   }
 
   offersCount(): [string, string | undefined] {
-    switch (this._allOffers.value.status) {
+    switch (this._offersCount.value.status) {
       case 'pending':
         return ['?', undefined];
       case 'error':
         return ['?', undefined];
       case 'complete': {
-        const cravingDnaHash = this.store.service.cellId[0];
-        const currentCount = this._allOffers.value.value.length;
-        const newCount = newOffersCount(cravingDnaHash, currentCount);
-        const notifiedCount =
-          getNotifiedOffersCount(encodeHashToBase64(cravingDnaHash)) || 0;
-
-        if (isKangaroo() && currentCount > notifiedCount) {
-          const notificationSettings = getCravingNotificationSettings(
-            encodeHashToBase64(cravingDnaHash),
-          );
-          if (
-            notificationSettings.offers.os ||
-            notificationSettings.offers.systray
-          ) {
-            this.dispatchEvent(
-              new CustomEvent('notify-os', {
-                detail: {
-                  notification: {
-                    title: 'New Offer',
-                    body: 'New Offer',
-                    urgency: 'medium',
-                  },
-                  os: notificationSettings.offers.os,
-                  systray: notificationSettings.offers.systray,
-                },
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }
-          setNotifiedOffersCount(
-            encodeHashToBase64(cravingDnaHash),
-            currentCount,
-          );
-        }
-
-        return [
-          currentCount.toString(),
-          newCount ? newCount.toString() : undefined,
-        ];
+        return this._offersCount.value.value;
       }
       default:
         return ['?', undefined];

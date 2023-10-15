@@ -136,8 +136,6 @@ export class HolochainApp extends LitElement {
       'previousDashboardMode',
     );
 
-    // setInterval(async () => await this.store.fetchStores(), 10000);
-
     if (!previousDashboardMode) {
       this.loading = false;
       return;
@@ -406,18 +404,6 @@ export class HolochainApp extends LitElement {
                 this._selectedCravingCellId = e.detail.cellId;
                 this._selectedCraving = e.detail.craving;
                 this._dashboardMode = DashboardMode.CravingView;
-              }}
-              @notify-os=${async (e: CustomEvent) => {
-                console.log('Trying to notify OS');
-                try {
-                  await notifyOS(
-                    e.detail.notification,
-                    e.detail.os,
-                    e.detail.systray,
-                  );
-                } catch (err) {
-                  console.warn(`Failed to notify OS: ${err}`);
-                }
               }}
             >
             </all-cravings>
