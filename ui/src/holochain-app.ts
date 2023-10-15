@@ -1058,7 +1058,7 @@ export class HolochainApp extends LitElement {
     if (this.loading) return html` <loading-animation></loading-animation> `;
 
     return html`
-      <main>
+      <main style="position: relative;">
         ${window.localStorage.getItem('intro-seen')
           ? this.renderHome()
           : html`<intro-section
@@ -1082,7 +1082,7 @@ export class HolochainApp extends LitElement {
           : html`
               <div
                 class="confirm-btn"
-                style="align-items: center; margin-top: 30px; position: fixed; bottom: 20px; left: 20px; "
+                style="align-items: center; margin-top: 30px; position: absolute; bottom: 15px; left: 15px; "
                 tabindex="0"
                 @click=${() => {
                   window.localStorage.setItem('intro-seen', 'true');
