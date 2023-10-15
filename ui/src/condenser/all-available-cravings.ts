@@ -4,11 +4,16 @@ import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 
 import './craving-detail';
-import { DnaHash } from '@holochain/client';
-import { CondenserStore, LobbyData } from '../condenser-store';
+import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
+import {
+  CondenserStore,
+  CravingCreationTime,
+  LobbyData,
+} from '../condenser-store';
 import { condenserContext } from '../contexts';
 import { sharedStyles } from '../sharedStyles';
 import { DnaRecipe } from '../types';
+import { getLocalStorageItem } from '../utils';
 
 @customElement('all-available-cravings')
 export class AllAvailableCravings extends LitElement {
@@ -24,6 +29,40 @@ export class AllAvailableCravings extends LitElement {
 
   @state()
   installingDnaHash: DnaHash | undefined;
+
+  @state()
+  _fetchStoreInterval: number | undefined;
+
+  disconnectedCallback(): void {
+    if (this._fetchStoreInterval)
+      window.clearInterval(this._fetchStoreInterval);
+  }
+
+  @state()
+  _unseenCravings: Array<DnaHashB64> = [];
+
+  async firstUpdated() {
+    console.log('FIRSTUPDATED::::');
+    await this._store.fetchStores();
+    this._allAvailableCravings.value.forEach(
+      ([dnaHash, [_cravingCreationTime, _dnaRecipe, _lobbyDatas]]) => {
+        const cravingDnaHashB64 = encodeHashToBase64(dnaHash);
+        if (
+          !window.localStorage.getItem(`knownCravingSeen#${cravingDnaHashB64}`)
+        ) {
+          this._unseenCravings.push(cravingDnaHashB64);
+          window.localStorage.setItem(
+            `knownCravingSeen#${cravingDnaHashB64}`,
+            'true',
+          );
+        }
+      },
+    );
+    window.setInterval(async () => {
+      await this._store.fetchStores();
+    }, 5000);
+    this.requestUpdate();
+  }
 
   async joinCraving(dnaRecipe: DnaRecipe) {
     this.installing = true;
@@ -54,7 +93,11 @@ export class AllAvailableCravings extends LitElement {
     }
   }
 
-  renderList(availableCravings: Array<[DnaHash, [DnaRecipe, LobbyData[]]]>) {
+  renderList(
+    availableCravings: Array<
+      [DnaHash, [CravingCreationTime, DnaRecipe, LobbyData[]]]
+    >,
+  ) {
     if (Object.values(availableCravings).length === 0)
       return html` <div
         class="column"
@@ -67,22 +110,50 @@ export class AllAvailableCravings extends LitElement {
         </div>
       </div>`;
 
+    console.log('CRAVING CREATION TIMES: ', availableCravings);
+
     return html`
       <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
         ${availableCravings
           .sort(
             (
-              [_dnaHash_a, [dnaRecipe_a, _lobbyDatas_a]],
-              [_dnaHash_b, [dnaRecipe_b, _lobbyDatas_b]],
-            ) => dnaRecipe_a.title.localeCompare(dnaRecipe_b.title),
+              [
+                _dnaHash_a,
+                [_cravingCreationTime_a, dnaRecipe_a, _lobbyDatas_a],
+              ],
+              [
+                _dnaHash_b,
+                [_cravingCreationTime_b, dnaRecipe_b, _lobbyDatas_b],
+              ],
+            ) =>
+              (getLocalStorageItem<number>(
+                `cravingDiscovered#${encodeHashToBase64(
+                  dnaRecipe_b.resulting_dna_hash,
+                )}`,
+              ) || 0) -
+              (getLocalStorageItem<number>(
+                `cravingDiscovered#${encodeHashToBase64(
+                  dnaRecipe_a.resulting_dna_hash,
+                )}`,
+              ) || 0),
           )
           .map(
-            ([_dnaHash, [dnaRecipe, lobbyDatas]]) => html`
+            ([dnaHash, [_cravingCreationTime, dnaRecipe, lobbyDatas]]) => html`
               <div
                 class="craving-container"
-                style="display: flex; flex-direction: column"
+                style="display: flex; flex-direction: column; position: relative;"
                 tabindex="0"
               >
+                ${this._unseenCravings.includes(encodeHashToBase64(dnaHash))
+                  ? html`
+                      <div
+                        class="notification yellow"
+                        style="margin-bottom: 2px; position: absolute; top: -5px; right: -5px;"
+                      >
+                        NEW
+                      </div>
+                    `
+                  : html``}
                 <div class="column" style="align-items: flex-end; width: 100%;">
                   <div
                     class="row"
@@ -182,6 +253,24 @@ export class AllAvailableCravings extends LitElement {
         background: #c8cfe68a;
         border-radius: 10px;
         padding: 8px 15px;
+      }
+
+      .notification {
+        padding: 3px 8px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 10px;
+        height: 20px;
+        color: black;
+        min-width: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 1px 1px 3px #0b0d159b;
+      }
+
+      .yellow {
+        background: #ffd623;
       }
     `,
   ];

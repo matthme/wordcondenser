@@ -16,7 +16,7 @@ import { decodeEntry } from '@holochain-open-dev/utils';
 import { open } from '@tauri-apps/api/shell';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { clientContext, condenserContext } from './contexts';
-import { DashboardMode, LobbyInfo, NotificationPayload } from './types';
+import { DashboardMode, LobbyInfo } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
 
@@ -47,7 +47,7 @@ import './lobby-view';
 import './intro';
 import './no-cookies-ever';
 import './loading-animation';
-import { isKangaroo, notifyOS } from './utils';
+import { getLocalStorageItem, isKangaroo, notifyOS } from './utils';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -84,7 +84,7 @@ export class HolochainApp extends LitElement {
   );
 
   private _allAvailableCravings = new StoreSubscriber(this, () =>
-    this.store ? this.store.getAvailableCravings() : undefined,
+    this.store ? this.store.allAvailableCravings : undefined,
   );
 
   private _allDisabledCravings = new StoreSubscriber(this, () =>
@@ -284,6 +284,23 @@ export class HolochainApp extends LitElement {
     }
   }
 
+  newAvailableCravingsCount(): number {
+    let count = 0;
+    if (this._allAvailableCravings.value.status === 'complete') {
+      this._allAvailableCravings.value.value.forEach(cravingDnaHash => {
+        if (
+          !getLocalStorageItem<number>(
+            `knownCravingSeen#${encodeHashToBase64(cravingDnaHash)}`,
+          )
+        ) {
+          count += 1;
+        }
+      });
+    }
+
+    return count;
+  }
+
   getSlogan() {
     const slogans = [
       "« Let's pull our jewels into here - from our collective atmosphere »",
@@ -439,6 +456,7 @@ export class HolochainApp extends LitElement {
   }
 
   renderCravings() {
+    const newAvailableCravingsCount = this.newAvailableCravingsCount();
     return html`
       <div
         class="row"
@@ -471,9 +489,24 @@ export class HolochainApp extends LitElement {
           @keypress=${() => {
             this._cravingMenuItem = 'available';
           }}
-          style="font-size: 0.8em;"
+          style="font-size: 0.8em; position: relative;"
         >
-          Available (${this._allAvailableCravings.value.length})
+          ${newAvailableCravingsCount > 0
+            ? html`
+                <div
+                  class="notification yellow"
+                  style="margin-bottom: 2px; position: absolute; top: -5px; right: -5px;"
+                >
+                  + ${newAvailableCravingsCount}
+                </div>
+              `
+            : html``}
+          <span>
+            Available
+            (${this._allAvailableCravings.value.status === 'complete'
+              ? this._allAvailableCravings.value.value.length
+              : '0'})
+          </span>
         </div>
         <div
           title="Cravings that you have installed in your conductor but that are disabled"
@@ -1327,6 +1360,24 @@ export class HolochainApp extends LitElement {
         min-width: 150px;
         cursor: pointer;
         margin: 0 4px;
+      }
+
+      .notification {
+        padding: 1px 5px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 10px;
+        height: 20px;
+        color: black;
+        min-width: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 1px 1px 3px #0b0d159b;
+      }
+
+      .yellow {
+        background: #ffd623;
       }
 
       .wordcondenser-link {

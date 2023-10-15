@@ -1,6 +1,7 @@
 import {
   derived,
   get,
+  lazyLoadAndPoll,
   Readable,
   writable,
   Writable,
@@ -26,6 +27,7 @@ import { LobbyStore } from './lobby-store';
 import { ProfilesClient } from './lobby/profiles/profiles-client';
 import { ProfilesStore } from './lobby/profiles/profiles-store';
 import { DnaRecipe, LobbyInfo } from './types';
+import { getLocalStorageItem } from './utils';
 
 export interface CravingData {
   title: string; // in case it is not installed, we have info about the title from the DnaRecipe
@@ -40,6 +42,8 @@ export interface LobbyData {
   info: LobbyInfo | undefined;
   dnaHash: DnaHash; // DNA hash of the lobby cell
 }
+
+export type CravingCreationTime = number;
 
 export class CondenserStore {
   private _installedCravings: Writable<DnaHashMap<CravingStore>> = writable(
@@ -56,8 +60,10 @@ export class CondenserStore {
 
   private _disabledLobbies: Writable<Record<string, ClonedCell>> = writable({});
 
-  private _cravingLobbyMapping: Writable<DnaHashMap<[DnaRecipe, LobbyData[]]>> = // dna hash of craving as keys
-    writable(new DnaHashMap<[DnaRecipe, LobbyData[]]>());
+  private _cravingLobbyMapping: Writable<
+    DnaHashMap<[CravingCreationTime, DnaRecipe, LobbyData[]]>
+  > = // dna hash of craving as keys
+    writable(new DnaHashMap<[CravingCreationTime, DnaRecipe, LobbyData[]]>());
 
   private _filterGroup: Writable<DnaHash | undefined> = writable(undefined);
 
@@ -67,7 +73,9 @@ export class CondenserStore {
     disabledCravings: Record<string, ClonedCell>,
     lobbies: DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>,
     disabledLobbies: Record<string, ClonedCell>,
-    cravingLobbyMapping: DnaHashMap<[DnaRecipe, LobbyData[]]>,
+    cravingLobbyMapping: DnaHashMap<
+      [CravingCreationTime, DnaRecipe, LobbyData[]]
+    >,
   ) {
     this._installedCravings.set(installedCravings);
     this._disabledCravings.set(disabledCravings);
@@ -86,19 +94,23 @@ export class CondenserStore {
     // console.log("%%% @connect(): installedCravings: ", installedCravings);
     // console.log("%%% @connect(): disabledCravings: ", disabledCravings);
 
-    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>();
+    const cravingLobbyMapping = new DnaHashMap<
+      [number, DnaRecipe, LobbyData[]]
+    >();
 
     await Promise.all(
       Array.from(lobbies.entries()).map(
         async ([dnaHash, [lobbyStore, _profilesStore]]) => {
           const allRecipeRecords =
             await lobbyStore.service.getAllCravingRecipes();
-          const allRecipes = allRecipeRecords.map(
-            record => decodeEntry(record) as DnaRecipe,
-          );
+          const allRecipesWithCreationTime: Array<[number, DnaRecipe]> =
+            allRecipeRecords.map(record => [
+              record.signed_action.hashed.content.timestamp,
+              decodeEntry(record) as DnaRecipe,
+            ]);
 
           // create a mapping beteen cravings and the lobbies this craving is shared with
-          allRecipes.forEach(recipe => {
+          allRecipesWithCreationTime.forEach(([creationTime, recipe]) => {
             const lobbyData: LobbyData = {
               name: lobbyStore.lobbyName,
               info: lobbyStore.lobbyInfo
@@ -109,16 +121,21 @@ export class CondenserStore {
 
             try {
               // if cravingLobbyMapping already has a value for this key, push to it
-              const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] =
-                cravingLobbyMapping.get(recipe.resulting_dna_hash);
+              const [existinCreationTime, existingRecipe, existingValue]: [
+                CravingCreationTime,
+                DnaRecipe,
+                LobbyData[],
+              ] = cravingLobbyMapping.get(recipe.resulting_dna_hash);
               existingValue.push(lobbyData);
               cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                existinCreationTime,
                 existingRecipe,
                 existingValue,
               ]);
             } catch (e) {
               // if cravingLobbyMapping is does not have a value for this key yet, set it
               cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                creationTime,
                 recipe,
                 [lobbyData],
               ]);
@@ -186,17 +203,21 @@ export class CondenserStore {
     const [installedCravings, disabledCravings, lobbies, disabledLobbies] =
       await CondenserStore.fetchCells(this.appAgentWebsocket);
 
-    const cravingLobbyMapping = new DnaHashMap<[DnaRecipe, LobbyData[]]>();
+    const cravingLobbyMapping = new DnaHashMap<
+      [CravingCreationTime, DnaRecipe, LobbyData[]]
+    >();
 
     await Promise.all(
       Array.from(lobbies.entries()).map(
         async ([dnaHash, [lobbyStore, _profilesStore]]) => {
           const allRecipeRecords =
             await lobbyStore.service.getAllCravingRecipes();
-          const allRecipes = allRecipeRecords.map(
-            record => decodeEntry(record) as DnaRecipe,
-          );
-          allRecipes.forEach(recipe => {
+          const allRecipesWithCreationTime: Array<[number, DnaRecipe]> =
+            allRecipeRecords.map(record => [
+              record.signed_action.hashed.content.timestamp,
+              decodeEntry(record) as DnaRecipe,
+            ]);
+          allRecipesWithCreationTime.forEach(([creationTime, recipe]) => {
             const lobbyData: LobbyData = {
               name: lobbyStore.lobbyName,
               info: lobbyStore.lobbyInfo
@@ -207,16 +228,21 @@ export class CondenserStore {
 
             try {
               // if cravingLobbyMapping already has a value for this key, push to it
-              const [existingRecipe, existingValue]: [DnaRecipe, LobbyData[]] =
-                cravingLobbyMapping.get(recipe.resulting_dna_hash);
+              const [existinCreationTime, existingRecipe, existingValue]: [
+                CravingCreationTime,
+                DnaRecipe,
+                LobbyData[],
+              ] = cravingLobbyMapping.get(recipe.resulting_dna_hash);
               existingValue.push(lobbyData);
               cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                existinCreationTime,
                 existingRecipe,
                 existingValue,
               ]);
             } catch (e) {
               // if cravingLobbyMapping is does not have a value for this key yet, set it
               cravingLobbyMapping.set(recipe.resulting_dna_hash, [
+                creationTime,
                 recipe,
                 [lobbyData],
               ]);
@@ -346,7 +372,7 @@ export class CondenserStore {
   /** Here comes the Cravings logic */
 
   getCravingRecipe(cravingCellId: CellId): DnaRecipe {
-    return get(this._cravingLobbyMapping).get(cravingCellId[0])[0];
+    return get(this._cravingLobbyMapping).get(cravingCellId[0])[1];
   }
 
   cravingStore(cellId: CellId) {
@@ -552,7 +578,7 @@ export class CondenserStore {
     // console.log("@getLobbiesForCraving: got cravingDnaHash B64: ", encodeHashToBase64(cravingDnaHash));
     return derived(this._cravingLobbyMapping, store => {
       try {
-        return store.get(cravingDnaHash)[1];
+        return store.get(cravingDnaHash)[2];
       } catch (e) {
         // This is expected if the group(s) that are/were associated to that craving is/are disabled or deleted
         // console.warn("No Lobby found for the requested craving.")
@@ -564,7 +590,9 @@ export class CondenserStore {
   /**
    * Gets the cravings that are available but neither installed nor disabled.
    */
-  getAvailableCravings(): Readable<Array<[DnaHash, [DnaRecipe, LobbyData[]]]>> {
+  getAvailableCravings(): Readable<
+    Array<[DnaHash, [CravingCreationTime, DnaRecipe, LobbyData[]]]>
+  > {
     return derived(this._cravingLobbyMapping, mapping => {
       const installedCravingsHashes = Array.from(
         get(this._installedCravings).values(),
@@ -576,7 +604,7 @@ export class CondenserStore {
         .map(hash => JSON.stringify(hash));
 
       return Array.from(mapping.entries()).filter(
-        ([dnaHash, [_recipe, _lobbyDatas]]) => {
+        ([dnaHash, [_creationTime, _recipe, _lobbyDatas]]) => {
           const stringifiedHash = JSON.stringify(dnaHash);
           return (
             !installedCravingsHashes.includes(stringifiedHash) &&
@@ -586,6 +614,48 @@ export class CondenserStore {
       );
     });
   }
+
+  /**
+   * Used only to display the count of available cravings, i.e. newly arrived cravings
+   */
+  allAvailableCravings = lazyLoadAndPoll(async () => {
+    let allKnownCravingHashes: Array<DnaHash> = [];
+    await Promise.all(
+      Array.from(get(this._lobbies).entries()).map(
+        async ([_dnaHash, [lobbyStore, _profilesStore]]) => {
+          const allRecipeRecords =
+            await lobbyStore.service.getAllCravingRecipes();
+          const allRecipeDnaHashes = allRecipeRecords
+            .map(record => decodeEntry(record) as DnaRecipe)
+            .map(recipe => recipe.resulting_dna_hash);
+          allKnownCravingHashes = [
+            ...allKnownCravingHashes,
+            ...allRecipeDnaHashes,
+          ];
+
+          allRecipeDnaHashes.forEach(dnaHash => {
+            const cravingDiscovered = getLocalStorageItem<number>(
+              `cravingDiscovered#${encodeHashToBase64(dnaHash)}`,
+            );
+            if (!cravingDiscovered)
+              window.localStorage.setItem(
+                `cravingDiscovered#${encodeHashToBase64(dnaHash)}`,
+                JSON.stringify(Date.now()),
+              );
+          });
+        },
+      ),
+    );
+
+    // Check against installed cells
+    const installedCravings = Array.from(
+      get(this._installedCravings).keys(),
+    ).map(hash => hash.toString());
+
+    return allKnownCravingHashes.filter(
+      dnaHash => !installedCravings.includes(dnaHash.toString()),
+    );
+  }, 5000);
 
   async createLobby(
     networkSeed: string,
