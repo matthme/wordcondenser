@@ -29,7 +29,7 @@ import { LobbyStore } from './lobby-store';
 import { LobbyInfo } from './types';
 
 import './lobby/profiles/elements/edit-profile';
-import { groupPropsToInviteLink } from './utils';
+import { getLocalStorageItem, groupPropsToInviteLink } from './utils';
 
 export enum LobbyViewMode {
   Home,
@@ -299,39 +299,73 @@ ${this.lobbyInfo!.network_seed}
             <div style="margin-bottom: 40px; font-size: 0.9em; color: #9098b3;">
               You are new to this pack. Give yourself a shape!
             </div>
-            <div
-              style="border-radius: 30px; border: 1px solid #9098b3; margin-bottom: 45px; padding: 20px; background: #9098b31c"
-            >
-              <div
-                style="font-weight: bold; font-size: 0.8em; color: #9098b3; margin-bottom: 15px;"
-              >
-                💡 Note:
-              </div>
-              <div
-                style="font-size: 0.7em; color: #9098b3; max-width: 900px; text-align: left;"
-              >
-                This is Holochain and therefore peer-to-peer. Only the people in
-                this group will ever be able to see the information that you add
-                to your profile!<br /><br />
-                It is however totally okay if you feel more comfortable to start
-                off with an imaginary name. You are free to update your profile
-                and reveal more about yourself at any later point in time.<br /><br />
-                Your profile is only shared within this group that toghether
-                tracks and hunts for cravings in the wild. Participating in a
-                craving itself is inteded to be anonymous*.
-              </div>
-              <div
-                style="font-size: 0.5em; color: #9098b3; max-width: 900px; text-align: left; margin-top: 50px;"
-              >
-                *It is possible, with some coding effort to draw conclusions
-                about the public key behind actions taken in a Craving and as a
-                result of this potentially draw conclusions about the person
-                that's behind that key. But frankly, who even wants to do that,
-                given that it's so much more fun to just have it be something
-                that emerges from our collective vapor without the need of
-                knowing who wrote what exactly?
-              </div>
-            </div>
+
+            ${getLocalStorageItem<boolean>('dont-show-message-anymore')
+              ? html``
+              : html`
+                  <div
+                    style="border-radius: 30px; border: 1px solid #9098b3; padding: 20px; margin-bottom: 45px; background: #9098b31c"
+                  >
+                    <div
+                      style="font-weight: bold; font-size: 0.8em; color: #9098b3; margin-bottom: 15px;"
+                    >
+                      💡 Note:
+                    </div>
+                    <div
+                      style="font-size: 0.7em; color: #9098b3; max-width: 900px; text-align: left;"
+                    >
+                      This is Holochain and therefore peer-to-peer. Only the
+                      people in this group will ever be able to see the
+                      information that you add to your profile!<br /><br />
+                      It is however totally okay if you feel more comfortable to
+                      start off with an imaginary name. You are free to update
+                      your profile and reveal more about yourself at any later
+                      point in time.<br /><br />
+                      Your profile is only shared within this group that
+                      toghether tracks and hunts for Cravings in the wild.
+                      Participating in a craving itself is inteded to be
+                      anonymous*.
+                    </div>
+                    <div
+                      style="font-size: 0.5em; color: #9098b3; max-width: 900px; text-align: left; margin-top: 50px;"
+                    >
+                      *It is possible, with some coding effort to draw
+                      conclusions about the public key behind actions taken in a
+                      Craving and as a result of this potentially draw
+                      conclusions about the person that's behind that key. But
+                      frankly, who even wants to do that, given that it's so
+                      much more fun to just have it be something that emerges
+                      from our collective vapor without the need of knowing who
+                      wrote what exactly?
+                    </div>
+                    <div
+                      class="row"
+                      style="margin-top: 20px; align-items: center; justify-content: flex-start; font-size: 0.7em; color: #9098b3; flex: 1; width: 900px;"
+                    >
+                      <input
+                        id="dont-show-message-anymore"
+                        type="checkbox"
+                        style="transform: scale(1.8); cursor: pointer;"
+                        @input=${(e: InputEvent) => {
+                          if ((e.target as HTMLInputElement).checked) {
+                            window.sessionStorage.setItem(
+                              'dont-show-message-anymore',
+                              'true',
+                            );
+                          } else {
+                            window.sessionStorage.setItem(
+                              'dont-show-message-anymore',
+                              'false',
+                            );
+                          }
+                        }}
+                      />
+                      <span style="margin-left: 10px;"
+                        >Don't show this Note anymore</span
+                      >
+                    </div>
+                  </div>
+                `}
 
             <div
               style="font-size: 0.8em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left;"

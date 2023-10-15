@@ -114,6 +114,11 @@ export function getLocalStorageItem<T>(key: string): T | undefined {
   return item ? JSON.parse(item) : undefined;
 }
 
+export function getSessionStorageItem<T>(key: string): T | undefined {
+  const item: string | null = window.sessionStorage.getItem(key);
+  return item ? JSON.parse(item) : undefined;
+}
+
 // ================  unread events counts ================
 
 export function newAssociationsCount(

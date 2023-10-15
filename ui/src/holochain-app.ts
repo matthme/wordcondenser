@@ -47,7 +47,12 @@ import './lobby-view';
 import './intro';
 import './no-cookies-ever';
 import './loading-animation';
-import { getLocalStorageItem, isKangaroo, notifyOS } from './utils';
+import {
+  getLocalStorageItem,
+  getSessionStorageItem,
+  isKangaroo,
+  notifyOS,
+} from './utils';
 import { JoinLobby } from './lobby/join-lobby';
 
 @customElement('holochain-app')
@@ -916,7 +921,19 @@ export class HolochainApp extends LitElement {
         return html`
           <profiles-context .store=${profilesStore}>
             <lobby-view
-              @profile-created=${this.handleRefresh}
+              @profile-created=${() => {
+                const dontShowMessageAnymore = getSessionStorageItem<boolean>(
+                  'dont-show-message-anymore',
+                );
+                if (dontShowMessageAnymore) {
+                  window.localStorage.setItem(
+                    'dont-show-message-anymore',
+                    'true',
+                  );
+                }
+
+                this.handleRefresh();
+              }}
               @request-home=${() => {
                 this._dashboardMode = DashboardMode.Home;
                 this._selectedLobbyCellId = undefined;
