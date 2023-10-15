@@ -105,15 +105,18 @@ export class JoinLobby extends LitElement {
           },
         }),
       );
+
+      setTimeout(() => {
+        this.installing = false;
+      }, 4000);
     } catch (e: any) {
-      console.log('ERROR: ', JSON.stringify(e));
+      this.installing = false;
+      console.error('Failed to join Group: ', JSON.stringify(e));
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
       errorSnackbar.labelText = `Error creating the lobby: ${e.data.data}`;
       errorSnackbar.show();
-
-      this.installing = false;
     }
   }
 
@@ -238,10 +241,12 @@ export class JoinLobby extends LitElement {
                 opacity: 0.85;
               "
               @click=${() => this.joinLobby()}
-              .disabled=${!this.isLobbyValid() && !this.installing}
+              .disabled=${!this.isLobbyValid() || this.installing}
             >
               <div class="row" style="align-items: center;">
-                <span style="margin-left: 12px;">Join Group</span>
+                <span style="margin-left: 12px;"
+                  >${this.installing ? 'joining...' : 'Join Group'}</span
+                >
               </div>
             </mvb-button>
           </div>

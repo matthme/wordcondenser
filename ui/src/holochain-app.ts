@@ -48,6 +48,7 @@ import './intro';
 import './no-cookies-ever';
 import './loading-animation';
 import { getLocalStorageItem, isKangaroo, notifyOS } from './utils';
+import { JoinLobby } from './lobby/join-lobby';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -517,43 +518,47 @@ export class HolochainApp extends LitElement {
           class="row"
           style="width: 100%; justify-content: flex-end; margin-right: 50px; position: relative;"
         >
-          ${this._allLobbyDatas.value.map(
-            lobbyData => html`
-              <div class="column" style="align-items: center;">
-                ${lobbyData.info && lobbyData.info.logo_src
-                  ? html`
-                      <img
-                        src=${lobbyData.info.logo_src}
-                        title="Click to filter/unfilter by Group '${lobbyData.name}'"
-                        class="group-icon"
-                        alt="Icon of group with name ${lobbyData.name}"
-                        tabindex="0"
-                        style="
+          ${this._allLobbyDatas.value
+            .sort((lobbyData_a, lobbyData_b) =>
+              lobbyData_b.name.localeCompare(lobbyData_a.name),
+            )
+            .map(
+              lobbyData => html`
+                <div class="column" style="align-items: center;">
+                  ${lobbyData.info && lobbyData.info.logo_src
+                    ? html`
+                        <img
+                          src=${lobbyData.info.logo_src}
+                          title="Click to filter/unfilter by Group '${lobbyData.name}'"
+                          class="group-icon"
+                          alt="Icon of group with name ${lobbyData.name}"
+                          tabindex="0"
+                          style="
                       height: 70px;
                       width: 70px;
                       border-radius: 50%;
                       margin-right: 2px;
                       cursor: pointer;
                       ${this.amISelected(lobbyData.dnaHash)
-                          ? 'border: 3px solid white;'
-                          : ''}
+                            ? 'border: 3px solid white;'
+                            : ''}
                     "
-                        @keypress=${(e: KeyboardEvent) =>
-                          e.key === 'Enter'
-                            ? this.store.filterByGroup(lobbyData.dnaHash)
-                            : undefined}
-                        @click=${() =>
-                          this.store.filterByGroup(lobbyData.dnaHash)}
-                      />
-                    `
-                  : html`
-                      <div
-                        class="column group-icon ${this.amISelected(
-                          lobbyData.dnaHash,
-                        )
-                          ? 'group-icon-selected'
-                          : ''}"
-                        style="
+                          @keypress=${(e: KeyboardEvent) =>
+                            e.key === 'Enter'
+                              ? this.store.filterByGroup(lobbyData.dnaHash)
+                              : undefined}
+                          @click=${() =>
+                            this.store.filterByGroup(lobbyData.dnaHash)}
+                        />
+                      `
+                    : html`
+                        <div
+                          class="column group-icon ${this.amISelected(
+                            lobbyData.dnaHash,
+                          )
+                            ? 'group-icon-selected'
+                            : ''}"
+                          style="
                       justify-content: center;
                       height: 70px;
                       width: 70px;
@@ -565,25 +570,25 @@ export class HolochainApp extends LitElement {
                       color: black;
                       cursor: pointer;
                       ${this.amISelected(lobbyData.dnaHash)
-                          ? 'border: 3px solid white;'
-                          : ''}
+                            ? 'border: 3px solid white;'
+                            : ''}
                     "
-                        title="Click to filter/unfilter by Group '${lobbyData.name}'"
-                        tabindex="0"
-                        alt="Icon of group with name ${lobbyData.name}"
-                        @keypress=${(e: KeyboardEvent) =>
-                          e.key === 'Enter'
-                            ? this.store.filterByGroup(lobbyData.dnaHash)
-                            : undefined}
-                        @click=${() =>
-                          this.store.filterByGroup(lobbyData.dnaHash)}
-                      >
-                        <span>${lobbyData.name.slice(0, 2)}</span>
-                      </div>
-                    `}
-              </div>
-            `,
-          )}
+                          title="Click to filter/unfilter by Group '${lobbyData.name}'"
+                          tabindex="0"
+                          alt="Icon of group with name ${lobbyData.name}"
+                          @keypress=${(e: KeyboardEvent) =>
+                            e.key === 'Enter'
+                              ? this.store.filterByGroup(lobbyData.dnaHash)
+                              : undefined}
+                          @click=${() =>
+                            this.store.filterByGroup(lobbyData.dnaHash)}
+                        >
+                          <span>${lobbyData.name.slice(0, 2)}</span>
+                        </div>
+                      `}
+                </div>
+              `,
+            )}
 
           <div
             class="row"
@@ -841,8 +846,9 @@ export class HolochainApp extends LitElement {
           </button>
           <div style="margin-top: 20px;">
             <create-lobby
-              @lobby-created=${() => {
-                this._dashboardMode = DashboardMode.Home;
+              @lobby-created=${(e: CustomEvent) => {
+                this._selectedLobbyCellId = e.detail.cellId;
+                this._dashboardMode = DashboardMode.LobbyView;
               }}
             ></create-lobby>
           </div>
@@ -864,8 +870,9 @@ export class HolochainApp extends LitElement {
           </button>
           <div style="margin-top: 20px;">
             <join-lobby
-              @lobby-joined=${() => {
-                window.location.reload();
+              @lobby-joined=${(e: CustomEvent) => {
+                this._selectedLobbyCellId = e.detail.cellId;
+                this._dashboardMode = DashboardMode.LobbyView;
               }}
             ></join-lobby>
           </div>
@@ -888,9 +895,10 @@ export class HolochainApp extends LitElement {
           <div style="margin-top: 20px;">
             <join-lobby-from-link
               .deepLink=${this._deepLink}
-              @lobby-joined=${() => {
+              @lobby-joined=${(e: CustomEvent) => {
                 this._deepLink = undefined;
-                window.location.reload();
+                this._selectedLobbyCellId = e.detail.cellId;
+                this._dashboardMode = DashboardMode.LobbyView;
               }}
             ></join-lobby-from-link>
           </div>

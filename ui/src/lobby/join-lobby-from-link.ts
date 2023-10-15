@@ -98,8 +98,12 @@ export class JoinLobbyFromLink extends LitElement {
           },
         }),
       );
+
+      setTimeout(() => {
+        this.installing = false;
+      }, 4000);
     } catch (e: any) {
-      console.log('ERROR: ', JSON.stringify(e));
+      console.error('Failed to join Group: ', JSON.stringify(e));
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
