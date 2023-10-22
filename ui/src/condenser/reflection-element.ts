@@ -284,6 +284,7 @@ export class ReflectionElement extends LitElement {
       }
 
       .content {
+        white-space: pre-line;
         text-align: left;
         font-size: 19px;
         color: #abb5d6;

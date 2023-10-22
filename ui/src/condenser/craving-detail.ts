@@ -358,7 +358,7 @@ export class CravingDetail extends LitElement {
       }
 
       .craving-description {
-        white-space: normal;
+        white-space: pre-line;
         text-align: left;
         font-size: 19px;
         height: 120px;
