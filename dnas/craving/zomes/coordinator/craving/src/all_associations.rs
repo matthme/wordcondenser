@@ -1,20 +1,23 @@
 use std::collections::HashMap;
 
-use hdk::prelude::*;
 use craving_integrity::*;
-
+use hdk::prelude::*;
 
 /// Getting all deduplicated associations.
 #[hdk_extern]
 pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_associations");
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AllAssociations, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?.build(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            link.target.into_any_dht_hash().unwrap(),
-            GetOptions::default(),
-        ))
+        .map(|link| {
+            GetInput::new(
+                link.target.into_any_dht_hash().unwrap(),
+                GetOptions::default(),
+            )
+        })
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
 
@@ -38,7 +41,7 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
                                 sorted_and_deduped_records.insert(eh.clone(), record);
                             }
                         }
-                    },
+                    }
                     None => {
                         sorted_and_deduped_records.insert(eh.clone(), record);
                     }
@@ -57,17 +60,19 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
 #[hdk_extern]
 pub fn get_all_association_actions(_: ()) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_associations");
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AllAssociations, None)?;
+    let links = get_links(
+        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?.build(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            link.target.into_any_dht_hash().unwrap(),
-            GetOptions::default(),
-        ))
+        .map(|link| {
+            GetInput::new(
+                link.target.into_any_dht_hash().unwrap(),
+                GetOptions::default(),
+            )
+        })
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let records: Vec<Record> = records.into_iter().filter_map(|r| r).collect();
     Ok(records)
 }
-
-

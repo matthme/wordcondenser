@@ -1,12 +1,10 @@
-use hdk::prelude::*;
 use craving_integrity::*;
+use hdk::prelude::*;
 #[hdk_extern]
 pub fn add_resonator_for_action(action_hash: ActionHash) -> ExternResult<()> {
     let pubkey = agent_info()?.agent_initial_pubkey;
     let existing_links = get_links(
-        action_hash.clone(),
-        LinkTypes::ActionToResonator,
-        None,
+        GetLinksInputBuilder::try_new(action_hash.clone(), LinkTypes::ActionToResonator)?.build(),
     )?;
     let my_links: Vec<Link> = existing_links
         .into_iter()
@@ -19,20 +17,23 @@ pub fn add_resonator_for_action(action_hash: ActionHash) -> ExternResult<()> {
     Ok(())
 }
 #[hdk_extern]
-pub fn get_resonators_for_action(
-    action_hash: ActionHash,
-) -> ExternResult<Vec<AgentPubKey>> {
-    let links = get_links(reflection_hash, LinkTypes::ActionToResonator, None)?;
+pub fn get_resonators_for_action(action_hash: ActionHash) -> ExternResult<Vec<AgentPubKey>> {
+    let links = get_links(
+        GetLinksInputBuilder::try_new(action_hash, LinkTypes::ActionToResonator)?.build(),
+    )?;
     let agents: Vec<AgentPubKey> = links
         .into_iter()
-        .map(|link| AgentPubKey::from(EntryHash::from(link.target)))
+        .map(|link| AgentPubKey::try_from(link.target).ok())
+        .filter_map(|ak| ak)
         .collect();
     Ok(agents)
 }
 #[hdk_extern]
 pub fn remove_resonator_for_action(action_hash: ActionHash) -> ExternResult<()> {
     let pubkey = agent_info()?.agent_initial_pubkey;
-    let existing_links = get_links(action_hash, LinkTypes::ActionToResonator, None)?;
+    let existing_links = get_links(
+        GetLinksInputBuilder::try_new(action_hash, LinkTypes::ActionToResonator)?.build(),
+    )?;
     let my_links: Vec<Link> = existing_links
         .into_iter()
         .filter(|link| link.target == pubkey.clone().into())

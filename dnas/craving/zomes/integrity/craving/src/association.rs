@@ -1,5 +1,5 @@
-use hdi::prelude::*;
 use crate::types::*;
+use hdi::prelude::*;
 
 #[hdk_entry_helper]
 #[derive(Clone)]
@@ -17,14 +17,20 @@ pub fn validate_create_association(
     match craving_dna_properties.max_association_chars {
         Some(max) => {
             if association.association.len() > max {
-                return Ok(ValidateCallbackResult::Invalid(format!("Association is longer than allowed. Max characters: {}", max)));
+                return Ok(ValidateCallbackResult::Invalid(format!(
+                    "Association is longer than allowed. Max characters: {}",
+                    max
+                )));
             }
-        },
+        }
         None => {
             if association.association.len() > DEFAULT_MAX_ASSOCIATION_CHARS {
-                return Ok(ValidateCallbackResult::Invalid(format!("Association is longer than allowed. Max characters: {} (default value)", DEFAULT_MAX_ASSOCIATION_CHARS)));
+                return Ok(ValidateCallbackResult::Invalid(format!(
+                    "Association is longer than allowed. Max characters: {} (default value)",
+                    DEFAULT_MAX_ASSOCIATION_CHARS
+                )));
             }
-        },
+        }
     }
 
     Ok(ValidateCallbackResult::Valid)
@@ -35,14 +41,18 @@ pub fn validate_update_association(
     _original_action: EntryCreationAction,
     _original_association: Association,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Invalid(String::from("Associations cannot be updated")))
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "Associations cannot be updated",
+    )))
 }
 pub fn validate_delete_association(
     _action: Delete,
     _original_action: EntryCreationAction,
     _original_association: Association,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Invalid(String::from("Associations cannot be deleted")))
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "Associations cannot be deleted",
+    )))
 }
 pub fn validate_create_link_association_updates(
     _action: CreateLink,
@@ -73,11 +83,9 @@ pub fn validate_create_link_association_updates(
     //         ),
     //     )?;
     // Ok(ValidateCallbackResult::Valid)
-    Ok(
-        ValidateCallbackResult::Invalid(
-            String::from("AssociationUpdates links cannot be updated"),
-        ),
-    )
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "AssociationUpdates links cannot be updated",
+    )))
 }
 pub fn validate_delete_link_association_updates(
     _action: DeleteLink,
@@ -86,11 +94,9 @@ pub fn validate_delete_link_association_updates(
     _target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(
-        ValidateCallbackResult::Invalid(
-            String::from("AssociationUpdates links cannot be deleted"),
-        ),
-    )
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "AssociationUpdates links cannot be deleted",
+    )))
 }
 pub fn validate_create_link_all_associations(
     _action: CreateLink,
@@ -98,17 +104,16 @@ pub fn validate_create_link_all_associations(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let action_hash = ActionHash::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
+    let action_hash = ActionHash::try_from(target_address)
+        .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _association: crate::Association = record
         .entry()
         .to_app_option()
         .map_err(|e| wasm_error!(e))?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Linked action must reference an entry"))
-            ),
-        )?;
+        .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
+            "Linked action must reference an entry"
+        ))))?;
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_associations(
@@ -118,9 +123,7 @@ pub fn validate_delete_link_all_associations(
     _target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(
-        ValidateCallbackResult::Invalid(
-            String::from("AllAssociations links cannot be deleted"),
-        ),
-    )
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "AllAssociations links cannot be deleted",
+    )))
 }

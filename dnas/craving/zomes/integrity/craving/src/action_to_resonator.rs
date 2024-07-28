@@ -5,7 +5,8 @@ pub fn validate_create_link_action_to_resonator(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
+    let target_pubkey = AgentPubKey::try_from(target_address)
+        .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let author_pubkey = action.author;
     if target_pubkey != author_pubkey {
         return Ok(
@@ -16,17 +17,16 @@ pub fn validate_create_link_action_to_resonator(
             ),
         );
     }
-    let action_hash = ActionHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
+    let action_hash =
+        ActionHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _reflection = record
         .entry()
         .to_app_option()
         .map_err(|e| wasm_error!(e))?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Linked action must reference an entry"))
-            ),
-        )?;
+        .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
+            "Linked action must reference an entry"
+        ))))?;
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_action_to_resonator(
@@ -36,7 +36,8 @@ pub fn validate_delete_link_action_to_resonator(
     target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let target_pubkey = AgentPubKey::try_from(target).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
+    let target_pubkey =
+        AgentPubKey::try_from(target).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let author_pubkey = action.author;
     if target_pubkey != author_pubkey {
         return Ok(
