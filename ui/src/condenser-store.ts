@@ -7,7 +7,7 @@ import {
   writable,
   Writable,
 } from '@holochain-open-dev/stores';
-import { decodeEntry, DnaHashMap } from '@holochain-open-dev/utils';
+import { decodeEntry } from '@holochain-open-dev/utils';
 import {
   DnaModifiers,
   AppWebsocket,
@@ -16,6 +16,7 @@ import {
   ClonedCell,
   DnaHash,
   encodeHashToBase64,
+  DnaHashMap,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import md5 from 'md5';

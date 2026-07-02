@@ -1,5 +1,7 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_reflection(reflection: Reflection) -> ExternResult<Record> {
     let reflection_hash = create_entry(&EntryTypes::Reflection(reflection.clone()))?;
@@ -16,13 +18,15 @@ pub fn create_reflection(reflection: Reflection) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_reflection(original_reflection_hash: ActionHash) -> ExternResult<Option<Record>> {
+pub fn get_reflection(
+    original_reflection_hash: ZomeFnInput<ActionHash>,
+) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
-            original_reflection_hash.clone(),
+        LinkQuery::try_new(
+            original_reflection_hash.input.clone(),
             LinkTypes::ReflectionUpdates,
-        )?
-        .build(),
+        )?,
+        original_reflection_hash.get_strategy(),
     )?;
     let latest_link = links
         .into_iter()
@@ -30,7 +34,7 @@ pub fn get_reflection(original_reflection_hash: ActionHash) -> ExternResult<Opti
     let latest_reflection_hash = match latest_link {
         Some(link) => ActionHash::try_from(link.target.clone())
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_reflection_hash.clone(),
+        None => original_reflection_hash.input.clone(),
     };
     get(latest_reflection_hash, GetOptions::default())
 }

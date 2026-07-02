@@ -1,24 +1,27 @@
 use cravings_integrity::*;
 use hdk::prelude::*;
 
+use crate::helper::ZomeFnInput;
+
 const LOBBY_INFO: &str = "LOBBY_INFO";
 
 #[hdk_extern]
-pub fn create_lobby_info(lobby_info: LobbyInfo) -> ExternResult<Record> {
+pub fn create_lobby_info(lobby_info: ZomeFnInput<LobbyInfo>) -> ExternResult<Record> {
     let anchor = anchor(
         LinkTypes::AnchorToLobbyInfo,
         LOBBY_INFO.into(),
         LOBBY_INFO.into(),
     )?;
     let existing_links = get_links(
-        GetLinksInputBuilder::try_new(anchor.clone(), LinkTypes::AnchorToLobbyInfo)?.build(),
+        LinkQuery::try_new(anchor.clone(), LinkTypes::AnchorToLobbyInfo)?,
+        lobby_info.get_strategy(),
     )?;
     if existing_links.len() != 0 {
         return Err(wasm_error!(WasmErrorInner::Guest(String::from(
             "There is already a link from the LOBBY_INFO anchor. Only one link is allowed."
         ))));
     }
-    let lobby_info_hash = create_entry(&EntryTypes::LobbyInfo(lobby_info.clone()))?;
+    let lobby_info_hash = create_entry(&EntryTypes::LobbyInfo(lobby_info.input.clone()))?;
 
     create_link(
         anchor,
@@ -33,14 +36,15 @@ pub fn create_lobby_info(lobby_info: LobbyInfo) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_lobby_info(_: ()) -> ExternResult<Option<Record>> {
+pub fn get_lobby_info(input: ZomeFnInput<()>) -> ExternResult<Option<Record>> {
     let anchor = anchor(
         LinkTypes::AnchorToLobbyInfo,
         LOBBY_INFO.into(),
         LOBBY_INFO.into(),
     )?;
     let anchor_links = get_links(
-        GetLinksInputBuilder::try_new(anchor.clone(), LinkTypes::AnchorToLobbyInfo)?.build(),
+        LinkQuery::try_new(anchor.clone(), LinkTypes::AnchorToLobbyInfo)?,
+        input.get_strategy(),
     )?;
     if anchor_links.len() == 0 {
         return Err(wasm_error!(WasmErrorInner::Guest(String::from(
@@ -53,11 +57,11 @@ pub fn get_lobby_info(_: ()) -> ExternResult<Option<Record>> {
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
 
     let links = get_links(
-        GetLinksInputBuilder::try_new(
+        LinkQuery::try_new(
             original_lobby_info_hash.clone(),
             LinkTypes::LobbyInfoUpdates,
-        )?
-        .build(),
+        )?,
+        input.get_strategy(),
     )?;
     let latest_link = links
         .into_iter()

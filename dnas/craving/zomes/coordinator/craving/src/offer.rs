@@ -1,5 +1,7 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_offer(offer: Offer) -> ExternResult<Record> {
     let offer_hash = create_entry(&EntryTypes::Offer(offer.clone()))?;
@@ -16,10 +18,10 @@ pub fn create_offer(offer: Offer) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_offer(original_offer_hash: ActionHash) -> ExternResult<Option<Record>> {
+pub fn get_offer(original_offer_hash: ZomeFnInput<ActionHash>) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(original_offer_hash.clone(), LinkTypes::OfferUpdates)?
-            .build(),
+        LinkQuery::try_new(original_offer_hash.input.clone(), LinkTypes::OfferUpdates)?,
+        original_offer_hash.get_strategy(),
     )?;
     let latest_link = links
         .into_iter()
@@ -27,7 +29,7 @@ pub fn get_offer(original_offer_hash: ActionHash) -> ExternResult<Option<Record>
     let latest_offer_hash = match latest_link {
         Some(link) => ActionHash::try_from(link.target.clone())
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_offer_hash.clone(),
+        None => original_offer_hash.input.clone(),
     };
     get(latest_offer_hash, GetOptions::default())
 }

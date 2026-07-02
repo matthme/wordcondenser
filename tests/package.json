@@ -7,8 +7,8 @@
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.7.0",
-    "@holochain/client": "0.18.0-dev.3",
-    "@holochain/tryorama": "0.17.0-dev.3",
+    "@holochain/client": "0.20.6",
+    "@holochain/tryorama": "^0.19.2",
     "@goenning/foreach-cli": "^1.9.0",
     "ts-node-test": "^0.2.0"
   },

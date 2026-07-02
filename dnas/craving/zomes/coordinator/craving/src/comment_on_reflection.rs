@@ -1,5 +1,7 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_comment_on_reflection(
     comment_on_reflection: CommentOnReflection,
@@ -22,22 +24,23 @@ pub fn create_comment_on_reflection(
 }
 #[hdk_extern]
 pub fn get_comment_on_reflection(
-    original_comment_on_reflection_hash: ActionHash,
+    original_comment_on_reflection_hash: ZomeFnInput<ActionHash>,
 ) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
-            original_comment_on_reflection_hash.clone(),
+        LinkQuery::try_new(
+            original_comment_on_reflection_hash.input.clone(),
             LinkTypes::CommentOnReflectionUpdates,
-        )?
-        .build(),
+        )?,
+        original_comment_on_reflection_hash.get_strategy(),
     )?;
+
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_comment_on_reflection_hash = match latest_link {
         Some(link) => ActionHash::try_from(link.target.clone())
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_comment_on_reflection_hash.clone(),
+        None => original_comment_on_reflection_hash.input.clone(),
     };
     get(latest_comment_on_reflection_hash, GetOptions::default())
 }
@@ -76,15 +79,16 @@ pub fn delete_comment_on_reflection(
 }
 #[hdk_extern]
 pub fn get_comment_on_reflections_for_reflection(
-    reflection_hash: ActionHash,
+    reflection_hash: ZomeFnInput<ActionHash>,
 ) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
-            reflection_hash,
+        LinkQuery::try_new(
+            reflection_hash.input.clone(),
             LinkTypes::ReflectionToCommentOnReflections,
-        )?
-        .build(),
+        )?,
+        reflection_hash.get_strategy(),
     )?;
+
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| {

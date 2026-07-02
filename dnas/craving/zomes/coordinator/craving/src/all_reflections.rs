@@ -1,11 +1,15 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
-pub fn get_all_reflections(_: ()) -> ExternResult<Vec<Record>> {
+pub fn get_all_reflections(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_reflections");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllReflections)?.build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllReflections)?,
+        input.get_strategy(),
     )?;
+
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| {

@@ -1,5 +1,5 @@
 import { AsyncReadable, lazyLoadAndPoll } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap } from '@holochain-open-dev/utils';
+import { LazyHoloHashMap } from '@holochain/client';
 import {
   ActionHash,
   AgentPubKey,

@@ -1,5 +1,7 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_comment_on_offer(comment_on_offer: CommentOnOffer) -> ExternResult<Record> {
     let comment_on_offer_hash =
@@ -19,22 +21,23 @@ pub fn create_comment_on_offer(comment_on_offer: CommentOnOffer) -> ExternResult
 }
 #[hdk_extern]
 pub fn get_comment_on_offer(
-    original_comment_on_offer_hash: ActionHash,
+    original_comment_on_offer_hash: ZomeFnInput<ActionHash>,
 ) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(
-            original_comment_on_offer_hash.clone(),
+        LinkQuery::try_new(
+            original_comment_on_offer_hash.input.clone(),
             LinkTypes::CommentOnOfferUpdates,
-        )?
-        .build(),
+        )?,
+        original_comment_on_offer_hash.get_strategy(),
     )?;
+
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_comment_on_offer_hash = match latest_link {
         Some(link) => ActionHash::try_from(link.target.clone())
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_comment_on_offer_hash.clone(),
+        None => original_comment_on_offer_hash.input.clone(),
     };
     get(latest_comment_on_offer_hash, GetOptions::default())
 }
@@ -70,9 +73,12 @@ pub fn delete_comment_on_offer(
     delete_entry(original_comment_on_offer_hash)
 }
 #[hdk_extern]
-pub fn get_comment_on_offers_for_offer(offer_hash: ActionHash) -> ExternResult<Vec<Record>> {
+pub fn get_comment_on_offers_for_offer(
+    offer_hash: ZomeFnInput<ActionHash>,
+) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(offer_hash, LinkTypes::OfferToCommentOnOffers)?.build(),
+        LinkQuery::try_new(offer_hash.input.clone(), LinkTypes::OfferToCommentOnOffers)?,
+        offer_hash.get_strategy(),
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

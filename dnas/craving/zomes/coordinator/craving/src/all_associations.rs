@@ -3,12 +3,15 @@ use std::collections::HashMap;
 use craving_integrity::*;
 use hdk::prelude::*;
 
+use crate::helper::ZomeFnInput;
+
 /// Getting all deduplicated associations.
 #[hdk_extern]
-pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
+pub fn get_all_associations(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_associations");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?.build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?,
+        input.get_strategy(),
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
@@ -58,10 +61,11 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
 /// Get all association records, i.e. if the same association has been created multiple
 /// times, return all of them
 #[hdk_extern]
-pub fn get_all_association_actions(_: ()) -> ExternResult<Vec<Record>> {
+pub fn get_all_association_actions(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
     let path = Path::from("all_associations");
     let links = get_links(
-        GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?.build(),
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?,
+        input.get_strategy(),
     )?;
     let get_input: Vec<GetInput> = links
         .into_iter()

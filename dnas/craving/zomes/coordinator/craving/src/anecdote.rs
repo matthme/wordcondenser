@@ -1,5 +1,7 @@
 use craving_integrity::*;
 use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_anecdote(anecdote: Anecdote) -> ExternResult<Record> {
     let anecdote_hash = create_entry(&EntryTypes::Anecdote(anecdote.clone()))?;
@@ -16,18 +18,24 @@ pub fn create_anecdote(anecdote: Anecdote) -> ExternResult<Record> {
     Ok(record)
 }
 #[hdk_extern]
-pub fn get_anecdote(original_anecdote_hash: ActionHash) -> ExternResult<Option<Record>> {
+pub fn get_anecdote(
+    original_anecdote_hash: ZomeFnInput<ActionHash>,
+) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(original_anecdote_hash.clone(), LinkTypes::AnecdoteUpdates)?
-            .build(),
+        LinkQuery::try_new(
+            original_anecdote_hash.input.clone(),
+            LinkTypes::AnecdoteUpdates,
+        )?,
+        original_anecdote_hash.get_strategy(),
     )?;
+
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_anecdote_hash = match latest_link {
         Some(link) => ActionHash::try_from(link.target.clone())
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_anecdote_hash.clone(),
+        None => original_anecdote_hash.input.clone(),
     };
     get(latest_anecdote_hash, GetOptions::default())
 }

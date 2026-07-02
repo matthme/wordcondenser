@@ -1,6 +1,6 @@
 [package]
 name = "profiles"
-version = "0.0.1"
+version = "0.6.0"
 edition = "2021"
 
 [lib]
@@ -13,4 +13,4 @@ hdk = { workspace = true }
 serde = { workspace = true }
 
 profiles_integrity = { workspace = true }
-hc_zome_profiles_coordinator = { git = "https://github.com/holochain-open-dev/profiles", rev = "570dbc9135242a419b47b316ae22825d5a2c2ef9" }
+hc_zome_profiles_coordinator = { git = "https://github.com/holochain-open-dev/profiles", rev = "b3f14fb9d7ceadf274dc4cb2d5971b88803f8af7" }

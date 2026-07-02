@@ -9,6 +9,7 @@ pub mod comment_on_offer;
 pub mod comment_on_reflection;
 pub mod entry_to_resonator;
 pub mod get_init_time;
+pub mod helper;
 pub mod offer;
 pub mod reflection;
 use craving_integrity::*;

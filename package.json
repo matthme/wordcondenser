@@ -6,6 +6,7 @@
     "tests"
   ],
   "scripts": {
+    "spin": "hc-spin --version",
     "start": "AGENTS=${AGENTS:-2} BOOTSTRAP_PORT=$(get-port) SIGNAL_PORT=$(get-port) npm run network",
     "network": "hc sandbox clean && npm run build:happ && UI_PORT=$(get-port) concurrently \"npm run start --workspace ui\" \"npm run launch:happ\"",
     "test": "npm run build:zomes && hc app pack workdir --recursive && npm t -w tests",
@@ -15,11 +16,11 @@
     "launch:tauri": "concurrently \"hc run-local-services --bootstrap-port $BOOTSTRAP_PORT --signal-port $SIGNAL_PORT\" \"echo pass | RUST_LOG=warn hc launch --piped -n $AGENTS workdir/word-condenser.happ --ui-port $UI_PORT network --bootstrap http://127.0.0.1:\"$BOOTSTRAP_PORT\" webrtc ws://127.0.0.1:\"$SIGNAL_PORT\"\"",
     "package": "npm run build:happ && npm run package -w ui && hc web-app pack workdir --recursive",
     "build:happ": "npm run build:zomes && hc app pack workdir --recursive",
-    "build:zomes": "RUSTFLAGS='' CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown"
+    "build:zomes": "RUSTFLAGS='-C opt-level=z --cfg getrandom_backend=\"custom\"' CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown"
   },
   "devDependencies": {
     "@holochain-playground/cli": "^0.1.0",
-    "@holochain/hc-spin": "^0.300.3",
+    "@holochain/hc-spin": "^0.601.3",
     "concurrently": "^6.2.1",
     "get-port-cli": "^3.0.0",
     "rimraf": "^3.0.2"

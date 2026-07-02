@@ -1,6 +1,8 @@
 use cravings_integrity::*;
 use hdk::prelude::*;
 
+use crate::helper::ZomeFnInput;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AddLobbyInfoForAnchorInput {
     anchor: AgentPubKey,
@@ -19,10 +21,11 @@ pub fn add_lobby_info_for_anchor(input: AddLobbyInfoForAnchorInput) -> ExternRes
 }
 
 #[hdk_extern]
-pub fn get_lobby_infos_for_anchor(anchor: AgentPubKey) -> ExternResult<Vec<Record>> {
-    let links =
-        get_links(GetLinksInputBuilder::try_new(anchor, LinkTypes::AnchorToLobbyInfo)?.build())?;
-
+pub fn get_lobby_infos_for_anchor(anchor: ZomeFnInput<AgentPubKey>) -> ExternResult<Vec<Record>> {
+    let links = get_links(
+        LinkQuery::try_new(anchor.input.clone(), LinkTypes::AnchorToLobbyInfo)?,
+        anchor.get_strategy(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| {

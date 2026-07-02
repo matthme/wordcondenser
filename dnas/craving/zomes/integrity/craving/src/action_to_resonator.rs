@@ -20,7 +20,7 @@ pub fn validate_create_link_action_to_resonator(
     let action_hash =
         ActionHash::try_from(base_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
-    let _reflection = record
+    let _reflection: () = record
         .entry()
         .to_app_option()
         .map_err(|e| wasm_error!(e))?
