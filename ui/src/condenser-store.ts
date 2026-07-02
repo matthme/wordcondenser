@@ -10,7 +10,7 @@ import {
 import { decodeEntry, DnaHashMap } from '@holochain-open-dev/utils';
 import {
   DnaModifiers,
-  AppAgentWebsocket,
+  AppWebsocket,
   CellId,
   CellType,
   ClonedCell,
@@ -71,7 +71,7 @@ export class CondenserStore {
   private _pollingUnsubscriber: Unsubscriber | undefined;
 
   constructor(
-    protected appAgentWebsocket: AppAgentWebsocket,
+    protected appWebsocket: AppWebsocket,
     installedCravings: DnaHashMap<CravingStore>,
     disabledCravings: Record<string, ClonedCell>,
     lobbies: DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>,
@@ -90,11 +90,11 @@ export class CondenserStore {
     // console.log("@CondeserStore constructor: this._installedCravings: ", get(this._installedCravings));
   }
 
-  static async connect(appAgentWebsocket: AppAgentWebsocket) {
+  static async connect(appWebsocket: AppWebsocket) {
     // console.log("%%% Connecting to CondenserStore... %%%");
 
     const [installedCravings, disabledCravings, lobbies, disabledLobbies] =
-      await this.fetchCells(appAgentWebsocket);
+      await this.fetchCells(appWebsocket);
     // console.log("%%% @connect(): installedCravings: ", installedCravings);
     // console.log("%%% @connect(): disabledCravings: ", disabledCravings);
 
@@ -154,7 +154,7 @@ export class CondenserStore {
     // console.log("@connect: cravingLobbyMapping: ", cravingLobbyMapping);
 
     return new CondenserStore(
-      appAgentWebsocket,
+      appWebsocket,
       installedCravings,
       disabledCravings,
       lobbies,
@@ -205,7 +205,7 @@ export class CondenserStore {
    */
   async fetchStores() {
     const [installedCravings, disabledCravings, lobbies, disabledLobbies] =
-      await CondenserStore.fetchCells(this.appAgentWebsocket);
+      await CondenserStore.fetchCells(this.appWebsocket);
 
     const cravingLobbyMapping = new DnaHashMap<
       [CravingCreationTime, DnaRecipe, LobbyData[]]
@@ -268,11 +268,11 @@ export class CondenserStore {
   /**
    * Queries the conductor to get all craving and lobby cells and creates stores for the enabled ones
    *
-   * @param appAgentWebsocket
+   * @param appWebsocket
    * @returns
    */
   static async fetchCells(
-    appAgentWebsocket: AppAgentWebsocket,
+    appWebsocket: AppWebsocket,
   ): Promise<
     [
       DnaHashMap<CravingStore>,
@@ -286,7 +286,7 @@ export class CondenserStore {
     const lobbies = new DnaHashMap<[LobbyStore, ProfilesStore, DnaModifiers]>();
     const disabledLobbies: Record<string, ClonedCell> = {};
 
-    const appInfo = await appAgentWebsocket.appInfo();
+    const appInfo = await appWebsocket.appInfo();
     // console.log("%%% AppInfo: ", appInfo);
     const cravingCells = appInfo.cell_info.craving;
     await Promise.all(
@@ -300,7 +300,7 @@ export class CondenserStore {
           // if the craving cell is enabled
           if (cloneInfo.enabled) {
             const cravingService = new CravingService(
-              appAgentWebsocket,
+              appWebsocket,
               'craving',
               cellId,
             );
@@ -334,7 +334,7 @@ export class CondenserStore {
           if (cloneInfo.enabled) {
             // For every lobby cell, create a LobbyStore and add it to the DnaHashMap
             const lobbyService = new LobbyService(
-              appAgentWebsocket,
+              appWebsocket,
               'cravings',
               cellId,
             );
@@ -342,10 +342,7 @@ export class CondenserStore {
             try {
               const lobbyStore = await LobbyStore.connect(lobbyService);
 
-              const profilesService = new ProfilesClient(
-                appAgentWebsocket,
-                cellId,
-              );
+              const profilesService = new ProfilesClient(appWebsocket, cellId);
               const profilesStore = new ProfilesStore(profilesService, {
                 additionalFields: ['A little something about you'],
               });
@@ -434,15 +431,14 @@ export class CondenserStore {
     const requestHash = md5(JSON.stringify(cloneCellRequest));
     // console.log("@createCraving: Hash of create clone cell request: ", requestHash)
 
-    const cellInfo =
-      await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
+    const cellInfo = await this.appWebsocket.createCloneCell(cloneCellRequest);
 
     const cellId = cellInfo.cell_id;
 
     // console.log(`@condenser-store: created craving with dna hash: ${encodeHashToBase64(cellId[0])}`);
 
     const cravingService = new CravingService(
-      this.appAgentWebsocket,
+      this.appWebsocket,
       'craving',
       cellId,
     );
@@ -504,8 +500,7 @@ export class CondenserStore {
     const requestHash = md5(JSON.stringify(cloneCellRequest));
     // console.log("@joinCraving: Hash of create clone cell request: ", requestHash)
 
-    const cellInfo =
-      await this.appAgentWebsocket.createCloneCell(cloneCellRequest);
+    const cellInfo = await this.appWebsocket.createCloneCell(cloneCellRequest);
 
     const cellId = cellInfo.cell_id;
 
@@ -514,7 +509,7 @@ export class CondenserStore {
     // console.log("@CondenserStore: @joinCraving: Created clone cell: ", cellInfo);
 
     const cravingService = new CravingService(
-      this.appAgentWebsocket,
+      this.appWebsocket,
       'craving',
       cellId,
     );
@@ -535,7 +530,7 @@ export class CondenserStore {
    *
    */
   async disableCraving(cellId: CellId) {
-    await this.appAgentWebsocket.disableCloneCell({
+    await this.appWebsocket.disableCloneCell({
       clone_cell_id: cellId,
     });
 
@@ -553,7 +548,7 @@ export class CondenserStore {
    *
    */
   async enableCraving(cellId: CellId) {
-    await this.appAgentWebsocket.enableCloneCell({
+    await this.appWebsocket.enableCloneCell({
       clone_cell_id: cellId,
     });
 
@@ -704,13 +699,13 @@ export class CondenserStore {
     unenforcedRules: string | undefined,
     logoSrc: string,
   ): Promise<CellId> {
-    const cellInfo = await this.appAgentWebsocket.createCloneCell({
+    const cellInfo = await this.appWebsocket.createCloneCell({
       role_name: 'lobby',
       modifiers: {
         network_seed: networkSeed,
         properties: {
           name,
-          // creator: encodeHashToBase64(this.appAgentWebsocket.myPubKey), // not neeted in Word Condenser 0.1.X to reduce invitation friction
+          // creator: encodeHashToBase64(this.appWebsocket.myPubKey), // not neeted in Word Condenser 0.1.X to reduce invitation friction
         }, // lobby name will be fixed and part of the properties
       },
       name,
@@ -721,7 +716,7 @@ export class CondenserStore {
     // console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
 
     const lobbyService = new LobbyService(
-      this.appAgentWebsocket,
+      this.appWebsocket,
       'cravings',
       cellId,
     );
@@ -739,7 +734,7 @@ export class CondenserStore {
 
     const lobbyStore = await LobbyStore.connect(lobbyService);
 
-    const profilesService = new ProfilesClient(this.appAgentWebsocket, cellId);
+    const profilesService = new ProfilesClient(this.appWebsocket, cellId);
     const profilesStore = new ProfilesStore(profilesService, {
       additionalFields: ['A little something about you'],
     });
@@ -754,7 +749,7 @@ export class CondenserStore {
   }
 
   async disableLobby(cellId: CellId) {
-    await this.appAgentWebsocket.disableCloneCell({
+    await this.appWebsocket.disableCloneCell({
       clone_cell_id: cellId,
     });
 
@@ -766,7 +761,7 @@ export class CondenserStore {
   }
 
   async enableLobby(cellId: CellId) {
-    await this.appAgentWebsocket.enableCloneCell({
+    await this.appWebsocket.enableCloneCell({
       clone_cell_id: cellId,
     });
 
@@ -789,13 +784,13 @@ export class CondenserStore {
       }
     });
 
-    const cellInfo = await this.appAgentWebsocket.createCloneCell({
+    const cellInfo = await this.appWebsocket.createCloneCell({
       role_name: 'lobby',
       modifiers: {
         network_seed: networkSeed,
         properties: {
           name,
-          // creator: encodeHashToBase64(this.appAgentWebsocket.myPubKey), // not needed in Word Condenser 0.1.X to reduce invitation friction
+          // creator: encodeHashToBase64(this.appWebsocket.myPubKey), // not needed in Word Condenser 0.1.X to reduce invitation friction
         }, // lobby name will be fixed and part of the properties
       },
       name,
@@ -806,7 +801,7 @@ export class CondenserStore {
     // console.log("@CondenserStore: @createLobby: Created lobby cell: ", cellInfo);
 
     const lobbyService = new LobbyService(
-      this.appAgentWebsocket,
+      this.appWebsocket,
       'cravings',
       cellId,
     );
@@ -816,10 +811,7 @@ export class CondenserStore {
     // wait 2 seconds in order to get the chance to fetch the lobby info from another peer
     setTimeout(async () => {
       const lobbyStore = await LobbyStore.connect(lobbyService);
-      const profilesService = new ProfilesClient(
-        this.appAgentWebsocket,
-        cellId,
-      );
+      const profilesService = new ProfilesClient(this.appWebsocket, cellId);
       const profilesStore = new ProfilesStore(profilesService, {
         additionalFields: ['A little something about you'],
       });

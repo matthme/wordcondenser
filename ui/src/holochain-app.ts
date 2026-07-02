@@ -1,7 +1,7 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
-  AppAgentWebsocket,
+  AppWebsocket,
   CellId,
   decodeHashFromBase64,
   DnaHash,
@@ -79,7 +79,7 @@ export class HolochainApp extends LitElement {
 
   @provide({ context: clientContext })
   @property({ type: Object })
-  client!: AppAgentWebsocket;
+  client!: AppWebsocket;
 
   @provide({ context: condenserContext })
   @property({ type: Object })
@@ -111,7 +111,7 @@ export class HolochainApp extends LitElement {
 
   async firstUpdated() {
     // We pass '' as url because it will dynamically be replaced in launcher environments
-    this.client = await AppAgentWebsocket.connect('', 'word-condenser');
+    this.client = await AppWebsocket.connect();
     this.store = await CondenserStore.connect(this.client);
 
     if (isKangaroo()) {
