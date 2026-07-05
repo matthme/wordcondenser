@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
 import {
   Record,
-  AppAgentClient,
+  AppClient,
   CellId,
   AgentPubKey,
   ActionHash,
@@ -32,7 +32,7 @@ export interface ReflectionData {
 @customElement('all-reflections')
 export class AllReflections extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _condenserStore!: CondenserStore;

@@ -44,7 +44,7 @@ export class AllAvailableCravings extends LitElement {
   async firstUpdated() {
     await this._store.fetchStores();
     this._allAvailableCravings.value.forEach(
-      ([dnaHash, [_cravingCreationTime, _dnaRecipe, _lobbyDatas]]) => {
+      ([dnaHash, [_cravingCreationTime, _dnaRecipe]]) => {
         const cravingDnaHashB64 = encodeHashToBase64(dnaHash);
         if (
           !window.localStorage.getItem(`knownCravingSeen#${cravingDnaHashB64}`)
@@ -93,9 +93,7 @@ export class AllAvailableCravings extends LitElement {
   }
 
   renderList(
-    availableCravings: Array<
-      [DnaHash, [CravingCreationTime, DnaRecipe, LobbyData[]]]
-    >,
+    availableCravings: Array<[DnaHash, [CravingCreationTime, DnaRecipe]]>,
   ) {
     if (Object.values(availableCravings).length === 0)
       return html` <div
@@ -114,14 +112,8 @@ export class AllAvailableCravings extends LitElement {
         ${availableCravings
           .sort(
             (
-              [
-                _dnaHash_a,
-                [_cravingCreationTime_a, dnaRecipe_a, _lobbyDatas_a],
-              ],
-              [
-                _dnaHash_b,
-                [_cravingCreationTime_b, dnaRecipe_b, _lobbyDatas_b],
-              ],
+              [_dnaHash_a, [_cravingCreationTime_a, dnaRecipe_a]],
+              [_dnaHash_b, [_cravingCreationTime_b, dnaRecipe_b]],
             ) =>
               (getLocalStorageItem<number>(
                 `cravingDiscovered#${encodeHashToBase64(
@@ -135,7 +127,7 @@ export class AllAvailableCravings extends LitElement {
               ) || 0),
           )
           .map(
-            ([dnaHash, [_cravingCreationTime, dnaRecipe, lobbyDatas]]) => html`
+            ([dnaHash, [_cravingCreationTime, dnaRecipe]]) => html`
               <div
                 class="craving-container"
                 style="display: flex; flex-direction: column; position: relative;"
@@ -151,25 +143,6 @@ export class AllAvailableCravings extends LitElement {
                       </div>
                     `
                   : html``}
-                <div class="column" style="align-items: flex-end; width: 100%;">
-                  <div
-                    class="row"
-                    style="margin-top: 5px; justify-content: flex-end; overflow-x: auto;"
-                  >
-                    ${lobbyDatas.map(lobbyData => {
-                      if (lobbyData.info?.logo_src) {
-                        return html`<img
-                          alt="Group logo"
-                          title=${lobbyData.name}
-                          src=${lobbyData.info.logo_src}
-                          style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 5px 2px;"
-                        />`;
-                      }
-                      return html``;
-                    })}
-                  </div>
-                </div>
-
                 <div class="craving-title" style="margin-bottom: auto;">
                   ${dnaRecipe.title}
                 </div>

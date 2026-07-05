@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
-import { Record, AppAgentClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -20,7 +20,7 @@ import { sharedStyles } from '../sharedStyles';
 @customElement('create-reflection')
 export class CreateOffer extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _store!: CondenserStore;
@@ -58,7 +58,7 @@ export class CreateOffer extends LitElement {
 
     try {
       const record: Record = await this.client.callZome({
-        cap_secret: null,
+        cap_secret: undefined,
         cell_id: this.cravingCellId,
         zome_name: 'craving',
         fn_name: 'create_reflection',
@@ -79,10 +79,11 @@ export class CreateOffer extends LitElement {
       this.reflectionField.textAreaField.value = '';
       this.titleField.inputField.value = '';
     } catch (e: any) {
+      console.error(e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the reflection: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the reflection: ${e}`;
       errorSnackbar.show();
     }
   }

@@ -12,8 +12,6 @@ roles:
       modifiers:
         network_seed: ~
         properties: ~
-        origin_time: ~
-        quantum_time: ~
       version: ~
       clone_limit: 99999
   - name: lobby
@@ -25,7 +23,5 @@ roles:
       modifiers:
         network_seed: ~
         properties: ~
-        origin_time: ~
-        quantum_time: ~
       version: ~
-      clone_limit: 99999
+      clone_limit: 0

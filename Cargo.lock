@@ -19,9 +19,9 @@ checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
 
 [[package]]
 name = "arrayvec"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f02882884d3e1bc524fb12c79f107f6ad0e1cfd498c536ffb494301740995dfe"
+checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "autocfg"
@@ -155,6 +155,7 @@ version = "0.0.1"
 dependencies = [
  "hdi",
  "holochain_serialized_bytes",
+ "rmp-serde",
  "serde",
 ]
 
@@ -432,9 +433,9 @@ dependencies = [
 
 [[package]]
 name = "hdi"
-version = "0.7.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20ac9b32f4d90387d1181b6e58d8bfc4de02b7678354ac7d3af7a3a3c5b9d0fa"
+checksum = "df74665942cd911ca26245b3a68c783eef902018d41994e3192660fd9b157e0c"
 dependencies = [
  "getrandom",
  "hdk_derive",
@@ -452,9 +453,9 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.6.2"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "510f604e79db535f553d8b737d2cc82ac5fec0ed87dd6b9a3a334a31a6d01dd9"
+checksum = "cccd037e53cd05e518f66b839f0a57cda156a55dca0599bb1a4518ec371da801"
 dependencies = [
  "getrandom",
  "hdi",

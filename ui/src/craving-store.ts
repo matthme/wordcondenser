@@ -460,7 +460,7 @@ export class CravingStore {
 
   commentsOnReflection(
     reflectionHash: ActionHash,
-  ): AsyncReadable<Array<Record>> {
+  ): AsyncReadable<Array<Record>> | undefined {
     return this.commentsOnReflections.get(reflectionHash);
   }
 

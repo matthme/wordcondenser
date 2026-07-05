@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { Record, AppAgentClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -18,7 +18,7 @@ import { MVBTextField } from '../components/mvb-textfield';
 @customElement('create-association')
 export class CreateAssociation extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _store!: CondenserStore;
@@ -42,7 +42,7 @@ export class CreateAssociation extends LitElement {
 
     try {
       const record: Record = await this.client.callZome({
-        cap_secret: null,
+        cap_secret: undefined,
         cell_id: this.cravingCellId,
         zome_name: 'craving',
         fn_name: 'create_association',
@@ -65,10 +65,11 @@ export class CreateAssociation extends LitElement {
         this.shadowRoot?.getElementById('association-textfield') as MVBTextField
       ).clear();
     } catch (e: any) {
+      console.error(e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the association: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the association: ${e}`;
       errorSnackbar.show();
     }
   }

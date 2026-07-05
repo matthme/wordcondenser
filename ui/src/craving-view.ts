@@ -2,7 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
 import {
-  AppAgentClient,
+  AppClient,
   CellId,
   encodeHashToBase64,
   DnaHash,
@@ -42,8 +42,6 @@ import { LobbyInfo } from './types';
 
 export enum CravingViewMode {
   Home,
-  ShareRhyme,
-  ShareSelection,
   DisableCraving,
 }
 
@@ -51,7 +49,7 @@ export enum CravingViewMode {
 @customElement('craving-view')
 export class CravingView extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   store!: CondenserStore;
@@ -88,14 +86,6 @@ export class CravingView extends LitElement {
   @state()
   private _viewMode: CravingViewMode = CravingViewMode.Home;
 
-  private _lobbiesForCraving = new StoreSubscriber(this, () =>
-    this.store.getLobbiesForCraving(this.cravingCellId[0]),
-  );
-
-  private _allLobbies = new StoreSubscriber(this, () =>
-    this.store.getAllLobbies(),
-  );
-
   firstUpdated() {
     // deterministically derive "random" name from public key and craving title
     this.myNickName = getNickname(this.cravingCellId[1], this.craving.title);
@@ -116,20 +106,6 @@ export class CravingView extends LitElement {
       ).classList.add('selected');
     }
     this.requestUpdate();
-  }
-
-  async shareCraving() {
-    try {
-      const dnaHashes = this._selectedLobbies.map(b64hash =>
-        decodeHashFromBase64(b64hash),
-      );
-      await this.store.shareCraving(this.cravingCellId, dnaHashes);
-      this._viewMode = CravingViewMode.Home;
-    } catch (e) {
-      throw new Error(
-        `Failed to share craving: ${JSON.stringify(e).slice(100)}`,
-      );
-    }
   }
 
   async disableCraving() {
@@ -210,279 +186,76 @@ export class CravingView extends LitElement {
     </div> `;
   }
 
-  renderShareSelection() {
-    const allLobbies = Array.from(this._allLobbies.value.entries());
+  // renderShareRhyme1() {
+  //   return html`
+  //     <div
+  //       class="column"
+  //       style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
+  //     >
+  //       <div
+  //         style="font-size: 1.4em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 50px;"
+  //       >
+  //         Sharing is Caring
+  //       </div>
+  //       <div
+  //         class="column"
+  //         style="font-size: 0.85em; line-height: 1.4em; color: #9098b3; max-width: 900px; text-align: center; margin-bottom: 50px; align-items: center;"
+  //       >
+  //         As you see, those cravings -<br />
+  //         and especially the juicy ones,<br /><br />
 
-    // filter out the ones this craving is already shared with
-    // console.log("allLobbies dna hashes: ", allLobbies.map(([dnaHash, _]) => encodeHashToBase64(dnaHash)));
-    // console.log("_lobbiesForCraving dna hashes: ", this._lobbiesForCraving.value.map((lobbyData) => encodeHashToBase64(lobbyData.dnaHash)));
+  //         can propagate without constraints<br />
+  //         along our lines of social bonds.<br /><br />
 
-    const remainingLobbies = allLobbies.filter(
-      ([dnaHash, _]) =>
-        !this._lobbiesForCraving.value
-          .map(lobbyData => encodeHashToBase64(lobbyData.dnaHash))
-          .includes(encodeHashToBase64(dnaHash)),
-    );
+  //         So if you share one with a group of yours<br />
+  //         shaping language, is what you do!<br /><br />
 
-    if (remainingLobbies.length === 0) {
-      return html`
-        <div
-          class="column"
-          style="flex: 1; justify-content: center; align-items: center; height: 100vh;"
-        >
-          <div style="font-size: 1em; color: #9098b3; margin-bottom: 100px;">
-            You already shared this craving with every group!
-          </div>
-          <div
-            class="row confirm-btn"
-            style="align-items: center; margin-top: 5px;"
-            tabindex="0"
-            @click=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-          >
-            <span style="color: #abb5d6; font-size: 23px; margin: 0 10px;"
-              >Ok</span
-            >
-          </div>
-        </div>
-      `;
-    }
-    return html`
-      <div
-        class="column"
-        style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
-      >
-        <div style="font-size: 1.1em; color: #9098b3; margin-bottom: 30px;">
-          Select group to share it with:
-        </div>
+  //         So be wise and do take care,<br />
+  //         making sure to only share,<br />
+  //         what indeed you want to hear out there!
+  //       </div>
 
-        <div
-          class="column"
-          style="
-            max-width: 800px;
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #c5cded;
-            border-radius: 10px;
-            padding: 12px 10px;
-        "
-        >
-          ${remainingLobbies.map(
-            ([lobbyDnaHash, [lobbyStore, _profilesStore]]) => {
-              const lobbyInfo = decodeEntry(lobbyStore.lobbyInfo!) as LobbyInfo;
-              return html`
-                <div
-                  id=${encodeHashToBase64(lobbyDnaHash)}
-                  class="group-selection-element"
-                  @click=${() => this.handleSelectionClick(lobbyDnaHash)}
-                  @keypress=${() => this.handleSelectionClick(lobbyDnaHash)}
-                  tabindex="0"
-                >
-                  <!-- <div style="height: 60px; width: 60px; background: lightgreen; border-radius: 20%; margin-left: 15px;"></div> -->
-                  <img
-                    src=${lobbyInfo.logo_src}
-                    alt="Group logo"
-                    style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;"
-                  />
-                  <div
-                    style="
-                      margin-left: 30px;
-                  "
-                  >
-                    ${lobbyStore.lobbyName}
-                  </div>
-                </div>
-              `;
-            },
-          )}
-        </div>
+  //       <div class="row">
+  //         <div
+  //           class="row cancel-btn"
+  //           style="align-items: center; margin-top: 5px; margin-right: 20px;"
+  //           @click=${() => {
+  //             this._viewMode = CravingViewMode.Home;
+  //           }}
+  //           @keypress=${() => {
+  //             this._viewMode = CravingViewMode.Home;
+  //           }}
+  //           tabindex="0"
+  //         >
+  //           <span style="color: #cd2b2b; font-size: 23px;"
+  //             >${msg('Cancel')}</span
+  //           >
+  //         </div>
 
-        <div class="row" style="margin-top: 50px;">
-          <div
-            class="row cancel-btn"
-            style="align-items: center; margin-top: 5px; margin-right: 20px;"
-            @click=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            tabindex="0"
-          >
-            <span style="color: #cd2b2b; font-size: 23px;"
-              >${msg('Cancel')}</span
-            >
-          </div>
-
-          <div
-            class="row confirm-btn"
-            style="align-items: center; margin-top: 5px;"
-            tabindex="0"
-            @click=${async () => this.shareCraving()}
-            @keypress=${async () => this.shareCraving()}
-          >
-            <img
-              src="send_icon.svg"
-              style="height: 27px;"
-              alt="meditating person"
-            />
-            <span style="color: #abb5d6; font-size: 23px; margin-left: 10px;"
-              >Share!</span
-            >
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  renderShareRhyme1() {
-    return html`
-      <div
-        class="column"
-        style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
-      >
-        <div
-          style="font-size: 1.4em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 50px;"
-        >
-          Sharing is Caring
-        </div>
-        <div
-          class="column"
-          style="font-size: 0.85em; line-height: 1.4em; color: #9098b3; max-width: 900px; text-align: center; margin-bottom: 50px; align-items: center;"
-        >
-          As you see, those cravings -<br />
-          and especially the juicy ones,<br /><br />
-
-          can propagate without constraints<br />
-          along our lines of social bonds.<br /><br />
-
-          So if you share one with a group of yours<br />
-          shaping language, is what you do!<br /><br />
-
-          So be wise and do take care,<br />
-          making sure to only share,<br />
-          what indeed you want to hear out there!
-        </div>
-
-        <div class="row">
-          <div
-            class="row cancel-btn"
-            style="align-items: center; margin-top: 5px; margin-right: 20px;"
-            @click=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            tabindex="0"
-          >
-            <span style="color: #cd2b2b; font-size: 23px;"
-              >${msg('Cancel')}</span
-            >
-          </div>
-
-          <div
-            class="row confirm-btn"
-            style="align-items: center; margin-top: 5px;}"
-            tabindex="0"
-            @click=${() => {
-              this._viewMode = CravingViewMode.ShareSelection;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.ShareSelection;
-            }}
-          >
-            <img
-              src="meditating.svg"
-              style="height: 30px;"
-              alt="meditating person"
-            />
-            <span style="color: #abb5d6; font-size: 23px; margin-left: 10px;"
-              >I feel calm and ready to share</span
-            >
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  renderShareRhyme2() {
-    return html`
-      <div
-        class="column"
-        style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
-      >
-        <div
-          style="font-size: 1.4em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 70px; margin-top: -30px;"
-        >
-          Sharing is Caring
-        </div>
-        <img
-          src="symphony.svg"
-          style="width: 500px;"
-          alt="a sketch of a web of nodes with connections where each node is a filter and beautiful music is being emitted from the web as whole"
-        />
-        <div
-          class="column"
-          style="margin-top: 50px;font-size: 0.85em; line-height: 1.4em; color: #9098b3; max-width: 900px; text-align: center; margin-bottom: 50px; align-items: center;"
-        >
-          You are a filter in our collective web we form<br />
-          (for scientists: You shape with me our Fourier transorm)<br /><br />
-
-          let's have it then the way we want,<br />
-          each one of us lets through just this,<br />
-          we want the world to see, it is.<br /><br />
-
-          And consequently we will see,<br />
-          how all together - who would have thought? -<br />
-          we play one breathtaking symphony.<br />
-        </div>
-
-        <div class="row" style="margin-bottom: 100px;">
-          <div
-            class="row cancel-btn"
-            style="align-items: center; margin-top: 5px; margin-right: 20px;"
-            @click=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.Home;
-            }}
-            tabindex="0"
-          >
-            <span style="color: #cd2b2b; font-size: 23px;"
-              >${msg('Cancel')}</span
-            >
-          </div>
-
-          <div
-            class="row confirm-btn"
-            style="align-items: center; margin-top: 5px;}"
-            tabindex="0"
-            @click=${() => {
-              this._viewMode = CravingViewMode.ShareSelection;
-            }}
-            @keypress=${() => {
-              this._viewMode = CravingViewMode.ShareSelection;
-            }}
-          >
-            <img
-              src="violine.svg"
-              style="height: 40px;"
-              alt="meditating person"
-            />
-            <span style="color: #abb5d6; font-size: 23px; margin-left: 10px;"
-              >Let's pull that string!</span
-            >
-          </div>
-        </div>
-      </div>
-    `;
-  }
+  //         <div
+  //           class="row confirm-btn"
+  //           style="align-items: center; margin-top: 5px;}"
+  //           tabindex="0"
+  //           @click=${() => {
+  //             this._viewMode = CravingViewMode.ShareSelection;
+  //           }}
+  //           @keypress=${() => {
+  //             this._viewMode = CravingViewMode.ShareSelection;
+  //           }}
+  //         >
+  //           <img
+  //             src="meditating.svg"
+  //             style="height: 30px;"
+  //             alt="meditating person"
+  //           />
+  //           <span style="color: #abb5d6; font-size: 23px; margin-left: 10px;"
+  //             >I feel calm and ready to share</span
+  //           >
+  //         </div>
+  //       </div>
+  //     </div>
+  //   `;
+  // }
 
   renderHome() {
     return html`
@@ -581,51 +354,6 @@ nor to promote yourself!"
           >
             <span style="font-size: 20px;">collapse description</span>
           </div>
-        </div>
-
-        <div
-          class="row"
-          style="width: 100%; justify-content: flex-end; margin-right: 50px;"
-        >
-          ${this._lobbiesForCraving.value.map(lobbyData => {
-            if (lobbyData.info && lobbyData.info.logo_src) {
-              return html`
-                <img
-                  src=${lobbyData.info.logo_src}
-                  title="shared with '${lobbyData.name}'"
-                  alt="Icon of group with name ${lobbyData.name}"
-                  style="height: 70px; width: 70px; border-radius: 50%; margin: 3px;"
-                />
-              `;
-            }
-            return html`
-              <div
-                class="column"
-                style="justify-content: center; height: 70px; width: 70px; border-radius: 50%; background: #929ab9; font-size: 40px; font-weight: bold; margin: 3px; color: black;"
-                title="shared with '${lobbyData.name}'"
-                alt="Icon of group with name ${lobbyData.name}"
-              >
-                <span>${lobbyData.name.slice(0, 2)}</span>
-              </div>
-            `;
-          })}
-
-          <img
-            tabindex="0"
-            src="share_icon.svg"
-            alt="Share icon"
-            class="icon"
-            style="height: 60px; width: 60px; cursor: pointer; margin: 3px;"
-            title="Share with another Group"
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'enter') {
-                this._viewMode = CravingViewMode.ShareRhyme;
-              }
-            }}
-            @click=${() => {
-              this._viewMode = CravingViewMode.ShareRhyme;
-            }}
-          />
         </div>
 
         <div class="row" style="overflow-x: auto; width: 100%;">
@@ -842,16 +570,6 @@ nor to promote yourself!"
     switch (this._viewMode) {
       case CravingViewMode.Home:
         return this.renderHome();
-      case CravingViewMode.ShareRhyme: {
-        const randomBoolean = Math.random() < 0.5;
-        if (randomBoolean) {
-          return this.renderShareRhyme2();
-        }
-        return this.renderShareRhyme1();
-      }
-      case CravingViewMode.ShareSelection:
-        return this.renderShareSelection();
-
       case CravingViewMode.DisableCraving:
         return this.renderDisableCraving();
       default:

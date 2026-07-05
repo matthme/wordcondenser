@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { AppAgentClient, CellId } from '@holochain/client';
+import { AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@material/mwc-circular-progress';
@@ -18,7 +18,7 @@ import { sharedStyles } from '../sharedStyles';
 @customElement('all-offers')
 export class AllOffers extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _condenserStore!: CondenserStore;

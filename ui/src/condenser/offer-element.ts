@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { AppAgentClient, NewEntryAction } from '@holochain/client';
+import { AppClient, NewEntryAction } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
@@ -23,7 +23,7 @@ import { Offer } from './types';
 @customElement('offer-element')
 export class OfferElement extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: cravingStoreContext })
   store!: CravingStore;

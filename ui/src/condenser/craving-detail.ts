@@ -45,10 +45,6 @@ export class CravingDetail extends LitElement {
   @state()
   _editing = false;
 
-  private _lobbiesForCraving = new StoreSubscriber(this, () =>
-    this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
-  );
-
   private _allReflectionsCount = new StoreSubscriber(
     this,
     () => this.store.allReflectionsCount,
@@ -67,12 +63,6 @@ export class CravingDetail extends LitElement {
   private _associationsCount = new StoreSubscriber(
     this,
     () => this.store.associationsCount,
-  );
-
-  private _amIFiltered = new StoreSubscriber(this, () =>
-    this.condenserStore.amIFiltered(
-      this._lobbiesForCraving.value.map(data => data.dnaHash),
-    ),
   );
 
   // [number of total associations total, number of new associations]
@@ -249,10 +239,6 @@ export class CravingDetail extends LitElement {
   }
 
   render() {
-    if (this._amIFiltered.value) {
-      return html``;
-    }
-
     const timestamp = this.store.initTime;
     const craving = this.store.craving;
     const date = new Date(timestamp);
@@ -303,28 +289,6 @@ export class CravingDetail extends LitElement {
         </div>
         <div class="craving-title">${craving.title}</div>
         <div class="craving-description">${craving.description}</div>
-
-        <div
-          class="column"
-          style="flex: 1; align-items: flex-end; width: 100%;"
-        >
-          <div
-            class="row"
-            style="margin-top: 5px; justify-content: flex-end; margin-right: -15px; overflow-x: auto;"
-          >
-            ${this._lobbiesForCraving.value.map(lobbyData => {
-              if (lobbyData.info?.logo_src) {
-                return html`<img
-                  title=${lobbyData.name}
-                  alt="Group logo"
-                  src=${lobbyData.info.logo_src}
-                  style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;"
-                />`;
-              }
-              return html``;
-            })}
-          </div>
-        </div>
       </div>
     `;
   }

@@ -3,7 +3,7 @@ import { customElement } from 'lit/decorators.js';
 import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@material/mwc-circular-progress';
-import { DnaHashMap } from '@holochain-open-dev/utils';
+import { DnaHashMap } from '@holochain/client';
 
 import './craving-detail';
 import { CondenserStore } from '../condenser-store';

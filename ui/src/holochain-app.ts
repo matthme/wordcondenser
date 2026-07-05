@@ -1,22 +1,29 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
+  AppClient,
   AppWebsocket,
   CellId,
   decodeHashFromBase64,
-  DnaHash,
   encodeHashToBase64,
 } from '@holochain/client';
 import { provide } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
-import { invoke } from '@tauri-apps/api';
 
-import { get, StoreSubscriber } from '@holochain-open-dev/stores';
-import { decodeEntry } from '@holochain-open-dev/utils';
+import {
+  ProfilesStore,
+  profilesStoreContext,
+} from '@holochain-open-dev/profiles';
+import {
+  initializeHotReload,
+  isWeaveContext,
+  WeaveClient,
+} from '@theweave/api';
+
+import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { open } from '@tauri-apps/api/shell';
-import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { clientContext, condenserContext } from './contexts';
-import { DashboardMode, LobbyInfo } from './types';
+import { DashboardMode, weaveClientContext } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
 
@@ -33,27 +40,14 @@ import './condenser/all-cravings';
 import './condenser/all-disabled-cravings';
 import './condenser/all-available-cravings';
 import './craving-view';
-import './lobby-context';
 import './lobby/create-lobby';
-import './lobby/join-lobby';
-import './lobby/join-lobby-from-link';
 import './lobby/all-lobbies';
 import './lobby/all-craving-recipes';
-import './lobby/profiles/elements/profile-prompt';
 import './lobby/profiles/elements/profiles-context';
-import './lobby/profiles/elements/list-profiles';
-import './lobby/profiles/elements/my-profile';
-import './lobby-view';
 import './intro';
 import './no-cookies-ever';
 import './loading-animation';
-import {
-  getLocalStorageItem,
-  getSessionStorageItem,
-  isKangaroo,
-  notifyOS,
-} from './utils';
-import { JoinLobby } from './lobby/join-lobby';
+import { getLocalStorageItem } from './utils';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -63,23 +57,24 @@ export class HolochainApp extends LitElement {
 
   @state() _selectedCravingCellId: CellId | undefined = undefined;
 
-  @state() _selectedLobbyCellId: CellId | undefined = undefined;
-
   @state() _selectedCraving: CravingDnaProperties | undefined = undefined;
 
   @state() _deepLink: string | undefined = undefined;
 
-  @state() _menuItem: 'cravings' | 'groups' = 'cravings';
-
   @state() _cravingMenuItem: 'installed' | 'available' | 'disabled' =
     'installed';
 
-  @state()
-  _unlisten: UnlistenFn | undefined;
-
   @provide({ context: clientContext })
   @property({ type: Object })
-  client!: AppWebsocket;
+  client!: AppClient;
+
+  @provide({ context: weaveClientContext })
+  @property({ type: Object })
+  _weaveClient!: WeaveClient;
+
+  @provide({ context: profilesStoreContext })
+  @property({ type: Object })
+  _profilesStore!: ProfilesStore;
 
   @provide({ context: condenserContext })
   @property({ type: Object })
@@ -97,45 +92,37 @@ export class HolochainApp extends LitElement {
     this.store ? this.store.getAllDisabledCravings() : undefined,
   );
 
-  private _allLobbyDatas = new StoreSubscriber(this, () =>
-    this.store ? this.store.getAllLobbyDatas() : undefined,
-  );
-
-  private _activeGroupFilter = new StoreSubscriber(this, () =>
-    this.store ? this.store.activeGroupFilter() : undefined,
-  );
-
-  disconnectedCallback(): void {
-    if (this._unlisten) this._unlisten();
-  }
-
   async firstUpdated() {
-    // We pass '' as url because it will dynamically be replaced in launcher environments
-    this.client = await AppWebsocket.connect();
-    this.store = await CondenserStore.connect(this.client);
-
-    if (isKangaroo()) {
-      // clear the systray icon whenever the Window receives focus
-      window.addEventListener('focus', async () => {
-        await invoke('clear_systray_icon', {});
-      });
-
-      this._unlisten = await listen('deep-link-received', async e => {
-        console.log('Received deepLink: ', e.payload);
-        this._deepLink = e.payload as string;
-        this._dashboardMode = DashboardMode.JoinLobbyFromLink;
-        // remove intialDeepLink property (required for macOS, since initialDeepLink is
-        // written to the window object with each event)
-        window.localStorage.removeItem('initialDeepLink');
-      });
-
-      const initialDeepLink = window.localStorage.getItem('initialDeepLink');
-      if (initialDeepLink) {
-        this._deepLink = initialDeepLink;
-        this._dashboardMode = DashboardMode.JoinLobbyFromLink;
-        window.localStorage.removeItem('initialDeepLink');
+    console.log('FIRST UPDATED!');
+    if ((import.meta as any).env.DEV) {
+      try {
+        await initializeHotReload();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          'Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode.',
+        );
       }
     }
+    if (isWeaveContext()) {
+      const weaveClient = await WeaveClient.connect();
+      if (
+        weaveClient.renderInfo.type !== 'applet-view' ||
+        !['main'].includes(weaveClient.renderInfo.view.type)
+      )
+        throw new Error(
+          'This Applet only implements the applet main and asset views.',
+        );
+      this.client = weaveClient.renderInfo.appletClient as any;
+      this._weaveClient = weaveClient;
+      this._profilesStore = new ProfilesStore(
+        weaveClient.renderInfo.profilesClient as any,
+      );
+    } else {
+      // We pass an unused string as the url because it will dynamically be replaced in launcher environments
+      this.client = await AppWebsocket.connect();
+    }
+    this.store = await CondenserStore.connect(this.client, this._weaveClient);
 
     // check where to route after refresh
     const previousDashboardMode = window.localStorage.getItem(
@@ -159,15 +146,7 @@ export class HolochainApp extends LitElement {
             this._dashboardMode = DashboardMode.Home;
             break;
 
-          case 'CreateLobbyView':
-            this._dashboardMode = DashboardMode.Home;
-            break;
-
           case 'CreateCravingView':
-            this._dashboardMode = DashboardMode.Home;
-            break;
-
-          case 'JoinLobbyView':
             this._dashboardMode = DashboardMode.Home;
             break;
 
@@ -194,18 +173,6 @@ export class HolochainApp extends LitElement {
             break;
           }
 
-          case 'LobbyView': {
-            const retrievedLobbyDnaHash = decodeHashFromBase64(
-              window.localStorage.getItem('selectedLobbyDnaHash') as string,
-            );
-            this._selectedLobbyCellId = [
-              retrievedLobbyDnaHash,
-              this.client.myPubKey,
-            ];
-            this._dashboardMode = DashboardMode.LobbyView;
-            break;
-          }
-
           default:
             this._dashboardMode = DashboardMode.Home;
             break;
@@ -223,16 +190,6 @@ export class HolochainApp extends LitElement {
 
     switch (this._dashboardMode) {
       case DashboardMode.Home:
-        window.localStorage.setItem('previousDashboardMode', 'Home');
-        window.location.reload();
-        break;
-
-      case DashboardMode.CreateLobbyView:
-        window.localStorage.setItem('previousDashboardMode', 'Home');
-        window.location.reload();
-        break;
-
-      case DashboardMode.JoinLobbyView:
         window.localStorage.setItem('previousDashboardMode', 'Home');
         window.location.reload();
         break;
@@ -267,19 +224,6 @@ export class HolochainApp extends LitElement {
         window.localStorage.setItem('previousDashboardMode', 'Home');
         window.location.reload();
         break;
-
-      case DashboardMode.LobbyView: {
-        const selectedLobbyDnaHash = encodeHashToBase64(
-          this._selectedLobbyCellId![0],
-        );
-        window.localStorage.setItem(
-          'selectedLobbyDnaHash',
-          selectedLobbyDnaHash,
-        );
-        window.localStorage.setItem('previousDashboardMode', 'LobbyView');
-        window.location.reload();
-        break;
-      }
 
       default:
         window.localStorage.setItem('previousDashboardMode', 'Home');
@@ -328,67 +272,6 @@ export class HolochainApp extends LitElement {
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       return html`<span style="color: ${randomColor}">${word}&nbsp;</span>`;
     });
-  }
-
-  amISelected(lobbyDnaHash: DnaHash): boolean {
-    if (this._activeGroupFilter.value) {
-      console.log(
-        '@amISelected: encodeHashToBase64(this._activeGroupFilter.value): ',
-        encodeHashToBase64(this._activeGroupFilter.value),
-      );
-      console.log(
-        '@amISelected: encodeHashToBase64(lobbyDnaHash): ',
-        encodeHashToBase64(lobbyDnaHash),
-      );
-
-      return (
-        encodeHashToBase64(this._activeGroupFilter.value) ===
-        encodeHashToBase64(lobbyDnaHash)
-      );
-    }
-
-    return false;
-  }
-
-  renderWelcome() {
-    return html` <div class="column" style="align-items: center;">
-      <div style="color: #abb5da; margin-bottom: 30px; font-size: 25px;">
-        You are not part of any group yet. Join an existing group or create a
-        new one.
-      </div>
-
-      <div class="row" style="align-items: center;">
-        <button
-          @click=${() => {
-            this._dashboardMode = DashboardMode.JoinLobbyView;
-          }}
-          class="btn-create-lobby"
-        >
-          <div
-            class="row"
-            style="position: relative; align-items: center;"
-            title="Join an existing Group that tracks Cravings out there"
-          >
-            <span style="color: #ffd623ff; opacity: 0.85;">Join Group</span>
-          </div>
-        </button>
-
-        <button
-          @click=${() => {
-            this._dashboardMode = DashboardMode.CreateLobbyView;
-          }}
-          class="btn-create-lobby"
-        >
-          <div
-            class="row"
-            style="position: relative; align-items: center;"
-            title="Create a new Group to track Cravings out there"
-          >
-            <span style="color: #ffd623ff; opacity: 0.85;">Create Group</span>
-          </div>
-        </button>
-      </div>
-    </div>`;
   }
 
   renderBottom() {
@@ -518,165 +401,17 @@ export class HolochainApp extends LitElement {
         </div>
 
         <span style="display: flex; flex: 1;"></span>
-
-        <div
-          class="row"
-          style="width: 100%; justify-content: flex-end; margin-right: 50px; position: relative;"
-        >
-          ${this._allLobbyDatas.value
-            .sort((lobbyData_a, lobbyData_b) =>
-              lobbyData_b.name.localeCompare(lobbyData_a.name),
-            )
-            .map(
-              lobbyData => html`
-                <div class="column" style="align-items: center;">
-                  ${lobbyData.info && lobbyData.info.logo_src
-                    ? html`
-                        <img
-                          src=${lobbyData.info.logo_src}
-                          title="Click to filter/unfilter by Group '${lobbyData.name}'"
-                          class="group-icon"
-                          alt="Icon of group with name ${lobbyData.name}"
-                          tabindex="0"
-                          style="
-                      height: 70px;
-                      width: 70px;
-                      border-radius: 50%;
-                      margin-right: 2px;
-                      cursor: pointer;
-                      ${this.amISelected(lobbyData.dnaHash)
-                            ? 'border: 3px solid white;'
-                            : ''}
-                    "
-                          @keypress=${(e: KeyboardEvent) =>
-                            e.key === 'Enter'
-                              ? this.store.filterByGroup(lobbyData.dnaHash)
-                              : undefined}
-                          @click=${() =>
-                            this.store.filterByGroup(lobbyData.dnaHash)}
-                        />
-                      `
-                    : html`
-                        <div
-                          class="column group-icon ${this.amISelected(
-                            lobbyData.dnaHash,
-                          )
-                            ? 'group-icon-selected'
-                            : ''}"
-                          style="
-                      justify-content: center;
-                      height: 70px;
-                      width: 70px;
-                      border-radius: 50%;
-                      background: #929ab9;
-                      font-size: 40px;
-                      font-weight: bold;
-                      margin-right: 2px;
-                      color: black;
-                      cursor: pointer;
-                      ${this.amISelected(lobbyData.dnaHash)
-                            ? 'border: 3px solid white;'
-                            : ''}
-                    "
-                          title="Click to filter/unfilter by Group '${lobbyData.name}'"
-                          tabindex="0"
-                          alt="Icon of group with name ${lobbyData.name}"
-                          @keypress=${(e: KeyboardEvent) =>
-                            e.key === 'Enter'
-                              ? this.store.filterByGroup(lobbyData.dnaHash)
-                              : undefined}
-                          @click=${() =>
-                            this.store.filterByGroup(lobbyData.dnaHash)}
-                        >
-                          <span>${lobbyData.name.slice(0, 2)}</span>
-                        </div>
-                      `}
-                </div>
-              `,
-            )}
-
-          <div
-            class="row"
-            style="position: absolute; top: -45px; right: 10px; align-items: center;"
-          >
-            <img
-              src="filter_filled.svg"
-              alt="Filter icon"
-              style="height: 30px; margin: 3px; margin-right: 8px;"
-              title="Filter Cravings by Group"
-            />
-            <span style="color: #929ab9; font-size: 20px;"
-              >filter by Group</span
-            >
-          </div>
-        </div>
       </div>
 
       ${this.renderCravingTypes()}
     `;
   }
 
-  renderGroups() {
-    return html`
-      <div
-        id="content"
-        class="column"
-        style="align-items: center; width: 100%; margin-top: 90px;"
-      >
-        <all-lobbies
-          id="all-lobbies"
-          @selected-lobby=${(e: CustomEvent) => {
-            this._selectedLobbyCellId = e.detail.cellId;
-            this._dashboardMode = DashboardMode.LobbyView;
-            window.scrollTo(0, 0);
-          }}
-        >
-        </all-lobbies>
-      </div>
-    `;
-  }
-
   renderDashBoard() {
-    return html`
-      <div class="row" style="margin-bottom: 30px;">
-        <div
-          class=${this._menuItem === 'cravings'
-            ? 'menu-item-selected'
-            : 'menu-item'}
-          @click=${() => {
-            this._menuItem = 'cravings';
-          }}
-          @keypress=${() => {
-            this._menuItem = 'cravings';
-          }}
-          tabindex="0"
-        >
-          Cravings
-        </div>
-        <div
-          class=${this._menuItem === 'groups'
-            ? 'menu-item-selected'
-            : 'menu-item'}
-          @click=${() => {
-            this._menuItem = 'groups';
-          }}
-          @keypress=${() => {
-            this._menuItem = 'groups';
-          }}
-          tabindex="0"
-        >
-          Groups
-        </div>
-      </div>
-      ${this._menuItem === 'groups' ? this.renderGroups() : undefined}
-      ${this._menuItem === 'cravings' ? this.renderCravings() : undefined}
-    `;
+    return html` ${this.renderCravings()}`;
   }
 
   renderHome() {
-    const lobbies = get(this.store.getAllLobbies());
-    const disabledLobbies = get(this.store.getDisabledLobbies());
-
     switch (this._dashboardMode) {
       case DashboardMode.Home:
         return html`
@@ -699,83 +434,33 @@ export class HolochainApp extends LitElement {
                 `
               : html`<div style="height: 60px;"></div>`}
 
-            <div class="row left-buttons">
-              <button
-                @click=${() => {
-                  this._dashboardMode = DashboardMode.JoinLobbyView;
-                }}
-                @keypress=${(e: KeyboardEvent) => {
-                  if (e.key === 'Enter') {
-                    this._dashboardMode = DashboardMode.JoinLobbyView;
-                  }
-                }}
-                class="btn-join-group"
+            <button
+              @click=${() => {
+                this._dashboardMode = DashboardMode.CreateCravingView;
+              }}
+              @keypress=${() => {
+                this._dashboardMode = DashboardMode.CreateCravingView;
+              }}
+              class="btn-create-craving"
+            >
+              <div
+                class="row"
+                style="position: relative; align-items: center;"
+                title="craving for a word??"
               >
-                <div
-                  class="row"
-                  style="position: relative; align-items: center;"
-                  title="Join an existing Group that tracks Cravings out there"
+                <img
+                  src="empty_glass.svg"
+                  alt="Icon of an empty Erlenmeyer flask"
+                  style="height: 50px;"
+                />
+                <span
+                  style="color: #ffd623ff; opacity: 0.85; margin-left: 12px;"
+                  >Add Craving</span
                 >
-                  <span style="color: #ffd623ff; opacity: 0.85;"
-                    >Join Group</span
-                  >
-                </div>
-              </button>
-              <button
-                @click=${() => {
-                  this._dashboardMode = DashboardMode.CreateLobbyView;
-                }}
-                @keypress=${() => {
-                  this._dashboardMode = DashboardMode.CreateLobbyView;
-                }}
-                class="btn-join-group"
-              >
-                <div
-                  class="row"
-                  style="position: relative; align-items: center;"
-                  title="Create a new Group to track Cravings out there"
-                >
-                  <span style="color: #ffd623ff; opacity: 0.85;"
-                    >Create Group</span
-                  >
-                </div>
-              </button>
-            </div>
+              </div>
+            </button>
 
-            ${!(
-              lobbies.size === 0 && Object.values(disabledLobbies).length === 0
-            )
-              ? html`
-                  <button
-                    @click=${() => {
-                      this._dashboardMode = DashboardMode.CreateCravingView;
-                    }}
-                    @keypress=${() => {
-                      this._dashboardMode = DashboardMode.CreateCravingView;
-                    }}
-                    class="btn-create-craving"
-                  >
-                    <div
-                      class="row"
-                      style="position: relative; align-items: center;"
-                      title="craving for a word??"
-                    >
-                      <img
-                        src="empty_glass.svg"
-                        alt="Icon of an empty Erlenmeyer flask"
-                        style="height: 50px;"
-                      />
-                      <span
-                        style="color: #ffd623ff; opacity: 0.85; margin-left: 12px;"
-                        >Add Craving</span
-                      >
-                    </div>
-                  </button>
-                `
-              : html``}
-            ${lobbies.size === 0 && Object.values(disabledLobbies).length === 0
-              ? this.renderWelcome()
-              : this.renderDashBoard()}
+            ${this.renderDashBoard()}
           </div>
 
           <img
@@ -834,117 +519,6 @@ export class HolochainApp extends LitElement {
             ></create-craving>
           </div>
         `;
-      // #################  CreateLobbyView  #######################
-      case DashboardMode.CreateLobbyView:
-        return html`
-          <button
-            @click=${() => {
-              this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
-              this._selectedCraving = undefined;
-            }}
-            class="btn-back"
-          >
-            <div class="row" style="position: relative; align-items: center;">
-              <span style="color: #ffd623ff; opacity: 0.68;">Back</span>
-            </div>
-          </button>
-          <div style="margin-top: 20px;">
-            <create-lobby
-              @lobby-created=${(e: CustomEvent) => {
-                this._selectedLobbyCellId = e.detail.cellId;
-                this._dashboardMode = DashboardMode.LobbyView;
-              }}
-            ></create-lobby>
-          </div>
-        `;
-      // #################  JoinLobbyView  #######################
-      case DashboardMode.JoinLobbyView:
-        return html`
-          <button
-            @click=${() => {
-              this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
-              this._selectedCraving = undefined;
-            }}
-            class="btn-back"
-          >
-            <div class="row" style="position: relative; align-items: center;">
-              <span style="color: #ffd623ff; opacity: 0.68;">Back</span>
-            </div>
-          </button>
-          <div style="margin-top: 20px;">
-            <join-lobby
-              @lobby-joined=${(e: CustomEvent) => {
-                this._selectedLobbyCellId = e.detail.cellId;
-                this._dashboardMode = DashboardMode.LobbyView;
-              }}
-            ></join-lobby>
-          </div>
-        `;
-      // #################  JoinLobbyFromLink  #######################
-      case DashboardMode.JoinLobbyFromLink:
-        return html`
-          <button
-            @click=${() => {
-              this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
-              this._selectedCraving = undefined;
-            }}
-            class="btn-back"
-          >
-            <div class="row" style="position: relative; align-items: center;">
-              <span style="color: #ffd623ff; opacity: 0.68;">Back</span>
-            </div>
-          </button>
-          <div style="margin-top: 20px;">
-            <join-lobby-from-link
-              .deepLink=${this._deepLink}
-              @lobby-joined=${(e: CustomEvent) => {
-                this._deepLink = undefined;
-                this._selectedLobbyCellId = e.detail.cellId;
-                this._dashboardMode = DashboardMode.LobbyView;
-              }}
-            ></join-lobby-from-link>
-          </div>
-        `;
-      // #################  LobbyView  #######################
-      case DashboardMode.LobbyView: {
-        const [lobbyStore, profilesStore] = this.store.lobbyStore(
-          this._selectedLobbyCellId![0],
-        );
-        const lobbyInfoRecord = lobbyStore.lobbyInfo;
-        const lobbyInfo: LobbyInfo | undefined = lobbyInfoRecord
-          ? decodeEntry(lobbyInfoRecord)
-          : undefined;
-
-        return html`
-          <profiles-context .store=${profilesStore}>
-            <lobby-view
-              @profile-created=${() => {
-                const dontShowMessageAnymore = getSessionStorageItem<boolean>(
-                  'dont-show-message-anymore',
-                );
-                if (dontShowMessageAnymore) {
-                  window.localStorage.setItem(
-                    'dont-show-message-anymore',
-                    'true',
-                  );
-                }
-
-                this.handleRefresh();
-              }}
-              @request-home=${() => {
-                this._dashboardMode = DashboardMode.Home;
-                this._selectedLobbyCellId = undefined;
-              }}
-              .lobbyStore=${lobbyStore}
-              .lobbyInfo=${lobbyInfo}
-            ></lobby-view>
-          </profiles-context>
-        `;
-      }
-
       // #################  Settings  #######################
       case DashboardMode.Settings:
         return html`

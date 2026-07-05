@@ -1,12 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { state, customElement, property } from 'lit/decorators.js';
-import {
-  AppAgentClient,
-  DnaHash,
-  encodeHashToBase64,
-  DnaHashB64,
-  decodeHashFromBase64,
-} from '@holochain/client';
+import { state, customElement } from 'lit/decorators.js';
+import { AppClient } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -18,13 +12,11 @@ import '@material/mwc-textarea';
 import '../components/mvb-textfield';
 import '../components/mvb-textarea';
 import '../components/mvb-button';
-import { decodeEntry } from '@holochain-open-dev/utils';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { classMap } from 'lit/directives/class-map.js';
 import { sharedStyles } from '../sharedStyles';
 import { CondenserStore } from '../condenser-store';
 import { clientContext, condenserContext } from '../contexts';
-import { DnaRecipe, LobbyInfo } from '../types';
+import { DnaRecipe } from '../types';
 import { CravingDnaProperties } from './types';
 import { MVBButton } from '../components/mvb-button';
 
@@ -34,23 +26,16 @@ const MAX_TITLE_CHARS = 80;
 @customElement('create-craving')
 export class CreateCraving extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   store!: CondenserStore;
-
-  private _allLobbies = new StoreSubscriber(this, () =>
-    this.store.getAllLobbies(),
-  );
 
   @state()
   _title: string | undefined;
 
   @state()
   _description: string | undefined;
-
-  @state()
-  _selectedLobbies: DnaHashB64[] = [];
 
   @state()
   _max_association_chars: number | null = null;
@@ -74,8 +59,7 @@ export class CreateCraving extends LitElement {
       this._title.length <= MAX_TITLE_CHARS &&
       this._description !== undefined &&
       this._description !== '' &&
-      this._description.length <= MAX_DESCRIPTION_CHARS &&
-      this._selectedLobbies.length > 0
+      this._description.length <= MAX_DESCRIPTION_CHARS
     );
   }
 
@@ -109,40 +93,32 @@ export class CreateCraving extends LitElement {
 
     try {
       const networkSeed = uuidv4();
-      const originTime = Date.now() * 1000; // current epoch time in microseconds
 
       // create cell clone for this craving
       const clonedCell = await this.store.createCraving(
         cravingDnaProperties,
         networkSeed,
-        originTime,
       );
 
       const dnaRecipe: DnaRecipe = {
         title: this._title!,
         network_seed: networkSeed,
         properties: cravingDnaProperties, // original poster has special rights on the Craving
-        origin_time: originTime,
         membrane_proof: undefined,
         resulting_dna_hash: clonedCell.cell_id[0],
       };
 
       // console.log("Creating craving with recipe: ", dnaRecipe);
 
-      // create an entry in each of the lobby cells to register that Craving there
-      Promise.all(
-        this._selectedLobbies.map(async dnaHashB64 => {
-          const [lobbyStore, _profilesStore] = this.store.lobbyStore(
-            decodeHashFromBase64(dnaHashB64),
-          );
-          try {
-            await lobbyStore.service.registerCraving(dnaRecipe);
-          } catch (e) {
-            console.log('ERROR: ', JSON.stringify(e).slice(50));
-            throw new Error(JSON.stringify(e));
-          }
-        }),
-      );
+      // create an entry in the lobby cell to register that Craving there
+
+      const lobbyStore = this.store.lobbyStore();
+      try {
+        await lobbyStore.service.registerCraving(dnaRecipe);
+      } catch (e) {
+        console.log('ERROR: ', JSON.stringify(e).slice(50));
+        throw new Error(JSON.stringify(e));
+      }
 
       this.dispatchEvent(
         new CustomEvent('craving-created', {
@@ -164,7 +140,7 @@ export class CreateCraving extends LitElement {
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the craving: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the craving: ${e}`;
       errorSnackbar.show();
 
       this.installing = false;
@@ -172,86 +148,6 @@ export class CreateCraving extends LitElement {
         this.shadowRoot?.getElementById('create-craving-button') as MVBButton
       ).disabled = false;
     }
-  }
-
-  handleSelectionClick(dnaHash: DnaHash) {
-    const hashString = encodeHashToBase64(dnaHash);
-    if (this._selectedLobbies.includes(hashString)) {
-      const index = this._selectedLobbies.indexOf(hashString);
-      this._selectedLobbies.splice(index, 1);
-      (
-        this.shadowRoot?.getElementById(hashString) as HTMLElement
-      ).classList.remove('selected');
-    } else {
-      this._selectedLobbies.push(hashString);
-      (
-        this.shadowRoot?.getElementById(hashString) as HTMLElement
-      ).classList.add('selected');
-    }
-    this.requestUpdate();
-    // console.log("Clicked. Length of this._selectedLobbies: ", this._selectedLobbies.length);
-    // console.log("content of this._selectedLobbies: ", this._selectedLobbies);
-  }
-
-  renderLobbyList() {
-    const allLobbies = Array.from(this._allLobbies.value.entries());
-
-    if (allLobbies.length === 0) {
-      return html`<span style="font-size: 1em;"
-        >No Groups found. You need to be part of a group in order to add a
-        Craving.</span
-      >`;
-    }
-
-    return html`
-      <div
-        class="column"
-        style="
-          max-width: 800px;
-          height: 300px;
-          overflow-y: auto;
-          border: 1px solid #c5cded;
-          border-radius: 10px;
-          padding: 12px 10px;
-        "
-      >
-        ${allLobbies.map(([lobbyDnaHash, [lobbyStore, _profilesStore]]) => {
-          const lobbyInfo = lobbyStore.lobbyInfo
-            ? (decodeEntry(lobbyStore.lobbyInfo) as LobbyInfo)
-            : undefined;
-
-          return html`
-            <div
-              id=${encodeHashToBase64(lobbyDnaHash)}
-              class="group-selection-element"
-              @click=${() => this.handleSelectionClick(lobbyDnaHash)}
-              @keypress=${() => this.handleSelectionClick(lobbyDnaHash)}
-              tabindex="0"
-            >
-              <!-- <div style="height: 60px; width: 60px; background: lightgreen; border-radius: 20%; margin-left: 15px;"></div> -->
-              ${lobbyInfo
-                ? html`<img
-                    src=${lobbyInfo.logo_src}
-                    alt="Group logo"
-                    style="height: 60px; width: 60px; border-radius: 20%; margin-left: 15px;"
-                  />`
-                : html`<div
-                    style="background: #929ab9; height: 60px; width: 60px; border-radius: 20%; margin-left: 15px; font-size: 40px; font-weight: bold; color: black;"
-                  >
-                    ${lobbyStore.lobbyName.slice(0, 2)}
-                  </div>`}
-              <div
-                style="
-                    margin-left: 30px;
-                "
-              >
-                ${lobbyStore.lobbyName}
-              </div>
-            </div>
-          `;
-        })}
-      </div>
-    `;
   }
 
   render() {
@@ -353,8 +249,6 @@ export class CreateCraving extends LitElement {
           >
             Choose the group(s) you want this Craving to be discoverable for:
           </div>
-
-          ${this.renderLobbyList()}
 
           <div
             style="font-size: 18px; line-height: 30px; color: #c5cded; margin-bottom: 50px; margin-top: 10px; max-width: 800px; text-align: left;"

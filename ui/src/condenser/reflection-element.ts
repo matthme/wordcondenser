@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AppAgentClient, AgentPubKey } from '@holochain/client';
+import { AppClient, AgentPubKey } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
@@ -27,7 +27,7 @@ import './create-comment-on-reflection';
 @customElement('reflection-element')
 export class ReflectionElement extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: cravingStoreContext })
   cravingStore!: CravingStore;

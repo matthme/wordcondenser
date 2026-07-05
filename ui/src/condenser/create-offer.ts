@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { Record, AppAgentClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -18,7 +18,7 @@ import { MVBTextField } from '../components/mvb-textfield';
 @customElement('create-offer')
 export class CreateOffer extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _store!: CondenserStore;
@@ -41,7 +41,7 @@ export class CreateOffer extends LitElement {
 
     try {
       const record: Record = await this.client.callZome({
-        cap_secret: null,
+        cap_secret: undefined,
         cell_id: this.cravingCellId,
         zome_name: 'craving',
         fn_name: 'create_offer',

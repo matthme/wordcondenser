@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
-import { ActionHash, Record, AppAgentClient, CellId } from '@holochain/client';
+import { ActionHash, Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
@@ -17,7 +17,7 @@ import { MVBTextArea } from '../components/mvb-textarea';
 @customElement('create-comment-on-reflection')
 export class CreateCommentOnReflection extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _store!: CondenserStore;
@@ -43,7 +43,7 @@ export class CreateCommentOnReflection extends LitElement {
 
     try {
       const record: Record = await this.client.callZome({
-        cap_secret: null,
+        cap_secret: undefined,
         cell_id: this.cravingCellId,
         zome_name: 'craving',
         fn_name: 'create_comment_on_reflection',

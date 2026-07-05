@@ -16,7 +16,6 @@ pub struct DnaRecipe {
     pub title: String,
     pub network_seed: Option<String>,
     pub properties: CravingDnaProperties, // the properties consist only of the public key of the original poster in B64 format
-    pub origin_time: Option<Timestamp>,
     pub membrane_proof: Option<MembraneProof>,
     pub resulting_dna_hash: DnaHash,
 }
@@ -32,14 +31,18 @@ pub fn validate_update_dna_recipe(
     _original_action: EntryCreationAction,
     _original_dna_recipe: DnaRecipe,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Invalid(String::from("Dna Recipes cannot be updated")))
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "Dna Recipes cannot be updated",
+    )))
 }
 pub fn validate_delete_dna_recipe(
     _action: Delete,
     _original_action: EntryCreationAction,
     _original_dna_recipe: DnaRecipe,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Invalid(String::from("Dna Recipes cannot be deleted")))
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "Dna Recipes cannot be deleted",
+    )))
 }
 pub fn validate_create_link_all_craving_recipes(
     _action: CreateLink,
@@ -47,17 +50,16 @@ pub fn validate_create_link_all_craving_recipes(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    let action_hash = ActionHash::try_from(target_address).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
+    let action_hash = ActionHash::try_from(target_address)
+        .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?;
     let record = must_get_valid_record(action_hash)?;
     let _dna_recipe: crate::DnaRecipe = record
         .entry()
         .to_app_option()
         .map_err(|e| wasm_error!(e))?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Linked action must reference an entry"))
-            ),
-        )?;
+        .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
+            "Linked action must reference an entry"
+        ))))?;
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_craving_recipes(
@@ -67,9 +69,7 @@ pub fn validate_delete_link_all_craving_recipes(
     _target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(
-        ValidateCallbackResult::Invalid(
-            String::from("AllCravingRecipes links cannot be deleted"),
-        ),
-    )
+    Ok(ValidateCallbackResult::Invalid(String::from(
+        "AllCravingRecipes links cannot be deleted",
+    )))
 }

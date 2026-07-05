@@ -9,10 +9,6 @@ integrity:
       hash: ~
       path: "../../../target/wasm32-unknown-unknown/release/cravings_integrity.wasm"
       dependencies: ~
-    - name: profiles_integrity
-      hash: ~
-      path: "../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm"
-      dependencies: ~
 coordinator:
   zomes:
     - name: cravings
@@ -20,8 +16,3 @@ coordinator:
       path: "../../../target/wasm32-unknown-unknown/release/cravings.wasm"
       dependencies:
         - name: cravings_integrity
-    - name: profiles
-      hash: ~
-      path: "../../../target/wasm32-unknown-unknown/release/profiles.wasm"
-      dependencies:
-        - name: profiles_integrity
