@@ -8,22 +8,19 @@ import { Snackbar } from '@material/mwc-snackbar';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import { clientContext, cravingStoreContext } from '../contexts';
 import { CommentOnReflection } from './types';
-import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
 import { MVBTextArea } from '../components/mvb-textarea';
+import { CravingStore } from '../craving-store';
 
 @customElement('create-comment-on-reflection')
 export class CreateCommentOnReflection extends LitElement {
   @consume({ context: clientContext })
   client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
-
-  @property({ type: Object })
-  cravingCellId!: CellId;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
   reflectionHash!: ActionHash;
@@ -42,20 +39,15 @@ export class CreateCommentOnReflection extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: undefined,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_comment_on_reflection',
-        payload: comment,
-      });
+      const entryRecord =
+        await this._cravingStore.service.createCommentOnReflection(comment);
 
       this.dispatchEvent(
         new CustomEvent('comment-on-reflection-created', {
           composed: true,
           bubbles: true,
           detail: {
-            commentHash: record.signed_action.hashed.hash,
+            commentHash: entryRecord?.actionHash,
           },
         }),
       );
@@ -64,10 +56,11 @@ export class CreateCommentOnReflection extends LitElement {
         this.shadowRoot?.getElementById('comment-textarea') as MVBTextArea
       ).clear();
     } catch (e: any) {
+      console.error('Eror creating comment: ', e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the comment: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the comment: ${e}`;
       errorSnackbar.show();
       this._comment = undefined;
       throw new Error(`Error creating a comment on a reflection: ${e}`);

@@ -44,7 +44,7 @@ test(
       // Bob gets all anecdotes
       let collectionOutput: Record[] = await bob.cells[0].callZome({
         zome_name: "craving",
-        fn_name: "get_all_anecdotes",
+        fn_name: "get_anecdotes_for_craving",
         payload: null,
       });
       assert.equal(collectionOutput.length, 0);
@@ -58,7 +58,7 @@ test(
       // Bob gets all anecdotes again
       collectionOutput = await bob.cells[0].callZome({
         zome_name: "craving",
-        fn_name: "get_all_anecdotes",
+        fn_name: "get_anecdotes_for_craving",
         payload: null,
       });
       assert.equal(collectionOutput.length, 1);

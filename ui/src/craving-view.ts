@@ -3,24 +3,17 @@ import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
 import {
   AppClient,
-  CellId,
   encodeHashToBase64,
   DnaHash,
   DnaHashB64,
-  decodeHashFromBase64,
 } from '@holochain/client';
 import { consume } from '@lit-labs/context';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { localized, msg } from '@lit/localize';
-import { decodeEntry } from '@holochain-open-dev/utils';
+import { localized } from '@lit/localize';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 import '@material/mwc-circular-progress';
 
 import './condenser/craving-detail';
-// import './condenser/reflection/create-reflection';
-// import './condenser/reflection/reflections-for-craving';
-// import './condenser/offer/create-offer';
-// import './condenser/offer/offers-for-craving';
 import './condenser/create-association';
 import './condenser/association-map';
 import './condenser/all-offers';
@@ -32,18 +25,12 @@ import './condenser/create-reflection';
 import './craving-context';
 
 import { sharedStyles } from './sharedStyles';
-import { CravingDnaProperties } from './condenser/types';
+import { Craving } from './condenser/types';
 import { AssociationMap } from './condenser/association-map';
 
 import { clientContext, condenserContext } from './contexts';
 import { CondenserStore } from './condenser-store';
 import { getNickname } from './utils';
-import { LobbyInfo } from './types';
-
-export enum CravingViewMode {
-  Home,
-  DisableCraving,
-}
 
 @localized()
 @customElement('craving-view')
@@ -52,13 +39,10 @@ export class CravingView extends LitElement {
   client!: AppClient;
 
   @consume({ context: condenserContext })
-  store!: CondenserStore;
+  condenserStore!: CondenserStore;
 
   @property({ type: Object })
-  cravingCellId!: CellId;
-
-  @property({ type: Object })
-  craving!: CravingDnaProperties;
+  craving!: EntryRecord<Craving>;
 
   @query('#association-map')
   associationMap!: AssociationMap;
@@ -83,12 +67,12 @@ export class CravingView extends LitElement {
   @state()
   _selectedLobbies: DnaHashB64[] = [];
 
-  @state()
-  private _viewMode: CravingViewMode = CravingViewMode.Home;
-
   firstUpdated() {
     // deterministically derive "random" name from public key and craving title
-    this.myNickName = getNickname(this.cravingCellId[1], this.craving.title);
+    this.myNickName = getNickname(
+      this.client.myPubKey,
+      this.craving.entry.title,
+    );
   }
 
   handleSelectionClick(dnaHash: DnaHash) {
@@ -108,156 +92,7 @@ export class CravingView extends LitElement {
     this.requestUpdate();
   }
 
-  async disableCraving() {
-    try {
-      await this.store.disableCraving(this.cravingCellId);
-      window.location.reload();
-    } catch (e) {
-      alert('Failed to disable craving. See console for details.');
-      throw new Error(
-        `Failed to share craving: ${JSON.stringify(e).slice(100)}`,
-      );
-    }
-  }
-
-  renderDisableCraving() {
-    return html`<div
-      class="column"
-      style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
-    >
-      <div
-        style="font-size: 1.2em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 50px;"
-      >
-        Confirm that you want to disable this craving
-      </div>
-      <div
-        class="column"
-        style="font-size: 0.7em; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 50px; align-items: center;"
-      >
-        <div>
-          Disabling the Craving means that you disable the corresponding cell in
-          your Holochain conductor and you will stop synchronizing data with the
-          network of peers this craving forms together.<br /><br />
-          You can re-enable the Craving later or permanently delete it by
-          deleting the corresponding cell in the Holochain Launcher with the DNA
-          hash<br /><br />
-        </div>
-
-        <div
-          style="text-align: center; background: #9098b333; font-family: 'Monospace'; padding: 5px; border-radius: 5px; margin-bottom: 40px;"
-        >
-          ${encodeHashToBase64(this.cravingCellId[0])}
-        </div>
-        <div>
-          If you delete it permanently, you will not be able to ever join this
-          craving again <i>with this installation of the Word Condenser</i>. You
-          would need to install another instance of the Word Condenser with
-          another public key.
-        </div>
-      </div>
-
-      <div class="row">
-        <div
-          class="row cancel-btn"
-          style="align-items: center; margin-top: 5px; margin-right: 20px;"
-          @click=${() => {
-            this._viewMode = CravingViewMode.Home;
-          }}
-          @keypress=${(e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              this._viewMode = CravingViewMode.Home;
-            }
-          }}
-          tabindex="0"
-        >
-          <span style="color: #cd2b2b; font-size: 23px;">${msg('Cancel')}</span>
-        </div>
-
-        <div
-          class="row confirm-btn"
-          style="align-items: center; margin-top: 5px;}"
-          @click=${async () => this.disableCraving()}
-          @keypress=${async () => this.disableCraving()}
-          tabindex="0"
-        >
-          <span style="color: #abb5d6; font-size: 23px;">Disable</span>
-        </div>
-      </div>
-    </div> `;
-  }
-
-  // renderShareRhyme1() {
-  //   return html`
-  //     <div
-  //       class="column"
-  //       style="flex: 1; justify-content: center; align-items: center; margin-top: 100px;"
-  //     >
-  //       <div
-  //         style="font-size: 1.4em; font-weight: bold; color: #9098b3; max-width: 900px; text-align: left; margin-bottom: 50px;"
-  //       >
-  //         Sharing is Caring
-  //       </div>
-  //       <div
-  //         class="column"
-  //         style="font-size: 0.85em; line-height: 1.4em; color: #9098b3; max-width: 900px; text-align: center; margin-bottom: 50px; align-items: center;"
-  //       >
-  //         As you see, those cravings -<br />
-  //         and especially the juicy ones,<br /><br />
-
-  //         can propagate without constraints<br />
-  //         along our lines of social bonds.<br /><br />
-
-  //         So if you share one with a group of yours<br />
-  //         shaping language, is what you do!<br /><br />
-
-  //         So be wise and do take care,<br />
-  //         making sure to only share,<br />
-  //         what indeed you want to hear out there!
-  //       </div>
-
-  //       <div class="row">
-  //         <div
-  //           class="row cancel-btn"
-  //           style="align-items: center; margin-top: 5px; margin-right: 20px;"
-  //           @click=${() => {
-  //             this._viewMode = CravingViewMode.Home;
-  //           }}
-  //           @keypress=${() => {
-  //             this._viewMode = CravingViewMode.Home;
-  //           }}
-  //           tabindex="0"
-  //         >
-  //           <span style="color: #cd2b2b; font-size: 23px;"
-  //             >${msg('Cancel')}</span
-  //           >
-  //         </div>
-
-  //         <div
-  //           class="row confirm-btn"
-  //           style="align-items: center; margin-top: 5px;}"
-  //           tabindex="0"
-  //           @click=${() => {
-  //             this._viewMode = CravingViewMode.ShareSelection;
-  //           }}
-  //           @keypress=${() => {
-  //             this._viewMode = CravingViewMode.ShareSelection;
-  //           }}
-  //         >
-  //           <img
-  //             src="meditating.svg"
-  //             style="height: 30px;"
-  //             alt="meditating person"
-  //           />
-  //           <span style="color: #abb5d6; font-size: 23px; margin-left: 10px;"
-  //             >I feel calm and ready to share</span
-  //           >
-  //         </div>
-  //       </div>
-  //     </div>
-  //   `;
-  // }
-
-  renderHome() {
+  renderContent() {
     return html`
       <button
         @click=${() =>
@@ -283,7 +118,7 @@ export class CravingView extends LitElement {
           <div
             style="color: #929ab9; font-size: 40px; font-weight: bold; margin-left: 170px; text-align: left;"
           >
-            ${this.craving.title}
+            ${this.craving.entry.title}
           </div>
           <span style="display: flex; flex: 1;"></span>
 
@@ -332,7 +167,7 @@ nor to promote yourself!"
           style="${this.showDescription ? '' : 'display: none;'}"
         >
           <div style="margin-left: 185px; margin-right: 70px;">
-            ${this.craving.description}
+            ${this.craving.entry.description}
           </div>
         </div>
 
@@ -378,7 +213,7 @@ nor to promote yourself!"
               </div>
             </div>
             <create-association
-              .cravingCellId=${this.cravingCellId}
+              .cravingHash=${this.craving}
             ></create-association>
             <div
               class="row"
@@ -417,7 +252,7 @@ nor to promote yourself!"
             </div>
             <association-map
               id="association-map"
-              .cravingCellId=${this.cravingCellId}
+              .cravingHash=${this.craving.actionHash}
               .sortBy=${this.sortAssociationsBy}
             ></association-map>
           </div>
@@ -443,7 +278,7 @@ nor to promote yourself!"
               </div>
             </div>
             <create-reflection
-              .cravingCellId=${this.cravingCellId}
+              .cravingHash=${this.craving.actionHash}
             ></create-reflection>
             <div
               class="row"
@@ -481,7 +316,7 @@ nor to promote yourself!"
               >
             </div>
             <all-reflections
-              .cravingCellId=${this.cravingCellId}
+              .cravingHash=${this.craving.actionHash}
               .sortBy=${this.sortReflectionsBy}
             ></all-reflections>
           </div>
@@ -504,7 +339,9 @@ nor to promote yourself!"
                 Offers
               </div>
             </div>
-            <create-offer .cravingCellId=${this.cravingCellId}></create-offer>
+            <create-offer
+              .cravingHash=${this.craving.actionHash}
+            ></create-offer>
             <div
               class="row"
               style="justify-content: flex-end; margin-right: 20px;"
@@ -542,44 +379,22 @@ nor to promote yourself!"
             </div>
             <all-offers
               id="all-offers"
-              .cravingCellId=${this.cravingCellId}
+              .cravingHash=${this.craving.actionHash}
               .sortBy=${this.sortOffersBy}
             ></all-offers>
           </div>
         </div>
-
-        <img
-          class="icon"
-          src="power_off.svg"
-          alt="Power off icon"
-          style="height: 60px; position: fixed; bottom: 10px; right: 30px; cursor: pointer;"
-          title="Disable Craving"
-          tabindex="0"
-          @click=${() => {
-            this._viewMode = CravingViewMode.DisableCraving;
-          }}
-          @keypress=${() => {
-            this._viewMode = CravingViewMode.DisableCraving;
-          }}
-        />
       </div>
     `;
   }
 
-  renderContent() {
-    switch (this._viewMode) {
-      case CravingViewMode.Home:
-        return this.renderHome();
-      case CravingViewMode.DisableCraving:
-        return this.renderDisableCraving();
-      default:
-        return html`Unknwon render view`;
-    }
-  }
-
   render() {
     return html`
-      <craving-context .cravingCellId=${this.cravingCellId}>
+      <craving-context
+        .cravingStore=${this.condenserStore.cravingStore(
+          this.craving.actionHash,
+        )}
+      >
         ${this.renderContent()}
       </craving-context>
     `;

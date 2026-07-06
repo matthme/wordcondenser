@@ -3,11 +3,13 @@ use hdk::prelude::*;
 
 use crate::helper::ZomeFnInput;
 #[hdk_extern]
-pub fn get_anecdotes_for_craving(input: ZomeFnInput<ActionHash>) -> ExternResult<Vec<Record>> {
+pub fn get_all_cravings(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
+    let path = Path::from("all_cravings");
     let links = get_links(
-        LinkQuery::try_new(input.input.clone(), LinkTypes::AllAnecdotes)?,
+        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllCravings)?,
         input.get_strategy(),
     )?;
+
     let get_input: Vec<GetInput> = links
         .into_iter()
         .map(|link| {

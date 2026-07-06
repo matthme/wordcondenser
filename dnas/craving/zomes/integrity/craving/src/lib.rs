@@ -1,5 +1,7 @@
 pub mod action_to_resonator;
 pub use action_to_resonator::*;
+pub mod craving;
+pub use craving::*;
 pub mod entry_to_resonator;
 pub use entry_to_resonator::*;
 pub mod comment_on_reflection;
@@ -21,6 +23,7 @@ use hdi::prelude::*;
 #[hdk_entry_types]
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
+    Craving(Craving),
     Offer(Offer),
     Reflection(Reflection),
     Association(Association),
@@ -41,6 +44,7 @@ pub enum LinkTypes {
     CommentOnReflectionUpdates,
     EntryToResonator,
     ActionToResonator,
+    AllCravings,
     AllOffers,
     AllAssociations,
     AllReflections,
@@ -61,6 +65,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
     match op.flattened::<EntryTypes, LinkTypes>()? {
         FlatOp::StoreEntry(store_entry) => match store_entry {
             OpEntry::CreateEntry { app_entry, action } => match app_entry {
+                EntryTypes::Craving(craving) => {
+                    validate_create_craving(EntryCreationAction::Create(action), craving)
+                }
                 EntryTypes::Offer(offer) => {
                     validate_create_offer(EntryCreationAction::Create(action), offer)
                 }
@@ -87,6 +94,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             OpEntry::UpdateEntry {
                 app_entry, action, ..
             } => match app_entry {
+                EntryTypes::Craving(craving) => {
+                    validate_create_craving(EntryCreationAction::Update(action), craving)
+                }
                 EntryTypes::Offer(offer) => {
                     validate_create_offer(EntryCreationAction::Update(action), offer)
                 }
@@ -163,6 +173,24 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             comment_on_offer,
                             original_create_action,
                             original_comment_on_offer,
+                        )
+                    }
+                    EntryTypes::Craving(craving) => {
+                        let original_app_entry =
+                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_craving = match Craving::try_from(original_app_entry) {
+                            Ok(entry) => entry,
+                            Err(e) => {
+                                return Ok(ValidateCallbackResult::Invalid(format!(
+                                    "Expected to get Craving from Record: {e:?}"
+                                )));
+                            }
+                        };
+                        validate_update_craving(
+                            action,
+                            craving,
+                            original_create_action,
+                            original_craving,
                         )
                     }
                     EntryTypes::Anecdote(anecdote) => {
@@ -276,6 +304,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 }
             };
             match original_app_entry {
+                EntryTypes::Craving(craving) => {
+                    validate_delete_craving(delete_entry.clone().action, original_action, craving)
+                }
                 EntryTypes::Offer(offer) => {
                     validate_delete_offer(delete_entry.clone().action, original_action, offer)
                 }
@@ -358,6 +389,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             }
             LinkTypes::ActionToResonator => {
                 validate_create_link_action_to_resonator(action, base_address, target_address, tag)
+            }
+            LinkTypes::AllCravings => {
+                validate_create_link_all_cravings(action, base_address, target_address, tag)
             }
             LinkTypes::AllOffers => {
                 validate_create_link_all_offers(action, base_address, target_address, tag)
@@ -454,6 +488,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 target_address,
                 tag,
             ),
+
+            LinkTypes::AllCravings => validate_delete_link_all_cravings(
+                action,
+                original_action,
+                base_address,
+                target_address,
+                tag,
+            ),
             LinkTypes::AllOffers => validate_delete_link_all_offers(
                 action,
                 original_action,
@@ -485,6 +527,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
         },
         FlatOp::StoreRecord(store_record) => match store_record {
             OpRecord::CreateEntry { app_entry, action } => match app_entry {
+                EntryTypes::Craving(craving) => {
+                    validate_create_craving(EntryCreationAction::Create(action), craving)
+                }
                 EntryTypes::Offer(offer) => {
                     validate_create_offer(EntryCreationAction::Create(action), offer)
                 }
@@ -527,6 +572,37 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                 };
                 match app_entry {
+                    EntryTypes::Craving(craving) => {
+                        let result = validate_create_craving(
+                            EntryCreationAction::Update(action.clone()),
+                            craving.clone(),
+                        )?;
+                        if let ValidateCallbackResult::Valid = result {
+                            let original_craving: Option<Craving> = original_record
+                                .entry()
+                                .to_app_option()
+                                .map_err(|e| wasm_error!(e))?;
+                            let original_craving = match original_craving {
+                                Some(craving) => craving,
+                                None => {
+                                    return Ok(
+                                            ValidateCallbackResult::Invalid(
+                                                "The updated entry type must be the same as the original entry type"
+                                                    .to_string(),
+                                            ),
+                                        );
+                                }
+                            };
+                            validate_update_craving(
+                                action,
+                                craving,
+                                original_action,
+                                original_craving,
+                            )
+                        } else {
+                            Ok(result)
+                        }
+                    }
                     EntryTypes::Offer(offer) => {
                         let result = validate_create_offer(
                             EntryCreationAction::Update(action.clone()),
@@ -766,6 +842,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                 };
                 match original_app_entry {
+                    EntryTypes::Craving(original_craving) => {
+                        validate_delete_craving(action, original_action, original_craving)
+                    }
                     EntryTypes::Offer(original_offer) => {
                         validate_delete_offer(action, original_action, original_offer)
                     }
@@ -861,6 +940,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     target_address,
                     tag,
                 ),
+                LinkTypes::AllCravings => {
+                    validate_create_link_all_cravings(action, base_address, target_address, tag)
+                }
                 LinkTypes::AllOffers => {
                     validate_create_link_all_offers(action, base_address, target_address, tag)
                 }
@@ -970,6 +1052,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         create_link.tag,
                     ),
                     LinkTypes::ActionToResonator => validate_delete_link_action_to_resonator(
+                        action,
+                        create_link.clone(),
+                        base_address,
+                        create_link.target_address,
+                        create_link.tag,
+                    ),
+                    LinkTypes::AllCravings => validate_delete_link_all_cravings(
                         action,
                         create_link.clone(),
                         base_address,

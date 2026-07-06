@@ -26,13 +26,13 @@ export class AssociationMapElement extends LitElement {
   client!: AppClient;
 
   @consume({ context: cravingStoreContext })
-  store!: CravingStore;
+  _cravingStore!: CravingStore;
 
   @property()
   association!: AssociationData;
 
   async handleResonator() {
-    // console.log(":::HANDLING RESONATOR:::");
+    console.log(':::HANDLING RESONATOR:::');
     if (this.association.iResonated) {
       await this.unresonate();
     } else {
@@ -41,26 +41,28 @@ export class AssociationMapElement extends LitElement {
   }
 
   async resonate() {
+    console.log('RESONATING');
     const entryHash = (
       this.association.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.resonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.resonateWithEntry(entryHash);
+      await this._cravingStore.allAssociations.reload();
     } catch (e) {
       console.log('ERROR trying to resonate: ', e);
     }
   }
 
   async unresonate() {
+    console.log('UNRESONATING');
     const entryHash = (
       this.association.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.unresonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.unresonateWithEntry(entryHash);
+      await this._cravingStore.allAssociations.reload();
+      // // timeout required, otherwise it for some reason misses things...
+      // setTimeout(() => this.requestUpdate(), 50);
     } catch (e) {
       console.log('ERROR trying to unresonate: ', e);
     }

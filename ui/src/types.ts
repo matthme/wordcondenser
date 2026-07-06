@@ -7,10 +7,13 @@ import {
   MembraneProof,
   DnaHashB64,
   ActionHashB64,
+  ActionHash,
 } from '@holochain/client';
-import { CravingDnaProperties } from './condenser/types';
 import { createContext } from '@lit-labs/context';
 import { WeaveClient } from '@theweave/api';
+import { EntryRecord } from '@holochain-open-dev/utils';
+
+import { CravingDnaProperties } from './condenser/types';
 
 export const weaveClientContext = createContext<WeaveClient>('we_client');
 
@@ -20,6 +23,16 @@ export enum DashboardMode {
   CreateCravingView,
   Settings,
   NoCookiesEVER,
+}
+
+export interface UpdatedRecord {
+  original_action_hash: ActionHash;
+  record: HolochainRecord;
+}
+
+export interface UpdatedEntryRecord<T> {
+  original_action_hash: ActionHash;
+  record: EntryRecord<T>;
 }
 
 export interface DnaRecipe {

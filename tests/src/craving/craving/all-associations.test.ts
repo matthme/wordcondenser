@@ -45,7 +45,7 @@ test(
       // Bob gets all associations
       let collectionOutput: Record[] = await bob.cells[0].callZome({
         zome_name: "craving",
-        fn_name: "get_all_associations",
+        fn_name: "get_associations_for_craving",
         payload: null,
       });
       assert.equal(collectionOutput.length, 0);
@@ -59,7 +59,7 @@ test(
       // Bob gets all associations again
       collectionOutput = await bob.cells[0].callZome({
         zome_name: "craving",
-        fn_name: "get_all_associations",
+        fn_name: "get_associations_for_craving",
         payload: null,
       });
       assert.equal(collectionOutput.length, 1);

@@ -1,6 +1,7 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
+  ActionHash,
   AppClient,
   AppWebsocket,
   CellId,
@@ -19,15 +20,12 @@ import {
   isWeaveContext,
   WeaveClient,
 } from '@theweave/api';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
-import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { open } from '@tauri-apps/api/shell';
 import { clientContext, condenserContext } from './contexts';
 import { DashboardMode, weaveClientContext } from './types';
 import { CondenserStore } from './condenser-store';
 import { sharedStyles } from './sharedStyles';
-
-import { CravingDnaProperties } from './condenser/types';
 
 import '@fontsource/poppins';
 import '@fontsource/poppins/600.css';
@@ -40,14 +38,10 @@ import './condenser/all-cravings';
 import './condenser/all-disabled-cravings';
 import './condenser/all-available-cravings';
 import './craving-view';
-import './lobby/create-lobby';
-import './lobby/all-lobbies';
-import './lobby/all-craving-recipes';
-import './lobby/profiles/elements/profiles-context';
 import './intro';
 import './no-cookies-ever';
 import './loading-animation';
-import { getLocalStorageItem } from './utils';
+import { Craving } from './condenser/types';
 
 @customElement('holochain-app')
 export class HolochainApp extends LitElement {
@@ -55,9 +49,7 @@ export class HolochainApp extends LitElement {
 
   @state() _dashboardMode = DashboardMode.Home;
 
-  @state() _selectedCravingCellId: CellId | undefined = undefined;
-
-  @state() _selectedCraving: CravingDnaProperties | undefined = undefined;
+  @state() _selectedCraving: EntryRecord<Craving> | undefined = undefined;
 
   @state() _deepLink: string | undefined = undefined;
 
@@ -79,18 +71,6 @@ export class HolochainApp extends LitElement {
   @provide({ context: condenserContext })
   @property({ type: Object })
   store!: CondenserStore;
-
-  private _allCravings = new StoreSubscriber(this, () =>
-    this.store ? this.store.getAllInstalledCravings() : undefined,
-  );
-
-  private _allAvailableCravings = new StoreSubscriber(this, () =>
-    this.store ? this.store.allAvailableCravings : undefined,
-  );
-
-  private _allDisabledCravings = new StoreSubscriber(this, () =>
-    this.store ? this.store.getAllDisabledCravings() : undefined,
-  );
 
   async firstUpdated() {
     console.log('FIRST UPDATED!');
@@ -122,7 +102,7 @@ export class HolochainApp extends LitElement {
       // We pass an unused string as the url because it will dynamically be replaced in launcher environments
       this.client = await AppWebsocket.connect();
     }
-    this.store = await CondenserStore.connect(this.client, this._weaveClient);
+    this.store = new CondenserStore(this.client, this._weaveClient);
 
     // check where to route after refresh
     const previousDashboardMode = window.localStorage.getItem(
@@ -159,13 +139,6 @@ export class HolochainApp extends LitElement {
             break;
 
           case 'CravingView': {
-            const retrievedCravingDnaHash = decodeHashFromBase64(
-              window.localStorage.getItem('selectedCravingDnaHash') as string,
-            );
-            this._selectedCravingCellId = [
-              retrievedCravingDnaHash,
-              this.client.myPubKey,
-            ];
             this._selectedCraving = JSON.parse(
               window.localStorage.getItem('selectedCraving') as string,
             );
@@ -186,8 +159,6 @@ export class HolochainApp extends LitElement {
   handleRefresh() {
     window.localStorage.setItem('lastRefresh', Date.now().toString());
 
-    let selectedCravingDnaHash: string;
-
     switch (this._dashboardMode) {
       case DashboardMode.Home:
         window.localStorage.setItem('previousDashboardMode', 'Home');
@@ -205,12 +176,9 @@ export class HolochainApp extends LitElement {
         break;
 
       case DashboardMode.CravingView:
-        selectedCravingDnaHash = encodeHashToBase64(
-          this._selectedCravingCellId![0],
-        );
         window.localStorage.setItem(
-          'selectedCravingDnaHash',
-          selectedCravingDnaHash,
+          'selectedCravingHash',
+          encodeHashToBase64(this._selectedCraving!.actionHash),
         );
         window.localStorage.setItem(
           'selectedCraving',
@@ -222,7 +190,6 @@ export class HolochainApp extends LitElement {
 
       case DashboardMode.CreateCravingView:
         window.localStorage.setItem('previousDashboardMode', 'Home');
-        window.location.reload();
         break;
 
       default:
@@ -230,23 +197,6 @@ export class HolochainApp extends LitElement {
         window.location.reload();
         break;
     }
-  }
-
-  newAvailableCravingsCount(): number {
-    let count = 0;
-    if (this._allAvailableCravings.value.status === 'complete') {
-      this._allAvailableCravings.value.value.forEach(cravingDnaHash => {
-        if (
-          !getLocalStorageItem<number>(
-            `knownCravingSeen#${encodeHashToBase64(cravingDnaHash)}`,
-          )
-        ) {
-          count += 1;
-        }
-      });
-    }
-
-    return count;
   }
 
   getSlogan() {
@@ -278,132 +228,22 @@ export class HolochainApp extends LitElement {
     return html``;
   }
 
-  renderCravingTypes() {
-    switch (this._cravingMenuItem) {
-      case 'installed':
-        return html`
-          <div
-            id="content"
-            class="column"
-            style="align-items: flex-start; width: 100%;"
-          >
-            <all-cravings
-              id="all-cravings"
-              @selected-craving=${(e: CustomEvent) => {
-                this._selectedCravingCellId = e.detail.cellId;
-                this._selectedCraving = e.detail.craving;
-                this._dashboardMode = DashboardMode.CravingView;
-              }}
-            >
-            </all-cravings>
-          </div>
-        `;
-      case 'disabled':
-        return html`
-          <div
-            id="content"
-            class="column"
-            style="align-items: flex-start; width: 100%;"
-          >
-            <all-disabled-cravings></all-disabled-cravings>
-          </div>
-        `;
-      case 'available':
-        return html`
-          <div
-            id="content"
-            class="column"
-            style="align-items: flex-start; width: 100%;"
-          >
-            <all-available-cravings
-              @installed-craving=${(e: CustomEvent) => {
-                this._selectedCravingCellId = e.detail.cellId;
-                this._selectedCraving = e.detail.craving;
-                this._dashboardMode = DashboardMode.CravingView;
-                this.handleRefresh();
-              }}
-            ></all-available-cravings>
-          </div>
-        `;
-      default:
-        return html`Unknown Craving type`;
-    }
-  }
-
   renderCravings() {
-    const newAvailableCravingsCount = this.newAvailableCravingsCount();
     return html`
       <div
-        class="row"
-        style="margin-bottom: 30px; width: 100%; justify-content: flex-start; margin-left: 10px;"
+        id="content"
+        class="column"
+        style="align-items: flex-start; width: 100%;"
       >
-        <div
-          tabindex="0"
-          class=${this._cravingMenuItem === 'installed'
-            ? 'menu-item-selected'
-            : 'menu-item'}
-          @click=${() => {
-            this._cravingMenuItem = 'installed';
+        <all-cravings
+          id="all-cravings"
+          @selected-craving=${(e: CustomEvent) => {
+            this._selectedCraving = e.detail.craving;
+            this._dashboardMode = DashboardMode.CravingView;
           }}
-          @keypress=${() => {
-            this._cravingMenuItem = 'installed';
-          }}
-          style="font-size: 0.8em;"
         >
-          Installed (${this._allCravings.value.size})
-        </div>
-        <div
-          title="Cravings that are tracked by at least one of your groups but that you don't have installed"
-          tabindex="0"
-          class=${this._cravingMenuItem === 'available'
-            ? 'menu-item-selected'
-            : 'menu-item'}
-          @click=${() => {
-            this._cravingMenuItem = 'available';
-          }}
-          @keypress=${() => {
-            this._cravingMenuItem = 'available';
-          }}
-          style="font-size: 0.8em; position: relative;"
-        >
-          ${newAvailableCravingsCount > 0
-            ? html`
-                <div
-                  class="notification yellow"
-                  style="margin-bottom: 2px; position: absolute; top: -5px; right: -5px;"
-                >
-                  + ${newAvailableCravingsCount}
-                </div>
-              `
-            : html``}
-          <span>
-            Available
-            (${this._allAvailableCravings.value.status === 'complete'
-              ? this._allAvailableCravings.value.value.length
-              : '0'})
-          </span>
-        </div>
-        <div
-          title="Cravings that you have installed in your conductor but that are disabled"
-          tabindex="0"
-          class=${this._cravingMenuItem === 'disabled'
-            ? 'menu-item-selected'
-            : 'menu-item'}
-          @click=${() => {
-            this._cravingMenuItem = 'disabled';
-          }}
-          @keypress=${() => {
-            this._cravingMenuItem = 'disabled';
-          }}
-          style="font-size: 0.8em;"
-        >
-          Disabled (${Object.values(this._allDisabledCravings.value).length})
-        </div>
-
-        <span style="display: flex; flex: 1;"></span>
+        </all-cravings>
       </div>
-
-      ${this.renderCravingTypes()}
     `;
   }
 
@@ -485,10 +325,8 @@ export class HolochainApp extends LitElement {
             style="display: flex; flex: 1; width: 100%;"
             @back-home=${() => {
               this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
               this._selectedCraving = undefined;
             }}
-            .cravingCellId=${this._selectedCravingCellId}
             .craving=${this._selectedCraving}
           >
           </craving-view>
@@ -499,7 +337,6 @@ export class HolochainApp extends LitElement {
           <button
             @click=${() => {
               this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
               this._selectedCraving = undefined;
             }}
             class="btn-back"
@@ -511,10 +348,9 @@ export class HolochainApp extends LitElement {
           <div style="margin-top: 20px;">
             <create-craving
               @craving-created=${async (e: CustomEvent) => {
-                this._selectedCraving = e.detail.cravingDnaProperties;
-                this._selectedCravingCellId = e.detail.cravingCellId;
-                this._dashboardMode = DashboardMode.CravingView;
+                this._selectedCraving = e.detail.craving;
                 this.handleRefresh();
+                this._dashboardMode = DashboardMode.CravingView;
               }}
             ></create-craving>
           </div>
@@ -525,7 +361,6 @@ export class HolochainApp extends LitElement {
           <button
             @click=${() => {
               this._dashboardMode = DashboardMode.Home;
-              this._selectedCravingCellId = undefined;
               this._selectedCraving = undefined;
             }}
             class="btn-back"
@@ -540,13 +375,6 @@ export class HolochainApp extends LitElement {
           >
             version 0.2.X
           </div>
-
-          <a
-            class="wordcondenser-link"
-            href="https://www.wordcondenser.com"
-            target="_blank"
-            >www.wordcondenser.com</a
-          >
 
           <h1 style="color: #929ab9; margin-bottom: 100px;">Settings</h1>
 
@@ -638,10 +466,12 @@ export class HolochainApp extends LitElement {
               class="confirm-btn column"
               style="align-items: center; margin-top: 30px; margin-bottom: 80px;"
               tabindex="0"
-              @click=${() =>
-                open('https://github.com/matthme/wordcondenser/issues/new')}
-              @keypress=${() =>
-                open('https://github.com/matthme/wordcondenser/issues/new')}
+              @click=${() => {
+                throw new Error('Not implemented');
+              }}
+              @keypress=${() => {
+                throw new Error('Not implemented');
+              }}
             >
               <img
                 src="report_problem.svg"

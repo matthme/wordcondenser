@@ -19,6 +19,30 @@ export interface CravingDnaProperties {
   max_reflection_chars: number | null;
 }
 
+export interface CreateAssociationInput {
+  association: Association;
+  craving_hash: ActionHash;
+}
+
+export interface CreateOfferInput {
+  offer: Offer;
+  craving_hash: ActionHash;
+}
+
+export interface CreateReflectionInput {
+  reflection: Reflection;
+  craving_hash: ActionHash;
+}
+
+export interface Craving {
+  title: string;
+  description: string;
+  max_anecdote_chars?: number;
+  max_association_chars?: number;
+  max_offer_chars?: number;
+  max_reflection_chars?: number;
+}
+
 export interface Offer {
   offer: string;
   explanation: string | undefined;

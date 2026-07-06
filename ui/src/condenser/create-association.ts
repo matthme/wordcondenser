@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { Record, AppClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId, ActionHash } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -10,21 +10,26 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import {
+  clientContext,
+  condenserContext,
+  cravingStoreContext,
+} from '../contexts';
 import { Association } from './types';
 import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
+import { CravingStore } from '../craving-store';
 
 @customElement('create-association')
 export class CreateAssociation extends LitElement {
   @consume({ context: clientContext })
   client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
-  cravingCellId!: CellId;
+  cravingHash!: ActionHash;
 
   @state()
   _association: string | undefined;
@@ -41,13 +46,8 @@ export class CreateAssociation extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: undefined,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_association',
-        payload: association,
-      });
+      const entryRecord =
+        await this._cravingStore.service.createAssociation(association);
 
       // console.log("@create-association: Created association.");
 
@@ -56,7 +56,7 @@ export class CreateAssociation extends LitElement {
           composed: true,
           bubbles: true,
           detail: {
-            associationHash: record.signed_action.hashed.hash,
+            associationHash: entryRecord?.actionHash,
           },
         }),
       );

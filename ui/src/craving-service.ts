@@ -1,16 +1,12 @@
-import { decodeEntry } from '@holochain-open-dev/utils';
+import { decodeEntry, EntryRecord } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
   AppClient,
-  CallZomeRequest,
-  CellId,
-  CellType,
   EntryHash,
   Record,
+  RoleNameCallZomeRequest,
 } from '@holochain/client';
-import { decode } from '@msgpack/msgpack';
-import { UnsubscribeFunction } from 'emittery';
 
 import {
   Association,
@@ -22,7 +18,7 @@ import {
   UpdateCommentOnReflectionInput,
   UpdateReflectionInput,
   CravingSignal,
-  CravingDnaProperties,
+  Craving,
 } from './condenser/types';
 
 export interface CravingEvents {
@@ -32,74 +28,69 @@ export interface CravingEvents {
 export class CravingService {
   constructor(
     public client: AppClient,
+    public roleName = 'craving',
     public zomeName = 'craving',
-    public cellId: CellId,
+    public cravingHash: ActionHash,
+    public craving: EntryRecord<Craving>,
   ) {}
 
-  on<Name extends keyof CravingEvents>(
-    listener: (eventData: CravingEvents[Name]) => void | Promise<void>,
-  ): UnsubscribeFunction {
-    return this.client.on('signal', async signal => {
-      if (
-        signal.type === 'app' &&
-        JSON.stringify(signal.value.cell_id) === JSON.stringify(this.cellId) &&
-        this.zomeName === signal.value.zome_name
-      ) {
-        listener(signal.value.payload as CravingSignal);
-      }
+  async connect(
+    client: AppClient,
+    cravingHash: ActionHash,
+    roleName = 'craving',
+    zomeName = 'craving',
+  ) {
+    // first try locally, then if it fails go over the network
+    let craving: EntryRecord<Craving> | undefined;
+    try {
+      craving = await this.getCraving(cravingHash);
+    } catch (e) {
+      console.warn('Failed to get craving locally: ', e);
+      craving = await this.getCraving(cravingHash, false);
+    }
+    if (!craving) throw new Error('Failed to fetch Craving');
+
+    return new CravingService(client, roleName, zomeName, cravingHash, craving);
+  }
+
+  // TODO fix signal listener to adapt to ActionHash now
+  // on<Name extends keyof CravingEvents>(
+  //   listener: (eventData: CravingEvents[Name]) => void | Promise<void>,
+  // ): UnsubscribeFunction {
+  //   return this.client.on('signal', async signal => {
+  //     if (
+  //       signal.type === 'app' &&
+  //       JSON.stringify(signal.value.cell_id) === JSON.stringify(this.cellId) &&
+  //       this.zomeName === signal.value.zome_name
+  //     ) {
+  //       listener(signal.value.payload as CravingSignal);
+  //     }
+  //   });
+  // }
+
+  /**
+   * Gets the Craving for the provided ActionHash.
+   *
+   * @param actionHash action hash of the original action that created the association
+   * @returns Association or undefined if no record found for this entry hash
+   */
+  async getCraving(
+    actionHash: ActionHash,
+    local: boolean = true,
+  ): Promise<EntryRecord<Craving> | undefined> {
+    const record: Record | undefined = await this.callZome('get_craving', {
+      input: actionHash,
+      local,
     });
-  }
 
-  async getCraving(): Promise<CravingDnaProperties> {
-    const appInfo = await this.client.appInfo();
-    if (!appInfo) throw new Error('AppInfo is null.');
-    const cravingCellInfo = appInfo.cell_info.craving
-      .filter(cellInfo => cellInfo.type === CellType.Cloned)
-      .find(cellInfo => {
-        if (cellInfo.type === CellType.Cloned) {
-          const cloneInfo = cellInfo;
-          // Attention: potentially this needs JSON.stringification
-          if (
-            JSON.stringify(cloneInfo.value.cell_id[0]) ===
-              JSON.stringify(this.cellId[0]) &&
-            JSON.stringify(cloneInfo.value.cell_id[1]) ===
-              JSON.stringify(this.cellId[1])
-          ) {
-            return true;
-          }
-        }
-        return false;
-      });
-
-    if (!cravingCellInfo)
-      throw new Error('Matching craving cloned cell not found.');
-
-    // const craving = decode(
-    //   decode(
-    //     cravingCellInfo.value.dna_modifiers.properties,
-    //   ) as ArrayLike<number>,
-    // ) as CravingDnaProperties;
-
-    const craving = decode(cravingCellInfo.value.dna_modifiers.properties);
-
-    // console.log('DECODED CRAVING: ', craving);
-
-    return craving as any;
-  }
-
-  async getInitTime(): Promise<number> {
-    const timestamp_microseconds: number = await this.callZome(
-      'get_init_time',
-      null,
-    );
-    return timestamp_microseconds / 1000;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   /**
    * Gets the association for the provided entry hash. Associations should be deduplicated,
    * that's why only the entry hash matters.
    *
-   * @param entryHash action hash of the original action that created the association
+   * @param entryHash entry hash of the association
    * @returns Association or undefined if no record found for this entry hash
    */
   async getAssociation(
@@ -116,13 +107,16 @@ export class CravingService {
 
   async createAssociation(
     association: Association,
-  ): Promise<Association | undefined> {
+  ): Promise<EntryRecord<Association> | undefined> {
     const record: Record | undefined = await this.callZome(
       'create_association',
-      association,
+      {
+        association,
+        craving_hash: this.cravingHash,
+      },
     );
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   /**
@@ -130,10 +124,13 @@ export class CravingService {
    *
    * @returns
    */
-  async getAllAssociations(local: boolean = true): Promise<Array<Record>> {
+  async getAllAssociations(
+    cravingHash: ActionHash,
+    local: boolean = true,
+  ): Promise<Array<Record>> {
     const associations: Array<Record> = await this.callZome(
-      'get_all_associations',
-      { input: null, local },
+      'get_associations_for_craving',
+      { input: cravingHash, local },
     );
 
     return associations;
@@ -148,24 +145,27 @@ export class CravingService {
   async getReflection(
     originalReflectionHash: ActionHash,
     local: boolean = true,
-  ): Promise<Reflection | undefined> {
+  ): Promise<EntryRecord<Reflection> | undefined> {
     const record: Record | undefined = await this.callZome('get_reflection', {
       input: originalReflectionHash,
       local,
     });
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   async createReflection(
     reflection: Reflection,
-  ): Promise<Reflection | undefined> {
+  ): Promise<EntryRecord<Reflection> | undefined> {
     const record: Record | undefined = await this.callZome(
       'create_reflection',
-      reflection,
+      {
+        reflection,
+        craving_hash: this.cravingHash,
+      },
     );
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   async updateReflection(
@@ -179,11 +179,14 @@ export class CravingService {
     return record ? decodeEntry(record) : undefined;
   }
 
-  async getAllReflections(local: boolean = true): Promise<Array<Record>> {
+  async getAllReflections(
+    cravingHash: ActionHash,
+    local: boolean = true,
+  ): Promise<Array<Record>> {
     const reflections: Array<Record> = await this.callZome(
-      'get_all_reflections',
+      'get_reflections_for_craving',
       {
-        input: null,
+        input: cravingHash,
         local,
       },
     );
@@ -193,10 +196,10 @@ export class CravingService {
 
   async createCommentOnReflection(
     input: CommentOnReflection,
-  ): Promise<CommentOnReflection | undefined> {
+  ): Promise<EntryRecord<CommentOnReflection> | undefined> {
     const record = await this.callZome('create_comment_on_reflection', input);
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   async updateCommentOnReflection(
@@ -235,22 +238,22 @@ export class CravingService {
   async getOffer(
     originalOfferHash: ActionHash,
     local: boolean = true,
-  ): Promise<Offer | undefined> {
+  ): Promise<EntryRecord<Offer> | undefined> {
     const record: Record | undefined = await this.callZome('get_offer', {
       input: originalOfferHash,
       local,
     });
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
-  async createOffer(offer: Offer): Promise<Offer | undefined> {
-    const record: Record | undefined = await this.callZome(
-      'create_offer',
+  async createOffer(offer: Offer): Promise<EntryRecord<Offer> | undefined> {
+    const record: Record | undefined = await this.callZome('create_offer', {
       offer,
-    );
+      craving_hash: this.cravingHash,
+    });
 
-    return record ? decodeEntry(record) : undefined;
+    return record ? new EntryRecord(record) : undefined;
   }
 
   /**
@@ -258,11 +261,17 @@ export class CravingService {
    *
    * @returns
    */
-  async getAllOffers(local: boolean = true): Promise<Array<Record>> {
-    const offers: Array<Record> = await this.callZome('get_all_offers', {
-      input: null,
-      local,
-    });
+  async getAllOffers(
+    cravingHash: ActionHash,
+    local: boolean = true,
+  ): Promise<Array<Record>> {
+    const offers: Array<Record> = await this.callZome(
+      'get_offers_for_craving',
+      {
+        input: cravingHash,
+        local,
+      },
+    );
 
     return offers;
   }
@@ -289,12 +298,18 @@ export class CravingService {
     return this.callZome('delete_comment_on_offer', originalCommentOnOfferHash);
   }
 
-  async resonateWithEntry(entryHash: EntryHash): Promise<void> {
-    return this.callZome('add_resonator_for_entry', entryHash);
+  async resonateWithEntry(entryHash: EntryHash, local = true): Promise<void> {
+    return this.callZome('add_resonator_for_entry', {
+      input: entryHash,
+      local,
+    });
   }
 
-  async unresonateWithEntry(entryHash: EntryHash): Promise<void> {
-    return this.callZome('remove_resonator_for_entry', entryHash);
+  async unresonateWithEntry(entryHash: EntryHash, local = true): Promise<void> {
+    return this.callZome('remove_resonator_for_entry', {
+      input: entryHash,
+      local,
+    });
   }
 
   async getResonatorsForEntry(
@@ -326,8 +341,8 @@ export class CravingService {
   }
 
   private callZome(fn_name: string, payload: any) {
-    const req: CallZomeRequest = {
-      cell_id: this.cellId,
+    const req: RoleNameCallZomeRequest = {
+      role_name: this.roleName,
       zome_name: this.zomeName,
       fn_name,
       payload,

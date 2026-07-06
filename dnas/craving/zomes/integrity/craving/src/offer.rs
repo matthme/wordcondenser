@@ -1,6 +1,4 @@
 use hdi::prelude::*;
-
-use crate::types::{CravingDnaProperties, DEFAULT_MAX_OFFER_CHARS};
 #[hdk_entry_helper]
 #[derive(Clone)]
 pub struct Offer {
@@ -9,30 +7,8 @@ pub struct Offer {
 }
 pub fn validate_create_offer(
     _action: EntryCreationAction,
-    offer: Offer,
+    _offer: Offer,
 ) -> ExternResult<ValidateCallbackResult> {
-    let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
-        .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of offer creation: {}", err.to_string()))))?;
-
-    match craving_dna_properties.max_offer_chars {
-        Some(max) => {
-            if offer.offer.len() > max {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Offer is longer than allowed. Max characters: {}",
-                    max
-                )));
-            }
-        }
-        None => {
-            if offer.offer.len() > DEFAULT_MAX_OFFER_CHARS {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Offer is longer than allowed. Max characters: {} (default value)",
-                    DEFAULT_MAX_OFFER_CHARS
-                )));
-            }
-        }
-    }
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_offer(

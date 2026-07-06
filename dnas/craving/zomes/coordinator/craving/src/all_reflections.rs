@@ -3,10 +3,9 @@ use hdk::prelude::*;
 
 use crate::helper::ZomeFnInput;
 #[hdk_extern]
-pub fn get_all_reflections(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
-    let path = Path::from("all_reflections");
+pub fn get_reflections_for_craving(input: ZomeFnInput<ActionHash>) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllReflections)?,
+        LinkQuery::try_new(input.input.clone(), LinkTypes::AllReflections)?,
         input.get_strategy(),
     )?;
 
@@ -15,7 +14,7 @@ pub fn get_all_reflections(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> 
         .map(|link| {
             GetInput::new(
                 link.target.into_any_dht_hash().unwrap(),
-                GetOptions::default(),
+                input.get_options(),
             )
         })
         .collect();

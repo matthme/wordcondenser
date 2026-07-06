@@ -2,15 +2,21 @@ use craving_integrity::*;
 use hdk::prelude::*;
 
 use crate::helper::ZomeFnInput;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CreateOfferInput {
+    pub offer: Offer,
+    pub craving_hash: ActionHash,
+}
+
 #[hdk_extern]
-pub fn create_offer(offer: Offer) -> ExternResult<Record> {
-    let offer_hash = create_entry(&EntryTypes::Offer(offer.clone()))?;
+pub fn create_offer(input: CreateOfferInput) -> ExternResult<Record> {
+    let offer_hash = create_entry(&EntryTypes::Offer(input.offer.clone()))?;
     let record = get(offer_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Offer"))
     ))?;
-    let path = Path::from("all_offers");
     create_link(
-        path.path_entry_hash()?,
+        input.craving_hash,
         offer_hash.clone(),
         LinkTypes::AllOffers,
         (),

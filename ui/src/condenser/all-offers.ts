@@ -20,9 +20,6 @@ export class AllOffers extends LitElement {
   @consume({ context: clientContext })
   client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _condenserStore!: CondenserStore;
-
   @property({ type: Object })
   cravingCellId!: CellId;
 
@@ -31,9 +28,12 @@ export class AllOffers extends LitElement {
     'resonanceAbsolute';
 
   @consume({ context: cravingStoreContext })
-  _store!: CravingStore;
+  _cravingStore!: CravingStore;
 
-  private _allOffers = new StoreSubscriber(this, () => this._store.allOffers);
+  private _allOffers = new StoreSubscriber(
+    this,
+    () => this._cravingStore.allOffers,
+  );
 
   renderList(offerDatasInput: Array<OfferData>) {
     let offerDatas = offerDatasInput;
@@ -76,7 +76,9 @@ export class AllOffers extends LitElement {
         return html`ERROR`;
       case 'complete':
         // update offers count in localStorage
-        this._store.updateOffersCount(this._allOffers.value.value.length);
+        this._cravingStore.updateOffersCount(
+          this._allOffers.value.value.length,
+        );
         return this.renderList(this._allOffers.value.value);
       default:
         return html`You found the border of the universe...`;

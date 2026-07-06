@@ -7,10 +7,9 @@ use crate::helper::ZomeFnInput;
 
 /// Getting all deduplicated associations.
 #[hdk_extern]
-pub fn get_all_associations(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
-    let path = Path::from("all_associations");
+pub fn get_associations_for_craving(input: ZomeFnInput<ActionHash>) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?,
+        LinkQuery::try_new(input.input.clone(), LinkTypes::AllAssociations)?,
         input.get_strategy(),
     )?;
     let get_input: Vec<GetInput> = links
@@ -18,7 +17,7 @@ pub fn get_all_associations(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>>
         .map(|link| {
             GetInput::new(
                 link.target.into_any_dht_hash().unwrap(),
-                GetOptions::default(),
+                input.get_options(),
             )
         })
         .collect();
@@ -61,10 +60,11 @@ pub fn get_all_associations(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>>
 /// Get all association records, i.e. if the same association has been created multiple
 /// times, return all of them
 #[hdk_extern]
-pub fn get_all_association_actions(input: ZomeFnInput<()>) -> ExternResult<Vec<Record>> {
-    let path = Path::from("all_associations");
+pub fn get_association_actions_for_craving(
+    input: ZomeFnInput<ActionHash>,
+) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllAssociations)?,
+        LinkQuery::try_new(input.input.clone(), LinkTypes::AllAssociations)?,
         input.get_strategy(),
     )?;
     let get_input: Vec<GetInput> = links
@@ -72,7 +72,7 @@ pub fn get_all_association_actions(input: ZomeFnInput<()>) -> ExternResult<Vec<R
         .map(|link| {
             GetInput::new(
                 link.target.into_any_dht_hash().unwrap(),
-                GetOptions::default(),
+                input.get_options(),
             )
         })
         .collect();

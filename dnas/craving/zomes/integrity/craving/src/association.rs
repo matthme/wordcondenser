@@ -1,4 +1,3 @@
-use crate::types::*;
 use hdi::prelude::*;
 
 #[hdk_entry_helper]
@@ -8,31 +7,11 @@ pub struct Association {
 }
 pub fn validate_create_association(
     _action: EntryCreationAction,
-    association: Association,
+    _association: Association,
 ) -> ExternResult<ValidateCallbackResult> {
-    let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
-        .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of association creation: {}", err.to_string()))))?;
-
-    match craving_dna_properties.max_association_chars {
-        Some(max) => {
-            if association.association.len() > max {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Association is longer than allowed. Max characters: {}",
-                    max
-                )));
-            }
-        }
-        None => {
-            if association.association.len() > DEFAULT_MAX_ASSOCIATION_CHARS {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Association is longer than allowed. Max characters: {} (default value)",
-                    DEFAULT_MAX_ASSOCIATION_CHARS
-                )));
-            }
-        }
-    }
-
+    // TODO optionally require the action hash of the associated craving as well
+    // and then fetch the craving here to ensure it exists and validate that the
+    // association is not longer than allowed.
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_association(

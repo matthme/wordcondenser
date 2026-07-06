@@ -41,7 +41,7 @@ test("create a Offer and get all offers", { concurrency: 1 }, async (t) => {
     // Bob gets all offers
     let collectionOutput: Record[] = await bob.cells[0].callZome({
       zome_name: "craving",
-      fn_name: "get_all_offers",
+      fn_name: "get_offers_for_craving",
       payload: null,
     });
     assert.equal(collectionOutput.length, 0);
@@ -55,7 +55,7 @@ test("create a Offer and get all offers", { concurrency: 1 }, async (t) => {
     // Bob gets all offers again
     collectionOutput = await bob.cells[0].callZome({
       zome_name: "craving",
-      fn_name: "get_all_offers",
+      fn_name: "get_offers_for_craving",
       payload: null,
     });
     assert.equal(collectionOutput.length, 1);

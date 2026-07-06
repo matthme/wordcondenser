@@ -8,9 +8,10 @@ import {
   NewEntryAction,
   Record,
 } from '@holochain/client';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 import { CravingService } from './craving-service';
-import { CravingDnaProperties } from './condenser/types';
+import { Craving } from './condenser/types';
 import { CravingMessageStore } from './types';
 import {
   getCravingNotificationSettings,
@@ -25,6 +26,8 @@ import {
   newOffersCount,
   newReflectionsCount,
   notifyOS,
+  reloadableLazyLoadAndPoll,
+  reloadableLazyLoadAndPollUntil,
   setNotifiedAssociationsCount,
   setNotifiedCommentsCount,
   setNotifiedOffersCount,
@@ -50,25 +53,22 @@ export class CravingStore {
 
   private constructor(
     public service: CravingService,
-    public craving: CravingDnaProperties,
-    public initTime: number, // timestamp in ms when the cell was installed, i.e. the OpenChain action was commited
+    public craving: EntryRecord<Craving>,
     public messageStore: CravingMessageStore | undefined, // networkSeed: string,
   ) {
     // this.networkSeed = networkSeed;
   }
 
   static async connect(service: CravingService) {
-    const craving = await service.getCraving();
-    // console.log("&&& @CravingStore.connect(): got craving: ", craving);
-    const initTime = await service.getInitTime();
+    const craving = service.craving;
 
     // get message store for this Craving from localStorage
 
     const messageStore = getLocalStorageItem<CravingMessageStore>(
-      encodeHashToBase64(service.cellId[0]),
+      encodeHashToBase64(service.cravingHash),
     );
 
-    return new CravingStore(service, craving, initTime, messageStore);
+    return new CravingStore(service, craving, messageStore);
   }
 
   /**
@@ -100,7 +100,7 @@ export class CravingStore {
 
     // write to localStorage
     window.localStorage.setItem(
-      encodeHashToBase64(this.service.cellId[0]),
+      encodeHashToBase64(this.service.cravingHash),
       JSON.stringify(this.messageStore),
     );
   }
@@ -124,7 +124,7 @@ export class CravingStore {
 
     // write to localStorage
     window.localStorage.setItem(
-      encodeHashToBase64(this.service.cellId[0]),
+      encodeHashToBase64(this.service.cravingHash),
       JSON.stringify(this.messageStore),
     );
   }
@@ -156,7 +156,7 @@ export class CravingStore {
 
     // write to localStorage
     window.localStorage.setItem(
-      encodeHashToBase64(this.service.cellId[0]),
+      encodeHashToBase64(this.service.cravingHash),
       JSON.stringify(this.messageStore),
     );
   }
@@ -180,52 +180,95 @@ export class CravingStore {
 
     // write to localStorage
     window.localStorage.setItem(
-      encodeHashToBase64(this.service.cellId[0]),
+      encodeHashToBase64(this.service.cravingHash),
       JSON.stringify(this.messageStore),
     );
   }
 
-  allAssociations = lazyLoadAndPoll(async () => {
-    const associationRecords = await this.service.getAllAssociations();
+  allAssociations = reloadableLazyLoadAndPoll(
+    async () => {
+      const associationRecords = await this.service.getAllAssociations(
+        this.service.cravingHash,
+        false,
+      );
 
-    const myPubKey = this.service.cellId[1];
+      const myPubKey = this.service.client.myPubKey;
 
-    // here: Promise.all( ... fetch resonances for each of the records ... )
-    return Promise.all(
-      associationRecords.map(async record => {
-        const resonances = await this.service.getResonatorsForEntry(
-          (record.signed_action.hashed.content as NewEntryAction).entry_hash,
-        );
-        const iResonated = resonances
-          .map(hash => JSON.stringify(hash))
-          .includes(JSON.stringify(myPubKey));
-        const associationData: AssociationData = {
-          record,
-          resonators: resonances,
-          iResonated,
-          timestamp: record.signed_action.hashed.content.timestamp,
-        };
+      // here: Promise.all( ... fetch resonances for each of the records ... )
+      return Promise.all(
+        associationRecords.map(async record => {
+          const resonances = await this.service.getResonatorsForEntry(
+            (record.signed_action.hashed.content as NewEntryAction).entry_hash,
+          );
+          const iResonated = resonances
+            .map(pubkey => encodeHashToBase64(pubkey))
+            .includes(encodeHashToBase64(myPubKey));
+          const associationData: AssociationData = {
+            record,
+            resonators: resonances,
+            iResonated,
+            timestamp: record.signed_action.hashed.content.timestamp,
+          };
 
-        return associationData;
-      }),
-    );
-  }, 1500);
+          return associationData;
+        }),
+      );
+    },
+    4_000,
+    'Failed to get all associations',
+    async () => {
+      const associationRecords = await this.service.getAllAssociations(
+        this.service.cravingHash,
+        true, // Get associations locally in the first run
+      );
+
+      console.log('#1 Fetched associations');
+
+      const myPubKey = this.service.cravingHash;
+
+      // here: Promise.all( ... fetch resonances for each of the records ... )
+      return Promise.all(
+        associationRecords.map(async record => {
+          const resonances = await this.service.getResonatorsForEntry(
+            (record.signed_action.hashed.content as NewEntryAction).entry_hash,
+          );
+          const iResonated = resonances
+            .map(pubkey => encodeHashToBase64(pubkey))
+            .includes(encodeHashToBase64(myPubKey));
+          const associationData: AssociationData = {
+            record,
+            resonators: resonances,
+            iResonated,
+            timestamp: record.signed_action.hashed.content.timestamp,
+          };
+
+          return associationData;
+        }),
+      );
+    },
+  );
 
   // useful for immediately displaying the number of new associations on the craving detail card
   // no need to also get number of drops
   // returns [{total count}, {count of new associations}]
   associationsCount = lazyLoadAndPoll(async () => {
-    const allAssociations = await this.service.getAllAssociations();
-    const cravingDnaHash = this.service.cellId[0];
+    const allAssociations = await this.service.getAllAssociations(
+      this.service.cravingHash,
+    );
     const currentCount = allAssociations.length;
-    const newCount = newAssociationsCount(this.service.cellId[0], currentCount);
+    const newCount = newAssociationsCount(
+      this.service.cravingHash,
+      currentCount,
+    );
 
     const notifiedCount =
-      getNotifiedAssociationsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+      getNotifiedAssociationsCount(
+        encodeHashToBase64(this.service.cravingHash),
+      ) || 0;
 
     if (isKangaroo() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
-        encodeHashToBase64(cravingDnaHash),
+        encodeHashToBase64(this.service.cravingHash),
       );
       if (
         notificationSettings.associations.os ||
@@ -243,7 +286,7 @@ export class CravingStore {
             notificationSettings.associations.systray,
           );
           setNotifiedAssociationsCount(
-            encodeHashToBase64(cravingDnaHash),
+            encodeHashToBase64(this.service.cravingHash),
             currentCount,
           );
         } catch (err) {
@@ -261,16 +304,15 @@ export class CravingStore {
   // no need to also get number of drops
   // returns [{total count}, {count of new offers}]
   offersCount = lazyLoadAndPoll(async () => {
-    const allOffers = await this.service.getAllOffers();
-    const cravingDnaHash = this.service.cellId[0];
+    const allOffers = await this.service.getAllOffers(this.service.cravingHash);
     const currentCount = allOffers.length;
-    const newCount = newOffersCount(cravingDnaHash, currentCount);
+    const newCount = newOffersCount(this.service.cravingHash, currentCount);
     const notifiedCount =
-      getNotifiedOffersCount(encodeHashToBase64(cravingDnaHash)) || 0;
+      getNotifiedOffersCount(encodeHashToBase64(this.service.cravingHash)) || 0;
 
     if (isKangaroo() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
-        encodeHashToBase64(cravingDnaHash),
+        encodeHashToBase64(this.service.cravingHash),
       );
       if (
         notificationSettings.offers.os ||
@@ -288,7 +330,7 @@ export class CravingStore {
             notificationSettings.offers.systray,
           );
           setNotifiedOffersCount(
-            encodeHashToBase64(cravingDnaHash),
+            encodeHashToBase64(this.service.cravingHash),
             currentCount,
           );
         } catch (err) {
@@ -308,7 +350,9 @@ export class CravingStore {
    * of reflections + comments
    */
   allCommentsCount = lazyLoadAndPoll(async () => {
-    const reflectionRecords = await this.service.getAllReflections();
+    const reflectionRecords = await this.service.getAllReflections(
+      this.service.cravingHash,
+    );
     let currentCount = 0;
     await Promise.all(
       reflectionRecords.map(async record => {
@@ -319,13 +363,13 @@ export class CravingStore {
       }),
     );
 
-    const cravingDnaHash = this.service.cellId[0];
-    const newCount = newCommentsCount(cravingDnaHash, currentCount);
+    const newCount = newCommentsCount(this.service.cravingHash, currentCount);
     const notifiedCount =
-      getNotifiedCommentsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+      getNotifiedCommentsCount(encodeHashToBase64(this.service.cravingHash)) ||
+      0;
     if (isKangaroo() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
-        encodeHashToBase64(cravingDnaHash),
+        encodeHashToBase64(this.service.cravingHash),
       );
       if (
         notificationSettings.comments.os ||
@@ -343,7 +387,7 @@ export class CravingStore {
             notificationSettings.comments.systray,
           );
           setNotifiedCommentsCount(
-            encodeHashToBase64(cravingDnaHash),
+            encodeHashToBase64(this.service.cravingHash),
             currentCount,
           );
         } catch (err) {
@@ -358,7 +402,7 @@ export class CravingStore {
   }, 3500);
 
   allReflections = lazyLoadAndPoll(
-    () => this.service.getAllReflections(),
+    () => this.service.getAllReflections(this.service.cravingHash),
     1500,
   );
 
@@ -366,17 +410,23 @@ export class CravingStore {
   // no need to also get number of drops
   // returns [{total count}, {count of new associations}]
   allReflectionsCount = lazyLoadAndPoll(async () => {
-    const allReflections = await this.service.getAllReflections();
-    const cravingDnaHash = this.service.cellId[0];
+    const allReflections = await this.service.getAllReflections(
+      this.service.cravingHash,
+    );
     const currentCount = allReflections.length;
-    const newCount = newReflectionsCount(this.service.cellId[0], currentCount);
+    const newCount = newReflectionsCount(
+      this.service.cravingHash,
+      currentCount,
+    );
 
     const notifiedCount =
-      getNotifiedReflectionsCount(encodeHashToBase64(cravingDnaHash)) || 0;
+      getNotifiedReflectionsCount(
+        encodeHashToBase64(this.service.cravingHash),
+      ) || 0;
 
     if (isKangaroo() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
-        encodeHashToBase64(cravingDnaHash),
+        encodeHashToBase64(this.service.cravingHash),
       );
       if (
         notificationSettings.reflections.os ||
@@ -394,7 +444,7 @@ export class CravingStore {
             notificationSettings.reflections.systray,
           );
           setNotifiedReflectionsCount(
-            encodeHashToBase64(cravingDnaHash),
+            encodeHashToBase64(this.service.cravingHash),
             currentCount,
           );
         } catch (err) {
@@ -464,29 +514,65 @@ export class CravingStore {
     return this.commentsOnReflections.get(reflectionHash);
   }
 
-  allOffers = lazyLoadAndPoll(async () => {
-    const offerRecords = await this.service.getAllOffers();
+  allOffers = reloadableLazyLoadAndPoll(
+    async () => {
+      const offerRecords = await this.service.getAllOffers(
+        this.service.cravingHash,
+        false,
+      );
 
-    const myPubKey = this.service.cellId[1];
+      const myPubKey = this.service.client.myPubKey;
 
-    // here: Promise.all( ... fetch resonances for each of the records ... )
-    return Promise.all(
-      offerRecords.map(async record => {
-        const resonances = await this.service.getResonatorsForEntry(
-          (record.signed_action.hashed.content as NewEntryAction).entry_hash,
-        );
-        const iResonated = resonances
-          .map(hash => JSON.stringify(hash))
-          .includes(JSON.stringify(myPubKey));
-        const offerData: OfferData = {
-          record,
-          resonators: resonances,
-          iResonated,
-          timestamp: record.signed_action.hashed.content.timestamp,
-        };
+      // here: Promise.all( ... fetch resonances for each of the records ... )
+      return Promise.all(
+        offerRecords.map(async record => {
+          const resonances = await this.service.getResonatorsForEntry(
+            (record.signed_action.hashed.content as NewEntryAction).entry_hash,
+          );
+          const iResonated = resonances
+            .map(pubkey => encodeHashToBase64(pubkey))
+            .includes(encodeHashToBase64(myPubKey));
+          const offerData: OfferData = {
+            record,
+            resonators: resonances,
+            iResonated,
+            timestamp: record.signed_action.hashed.content.timestamp,
+          };
 
-        return offerData;
-      }),
-    );
-  }, 1000);
+          return offerData;
+        }),
+      );
+    },
+    4_000,
+    'Failed to get all offers',
+    async () => {
+      // Get locally in the first iteration
+      const offerRecords = await this.service.getAllOffers(
+        this.service.cravingHash,
+        true,
+      );
+
+      const myPubKey = this.service.client.myPubKey;
+
+      // here: Promise.all( ... fetch resonances for each of the records ... )
+      return Promise.all(
+        offerRecords.map(async record => {
+          const resonances = await this.service.getResonatorsForEntry(
+            (record.signed_action.hashed.content as NewEntryAction).entry_hash,
+          );
+          const iResonated = resonances
+            .map(pubkey => encodeHashToBase64(pubkey))
+            .includes(encodeHashToBase64(myPubKey));
+          const offerData: OfferData = {
+            record,
+            resonators: resonances,
+            iResonated,
+            timestamp: record.signed_action.hashed.content.timestamp,
+          };
+
+          return offerData;
+        }),
+      );
+    },
+  );
 }

@@ -1,4 +1,3 @@
-use crate::types::*;
 use hdi::prelude::*;
 
 #[hdk_entry_helper]
@@ -9,38 +8,8 @@ pub struct Reflection {
 }
 pub fn validate_create_reflection(
     _action: EntryCreationAction,
-    reflection: Reflection,
+    _reflection: Reflection,
 ) -> ExternResult<ValidateCallbackResult> {
-    let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
-        .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of reflection creation: {}", err.to_string()))))?;
-
-    match craving_dna_properties.max_reflection_chars {
-        Some(max) => {
-            if reflection.reflection.len() > max {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Reflection is longer than allowed. Max characters: {}",
-                    max
-                )));
-            }
-        }
-        None => {
-            if reflection.reflection.len() > DEFAULT_MAX_REFLECTION_CHARS {
-                return Ok(ValidateCallbackResult::Invalid(format!(
-                    "Reflection is longer than allowed. Max characters: {} (default value)",
-                    DEFAULT_MAX_REFLECTION_CHARS
-                )));
-            }
-        }
-    }
-
-    // max title length is hardcoded at 80 chars
-    if reflection.title.len() > 80 {
-        return Ok(ValidateCallbackResult::Invalid(format!(
-            "Reflection title is longer than allowed. Max characters: 80"
-        )));
-    }
-
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_reflection(

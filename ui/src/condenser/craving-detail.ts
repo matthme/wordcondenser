@@ -14,22 +14,6 @@ import { condenserContext } from '../contexts';
 import { CravingStore } from '../craving-store';
 import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
-import {
-  newAssociationsCount,
-  newOffersCount,
-  newCommentsCount,
-  newReflectionsCount,
-  getNotifiedOffersCount,
-  isKangaroo,
-  setNotifiedOffersCount,
-  getNotifiedCommentsCount,
-  setNotifiedCommentsCount,
-  getNotifiedReflectionsCount,
-  setNotifiedReflectionsCount,
-  getCravingNotificationSettings,
-  getNotifiedAssociationsCount,
-  setNotifiedAssociationsCount,
-} from '../utils';
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
@@ -239,9 +223,8 @@ export class CravingDetail extends LitElement {
   }
 
   render() {
-    const timestamp = this.store.initTime;
     const craving = this.store.craving;
-    const date = new Date(timestamp);
+    const date = new Date(craving.action.timestamp);
 
     // console.log("Craving: ", craving);
 
@@ -257,7 +240,6 @@ export class CravingDetail extends LitElement {
             ? this.dispatchEvent(
                 new CustomEvent('selected-craving', {
                   detail: {
-                    cellId: this.store.service.cellId,
                     craving,
                   },
                   bubbles: true,
@@ -269,7 +251,6 @@ export class CravingDetail extends LitElement {
           this.dispatchEvent(
             new CustomEvent('selected-craving', {
               detail: {
-                cellId: this.store.service.cellId,
                 craving,
               },
               bubbles: true,
@@ -283,12 +264,10 @@ export class CravingDetail extends LitElement {
         >
           ${this.renderCounts()}
           <span style="display: flex; flex: 1;"></span>
-          <span style="font-size: 14px;"
-            >installed ${timeAgo.format(date)}</span
-          >
+          <span style="font-size: 14px;">created ${timeAgo.format(date)}</span>
         </div>
-        <div class="craving-title">${craving.title}</div>
-        <div class="craving-description">${craving.description}</div>
+        <div class="craving-title">${craving.entry.title}</div>
+        <div class="craving-description">${craving.entry.description}</div>
       </div>
     `;
   }

@@ -1,12 +1,14 @@
 pub mod action_to_resonator;
 pub mod all_anecdotes;
 pub mod all_associations;
+pub mod all_cravings;
 pub mod all_offers;
 pub mod all_reflections;
 pub mod anecdote;
 pub mod association;
 pub mod comment_on_offer;
 pub mod comment_on_reflection;
+pub mod craving;
 pub mod entry_to_resonator;
 pub mod get_init_time;
 pub mod helper;

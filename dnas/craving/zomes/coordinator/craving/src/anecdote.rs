@@ -5,7 +5,7 @@ use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_anecdote(anecdote: Anecdote) -> ExternResult<Record> {
     let anecdote_hash = create_entry(&EntryTypes::Anecdote(anecdote.clone()))?;
-    let record = get(anecdote_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(anecdote_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Anecdote"))
     ))?;
     let path = Path::from("all_anecdotes");
@@ -37,7 +37,7 @@ pub fn get_anecdote(
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_anecdote_hash.input.clone(),
     };
-    get(latest_anecdote_hash, GetOptions::default())
+    get(latest_anecdote_hash, original_anecdote_hash.get_options())
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateAnecdoteInput {
@@ -57,7 +57,7 @@ pub fn update_anecdote(input: UpdateAnecdoteInput) -> ExternResult<Record> {
         LinkTypes::AnecdoteUpdates,
         (),
     )?;
-    let record = get(updated_anecdote_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(updated_anecdote_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly updated Anecdote"))
     ))?;
     Ok(record)

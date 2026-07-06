@@ -26,13 +26,12 @@ export class OfferElement extends LitElement {
   client!: AppClient;
 
   @consume({ context: cravingStoreContext })
-  store!: CravingStore;
+  _cravingStore!: CravingStore;
 
   @property()
   offer!: OfferData;
 
   async handleResonator() {
-    // console.log(":::HANDLING RESONATOR:::");
     if (this.offer.iResonated) {
       await this.unresonate();
     } else {
@@ -45,9 +44,8 @@ export class OfferElement extends LitElement {
       this.offer.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.resonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.resonateWithEntry(entryHash);
+      await this._cravingStore.allOffers.reload();
     } catch (e) {
       console.log('ERROR trying to resonate: ', e);
     }
@@ -58,9 +56,8 @@ export class OfferElement extends LitElement {
       this.offer.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.unresonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.unresonateWithEntry(entryHash);
+      await this._cravingStore.allOffers.reload();
     } catch (e) {
       console.log('ERROR trying to unresonate: ', e);
     }

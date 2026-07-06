@@ -2,15 +2,21 @@ use craving_integrity::*;
 use hdk::prelude::*;
 
 use crate::helper::ZomeFnInput;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CreateReflectionInput {
+    pub reflection: Reflection,
+    pub craving_hash: ActionHash,
+}
+
 #[hdk_extern]
-pub fn create_reflection(reflection: Reflection) -> ExternResult<Record> {
-    let reflection_hash = create_entry(&EntryTypes::Reflection(reflection.clone()))?;
+pub fn create_reflection(input: CreateReflectionInput) -> ExternResult<Record> {
+    let reflection_hash = create_entry(&EntryTypes::Reflection(input.reflection.clone()))?;
     let record = get(reflection_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Reflection"))
     ))?;
-    let path = Path::from("all_reflections");
     create_link(
-        path.path_entry_hash()?,
+        input.craving_hash,
         reflection_hash.clone(),
         LinkTypes::AllReflections,
         (),

@@ -10,20 +10,25 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import {
+  clientContext,
+  condenserContext,
+  cravingStoreContext,
+} from '../contexts';
 import { Reflection } from './types';
 import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
 import { MVBTextArea } from '../components/mvb-textarea';
 import { sharedStyles } from '../sharedStyles';
+import { CravingStore } from '../craving-store';
 
 @customElement('create-reflection')
 export class CreateOffer extends LitElement {
   @consume({ context: clientContext })
   client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
   cravingCellId!: CellId;
@@ -57,20 +62,15 @@ export class CreateOffer extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: undefined,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_reflection',
-        payload: reflection,
-      });
+      const entryRecord =
+        await this._cravingStore.service.createReflection(reflection);
 
       this.dispatchEvent(
         new CustomEvent('reflection-created', {
           composed: true,
           bubbles: true,
           detail: {
-            reflectionHash: record.signed_action.hashed.hash,
+            reflectionHash: entryRecord?.actionHash,
           },
         }),
       );

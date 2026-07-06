@@ -1,4 +1,3 @@
-use crate::types::*;
 use hdi::prelude::*;
 
 #[hdk_entry_helper]
@@ -19,24 +18,6 @@ pub fn validate_create_comment_on_reflection(
         .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
             "Dependant action must be accompanied by an entry"
         ))))?;
-
-    // comments on reflections are limited to the same size as a reflection itself
-    let dna_info = dna_info()?;
-    let craving_dna_properties = CravingDnaProperties::try_from(dna_info.modifiers.properties)
-        .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("Failed to convert dna properties into CravingDnaProperties during validation of offer creation: {}", err.to_string()))))?;
-
-    match craving_dna_properties.max_reflection_chars {
-        Some(max) => {
-            if comment_on_reflection.comment.len() > max {
-                return Ok(ValidateCallbackResult::Invalid(format!("Comment on Reflection is longer than allowed. Max characters: {} (same as Reflection max charachters)", max)));
-            }
-        }
-        None => {
-            if comment_on_reflection.comment.len() > DEFAULT_MAX_REFLECTION_CHARS {
-                return Ok(ValidateCallbackResult::Invalid(format!("Comment on Reflection is longer than allowed. Max characters: {} (default value)", DEFAULT_MAX_REFLECTION_CHARS)));
-            }
-        }
-    }
 
     Ok(ValidateCallbackResult::Valid)
 }
