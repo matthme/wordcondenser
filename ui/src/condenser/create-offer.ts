@@ -53,6 +53,8 @@ export class CreateOffer extends LitElement {
       );
       this._offer = undefined;
 
+      this._cravingStore.allOffers.reload();
+
       (
         this.shadowRoot?.getElementById('offer-textfield') as MVBTextField
       ).clear();

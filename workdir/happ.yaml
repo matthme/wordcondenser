@@ -13,15 +13,4 @@ roles:
         network_seed: ~
         properties: ~
       version: ~
-      clone_limit: 99999
-  - name: lobby
-    provisioning:
-      strategy: create
-      deferred: false
-    dna:
-      path: "../dnas/lobby/workdir/lobby.dna"
-      modifiers:
-        network_seed: ~
-        properties: ~
-      version: ~
       clone_limit: 0

@@ -12,7 +12,7 @@ pub struct CreateOfferInput {
 #[hdk_extern]
 pub fn create_offer(input: CreateOfferInput) -> ExternResult<Record> {
     let offer_hash = create_entry(&EntryTypes::Offer(input.offer.clone()))?;
-    let record = get(offer_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(offer_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Offer"))
     ))?;
     create_link(
@@ -37,7 +37,7 @@ pub fn get_offer(original_offer_hash: ZomeFnInput<ActionHash>) -> ExternResult<O
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_offer_hash.input.clone(),
     };
-    get(latest_offer_hash, GetOptions::default())
+    get(latest_offer_hash, original_offer_hash.get_options())
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateOfferInput {
@@ -54,7 +54,7 @@ pub fn update_offer(input: UpdateOfferInput) -> ExternResult<Record> {
         LinkTypes::OfferUpdates,
         (),
     )?;
-    let record = get(updated_offer_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(updated_offer_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly updated Offer"))
     ))?;
     Ok(record)

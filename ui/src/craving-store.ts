@@ -400,9 +400,11 @@ export class CravingStore {
     ] as [string, string | undefined];
   }, 3500);
 
-  allReflections = lazyLoadAndPoll(
-    () => this.service.getAllReflections(this.service.cravingHash),
-    1500,
+  allReflections = reloadableLazyLoadAndPoll(
+    () => this.service.getAllReflections(this.service.cravingHash, false),
+    4_000,
+    'Failed to get all reflections',
+    () => this.service.getAllReflections(this.service.cravingHash, true),
   );
 
   // useful for immediately displaying the number of new associations on the craving detail card
@@ -473,9 +475,11 @@ export class CravingStore {
   // all comments on all reflections
   commentsOnReflections = new LazyHoloHashMap(
     (reflectionHash: ActionHash) =>
-      lazyLoadAndPoll(
-        () => this.service.getAllCommentsOnReflection(reflectionHash),
-        1000,
+      reloadableLazyLoadAndPoll(
+        () => this.service.getAllCommentsOnReflection(reflectionHash, false),
+        4_000,
+        'Failed to get comments on reflection',
+        () => this.service.getAllCommentsOnReflection(reflectionHash, true),
       ),
     // asyncReadable<Array<Record>>(async (set) => {
     //   let commentRecords = await this.service.getAllCommentsOnReflection(reflectionHash);

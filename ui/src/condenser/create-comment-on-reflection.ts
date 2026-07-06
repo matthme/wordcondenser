@@ -55,6 +55,11 @@ export class CreateCommentOnReflection extends LitElement {
       (
         this.shadowRoot?.getElementById('comment-textarea') as MVBTextArea
       ).clear();
+
+      // Reload the store to update the UI immediately
+      this._cravingStore.commentsOnReflections
+        .get(this.reflectionHash)
+        ?.reload();
     } catch (e: any) {
       console.error('Eror creating comment: ', e);
       const errorSnackbar = this.shadowRoot?.getElementById(

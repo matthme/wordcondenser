@@ -45,8 +45,6 @@ export class CreateAssociation extends LitElement {
       const entryRecord =
         await this._cravingStore.service.createAssociation(association);
 
-      // console.log("@create-association: Created association.");
-
       this.dispatchEvent(
         new CustomEvent('association-created', {
           composed: true,
@@ -56,6 +54,8 @@ export class CreateAssociation extends LitElement {
           },
         }),
       );
+
+      this._cravingStore.allAssociations.reload();
 
       (
         this.shadowRoot?.getElementById('association-textfield') as MVBTextField

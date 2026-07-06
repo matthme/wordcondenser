@@ -5,7 +5,7 @@ use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_craving(craving: Craving) -> ExternResult<Record> {
     let craving_hash = create_entry(&EntryTypes::Craving(craving.clone()))?;
-    let record = get(craving_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(craving_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Craving"))
     ))?;
     let path = Path::from("all_cravings");

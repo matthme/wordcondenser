@@ -12,7 +12,7 @@ pub fn create_comment_on_offer(comment_on_offer: CommentOnOffer) -> ExternResult
         LinkTypes::OfferToCommentOnOffers,
         (),
     )?;
-    let record = get(comment_on_offer_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(comment_on_offer_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from(
             "Could not find the newly created CommentOnOffer"
         ))
@@ -39,7 +39,10 @@ pub fn get_comment_on_offer(
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_comment_on_offer_hash.input.clone(),
     };
-    get(latest_comment_on_offer_hash, GetOptions::default())
+    get(
+        latest_comment_on_offer_hash,
+        original_comment_on_offer_hash.get_options(),
+    )
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateCommentOnOfferInput {
@@ -59,7 +62,7 @@ pub fn update_comment_on_offer(input: UpdateCommentOnOfferInput) -> ExternResult
         LinkTypes::CommentOnOfferUpdates,
         (),
     )?;
-    let record = get(updated_comment_on_offer_hash.clone(), GetOptions::default())?.ok_or(
+    let record = get(updated_comment_on_offer_hash.clone(), GetOptions::local())?.ok_or(
         wasm_error!(WasmErrorInner::Guest(String::from(
             "Could not find the newly updated CommentOnOffer"
         ))),
@@ -85,7 +88,7 @@ pub fn get_comment_on_offers_for_offer(
         .map(|link| {
             GetInput::new(
                 link.target.into_any_dht_hash().unwrap(),
-                GetOptions::default(),
+                offer_hash.get_options(),
             )
         })
         .collect();

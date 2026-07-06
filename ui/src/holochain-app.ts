@@ -536,7 +536,7 @@ export class HolochainApp extends LitElement {
           : html`
               <div
                 class="confirm-btn"
-                style="align-items: center; margin-top: 30px; position: absolute; bottom: 15px; left: 15px; "
+                style="align-items: center; margin-top: 30px; position: fixed; bottom: 15px; left: 15px; "
                 tabindex="0"
                 @click=${() => {
                   window.localStorage.setItem('intro-seen', 'true');

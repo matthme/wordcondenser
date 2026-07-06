@@ -12,7 +12,7 @@ pub struct CreateReflectionInput {
 #[hdk_extern]
 pub fn create_reflection(input: CreateReflectionInput) -> ExternResult<Record> {
     let reflection_hash = create_entry(&EntryTypes::Reflection(input.reflection.clone()))?;
-    let record = get(reflection_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(reflection_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Reflection"))
     ))?;
     create_link(
@@ -42,7 +42,10 @@ pub fn get_reflection(
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_reflection_hash.input.clone(),
     };
-    get(latest_reflection_hash, GetOptions::default())
+    get(
+        latest_reflection_hash,
+        original_reflection_hash.get_options(),
+    )
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateReflectionInput {
@@ -62,10 +65,9 @@ pub fn update_reflection(input: UpdateReflectionInput) -> ExternResult<Record> {
         LinkTypes::ReflectionUpdates,
         (),
     )?;
-    let record =
-        get(updated_reflection_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
-            WasmErrorInner::Guest(String::from("Could not find the newly updated Reflection"))
-        ))?;
+    let record = get(updated_reflection_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
+        WasmErrorInner::Guest(String::from("Could not find the newly updated Reflection"))
+    ))?;
     Ok(record)
 }
 #[hdk_extern]

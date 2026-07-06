@@ -15,7 +15,7 @@ pub fn create_comment_on_reflection(
         LinkTypes::ReflectionToCommentOnReflections,
         (),
     )?;
-    let record = get(comment_on_reflection_hash.clone(), GetOptions::default())?.ok_or(
+    let record = get(comment_on_reflection_hash.clone(), GetOptions::local())?.ok_or(
         wasm_error!(WasmErrorInner::Guest(String::from(
             "Could not find the newly created CommentOnReflection"
         ))),
@@ -42,7 +42,10 @@ pub fn get_comment_on_reflection(
             .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
         None => original_comment_on_reflection_hash.input.clone(),
     };
-    get(latest_comment_on_reflection_hash, GetOptions::default())
+    get(
+        latest_comment_on_reflection_hash,
+        original_comment_on_reflection_hash.get_options(),
+    )
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateCommentOnReflectionInput {
@@ -64,7 +67,7 @@ pub fn update_comment_on_reflection(input: UpdateCommentOnReflectionInput) -> Ex
     )?;
     let record = get(
         updated_comment_on_reflection_hash.clone(),
-        GetOptions::default(),
+        GetOptions::local(),
     )?
     .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
         "Could not find the newly updated CommentOnReflection"
@@ -94,7 +97,7 @@ pub fn get_comment_on_reflections_for_reflection(
         .map(|link| {
             GetInput::new(
                 link.target.into_any_dht_hash().unwrap(),
-                GetOptions::default(),
+                reflection_hash.get_options(),
             )
         })
         .collect();
