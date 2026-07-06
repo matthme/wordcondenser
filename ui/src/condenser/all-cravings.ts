@@ -9,6 +9,7 @@ import './craving-detail';
 import { CondenserStore } from '../condenser-store';
 import { condenserContext } from '../contexts';
 import { Craving } from './types';
+import { sharedStyles } from '../sharedStyles';
 
 @customElement('all-cravings')
 export class AllCravings extends LitElement {
@@ -34,7 +35,7 @@ export class AllCravings extends LitElement {
       </div>`;
 
     return html`
-      <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+      <div class="row" style="flex-wrap: wrap;">
         ${Array.from(cravings.values())
           .sort(
             (craving_a, craving_b) =>
@@ -66,4 +67,6 @@ export class AllCravings extends LitElement {
         return html`unexpected store status.`;
     }
   }
+
+  static styles = [sharedStyles];
 }

@@ -110,13 +110,12 @@ export class CravingView extends LitElement {
         </div>
       </button>
 
-      <div
-        class="column"
-        style="align-items: center; flex: 1; width: 100%; margin-bottom: 80px;"
-      >
-        <div class="row top-bar">
+      <div class="column flex-1">
+        <!-- TOP (TITLE) BAR -->
+
+        <div class="row align-center" style="margin-left: 170px;">
           <div
-            style="color: #929ab9; font-size: 40px; font-weight: bold; margin-left: 170px; text-align: left;"
+            style="color: #929ab9; font-size: 40px; font-weight: bold; text-align: left;"
           >
             ${this.craving.entry.title}
           </div>
@@ -145,7 +144,7 @@ export class CravingView extends LitElement {
           >
             <div
               title="Yes, that's you!"
-              style="font-size: 23px; color: #e06208; margin-bottom: 10px;"
+              style="font-size: 23px; color: #e06208; margin-bottom: 10px; text-align: right;"
             >
               ${this.myNickName}
             </div>
@@ -162,16 +161,19 @@ nor to promote yourself!"
           </div>
         </div>
 
+        <!-- CRAVING DESCRIPTION ROW -->
+
         <div
           class="craving-description row"
-          style="${this.showDescription ? '' : 'display: none;'}"
+          style="margin-left: 170px; margin-right: 70px; ${this.showDescription
+            ? ''
+            : 'display: none;'}"
         >
-          <div style="margin-left: 185px; margin-right: 70px;">
-            ${this.craving.entry.description}
-          </div>
+          ${this.craving.entry.description}
         </div>
 
         <div
+          class="column center-content"
           style="margin-top: 20px; margin-bottom: 10px; ${this.showDescription
             ? ''
             : 'display: none;'}"
@@ -191,22 +193,27 @@ nor to promote yourself!"
           </div>
         </div>
 
-        <div class="row" style="overflow-x: auto; width: 100%;">
+        <!-- ASSOCIATIONS / REFLECTIONS / OFFERS ROW-->
+
+        <div class="row flex-1" style="overflow-x: auto; max-width: 100vw;">
+          <!-- ASSOCIATIONS BOX -->
+
           <div
-            class="column box"
-            style="flex-shrink: 0; width: 475px; margin-left: 20px;"
+            class="column box align-center"
+            style="min-width: 400px; width: 26%;"
           >
             <div
               class="row"
-              style="align-items: center; margin: 18px 10px 30px 23px;"
+              style="align-items: center; margin: 18px 10px 30px 0;"
             >
               <img
                 src="associations.png"
                 alt="associations icon"
-                style="height: 80px;"
+                style="height: 60px;"
               />
               <div
-                style="font-size: 34px; margin-left: 10px; color: #ffc64cff;"
+                class="section-title"
+                style="margin-left: 10px;"
                 title="What tickles your mind? Keep it short."
               >
                 Associations
@@ -252,27 +259,31 @@ nor to promote yourself!"
             </div>
             <association-map
               id="association-map"
+              style="width: 100%;"
               .cravingHash=${this.craving.actionHash}
               .sortBy=${this.sortAssociationsBy}
             ></association-map>
           </div>
 
+          <!-- REFLECTIONS BOX -->
+
           <div
-            class="column box"
-            style="flex-shrink: 0; width: 850px; padding: 10px;"
+            class="column box items-center"
+            style="min-width: 600px; width: 40%;"
           >
             <div
-              class="row"
-              style="align-items: center; margin: 18px 10px 35px 10px;"
+              class="row justify-center"
+              style="align-items: center; margin: 12px 10px 35px 10px;"
             >
               <img
                 src="reflections.svg"
                 alt="Reflections icon"
-                style="height: 65px;"
+                style="height: 60px;"
               />
               <div
-                style="font-size: 34px; margin-left: 10px; color: #ffc64cff;"
-                title="Any thoughts about the topic? Explore untapped philosohical realms."
+                class="section-title"
+                style="margin-left: 10px;"
+                title="Any thoughts about the topic? Explore untapped philosophical realms."
               >
                 Reflections
               </div>
@@ -321,19 +332,22 @@ nor to promote yourself!"
             ></all-reflections>
           </div>
 
-          <div class="column box" style="flex-shrink: 0; width: 495px;">
+          <!-- OFFERS BOX -->
+
+          <div class="column box" style="min-width: 400px; width: 26%;">
             <div
-              class="row"
-              style="align-items: center; margin: 30px 10px 30px 23px;"
+              class="row justify-center"
+              style="align-items: center; margin: 18px 10px 30px 10px;"
             >
               <img
                 src="offers.svg"
                 alt="Offers icon"
-                style="height: 65px;"
+                style="height: 60px;"
                 title="drip drop..."
               />
               <div
-                style="font-size: 34px; margin-left: 10px; color: #ffc64cff;"
+                class="section-title"
+                style="margin-left: 10px;"
                 title="Got a precious drop of liquified grammatical potential? Share it, make it real!"
               >
                 Offers
@@ -420,21 +434,12 @@ nor to promote yourself!"
         background-color: #ffd7231c;
       }
 
-      .top-bar {
-        width: calc(100% - 20px);
-        align-items: center;
-        margin: 10px;
-      }
-
       .craving-description {
         color: #abb5d6;
-        width: 100%;
-        align-items: left;
         font-size: 20px;
         text-align: left;
         margin-top: 10px;
         line-height: 30px;
-        white-space: pre-wrap;
       }
 
       .btn-collapse {
@@ -451,11 +456,16 @@ nor to promote yourself!"
         /* border: 1px solid transparent; */
       }
 
+      .section-title {
+        font-size: 28px;
+        color: #ffc64cff;
+      }
+
       .box {
         /* border: 2px solid #ffc64c94; */
         border-radius: 25px;
         margin: 10px;
-        padding-bottom: 10px;
+        padding: 10px;
         background: #fff6e309;
       }
 

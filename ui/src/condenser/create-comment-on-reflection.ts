@@ -70,24 +70,24 @@ export class CreateCommentOnReflection extends LitElement {
   render() {
     return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div class="container">
-        <div class="column" style="display: flex; align-items: flex-end;">
-          <mvb-textarea
-            id="comment-textarea"
-            style="
+      <div class="column container">
+        <mvb-textarea
+          id="comment-textarea"
+          style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 300px;
               --mvb-textfield-height: 50px;
               --border-width: 1px;
             "
-            placeholder="Write comment"
-            @input=${(e: CustomEvent) => {
-              this._comment = (e.target as any).value;
-            }}
-            required
-          ></mvb-textarea>
+          placeholder="Write comment"
+          @input=${(e: CustomEvent) => {
+            this._comment = (e.target as any).value;
+          }}
+          required
+        ></mvb-textarea>
 
+        <div class="row">
+          <span class="flex-1"></span>
           <div
             class="row ${this.isCommentValid() ? 'icon' : 'disabled'}"
             style="align-items: center; margin-top: 5px; ${this.isCommentValid()
@@ -114,12 +114,11 @@ export class CreateCommentOnReflection extends LitElement {
     sharedStyles,
     css`
       .container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
+        /* align-items: flex-end; */
         margin-top: 10px;
         margin-right: 12px;
         margin-bottom: 20px;
+        padding-left: 50px;
       }
 
       .disabled {

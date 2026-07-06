@@ -54,7 +54,7 @@ export class AllReflections extends LitElement {
   renderList(reflections: Array<Record>) {
     if (reflections.length === 0)
       return html`<div
-        style="font-size: 23px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
+        style="font-size: 21px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
       >
         No reflections found for this craving.
       </div>`;

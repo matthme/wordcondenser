@@ -40,7 +40,7 @@ export class AllOffers extends LitElement {
     if (offerDatas.length === 0)
       return html` <div class="column" style="flex: 1; align-items: center;">
         <div
-          style="font-size: 23px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
+          style="font-size: 21px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
         >
           No offers found for this craving.
         </div>

@@ -99,10 +99,10 @@ export class CreateOffer extends LitElement {
           style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 825px;
               --mvb-textfield-height: 50px;
               --border-width: 2px;
               margin-bottom: 10px;
+              width: 100%;
             "
           placeholder="Title"
           @input=${(e: CustomEvent) => {
@@ -118,10 +118,9 @@ export class CreateOffer extends LitElement {
               --mvb-secondary-color: #838ba4;
               --border-width: 1px;
               margin-bottom: 15px;
+              width: 100%;
             "
-          cols="59"
           placeholder="Reflection"
-          width="780px"
           @input=${(e: CustomEvent) => {
             this._reflection = (e.target as any).value;
           }}

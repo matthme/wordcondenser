@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { Record, AppClient, CellId } from '@holochain/client';
+import { AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -10,13 +10,8 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import {
-  clientContext,
-  condenserContext,
-  cravingStoreContext,
-} from '../contexts';
+import { clientContext, cravingStoreContext } from '../contexts';
 import { Offer } from './types';
-import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
 import { CravingStore } from '../craving-store';
 
@@ -83,8 +78,8 @@ export class CreateOffer extends LitElement {
             style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 370px;
               --mvb-textfield-height: 50px;
+              --mvb-textfield-width: 320px;
               --border-width: 1px;
             "
             placeholder="Add offer"

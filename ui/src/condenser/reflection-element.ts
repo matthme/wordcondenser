@@ -101,7 +101,7 @@ export class ReflectionElement extends LitElement {
           this._comments.value.value.length,
         );
         return html`
-          <div class="column" style="flex-end; padding-left: 40px;">
+          <div class="column" style="padding-left: 40px;">
             ${this._comments.value.value.map(record => {
               const comment = record
                 ? (decodeEntry(record) as CommentOnReflection)

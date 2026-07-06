@@ -28,7 +28,7 @@ export class MVBTextField extends LitElement {
 
   render() {
     return html`
-      <div class="container column" style="position: relative">
+      <div class="container column" style="position: relative;">
         <input
           id="input-field"
           type="text"
@@ -51,7 +51,7 @@ export class MVBTextField extends LitElement {
     sharedStyles,
     css`
       .container {
-        width: var(--mvb-textfield-width, 300px);
+        width: var(--mvb-textfield-width, 100%);
         height: var(--mvb-textfield-height, 48px);
         --default-primary-color: #9098b3;
         --default-secondary-color: #6f758a;

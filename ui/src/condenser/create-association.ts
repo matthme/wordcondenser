@@ -10,15 +10,11 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import {
-  clientContext,
-  condenserContext,
-  cravingStoreContext,
-} from '../contexts';
+import { clientContext, cravingStoreContext } from '../contexts';
 import { Association } from './types';
-import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
 import { CravingStore } from '../craving-store';
+import { sharedStyles } from '../sharedStyles';
 
 @customElement('create-association')
 export class CreateAssociation extends LitElement {
@@ -77,17 +73,15 @@ export class CreateAssociation extends LitElement {
   render() {
     return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div
-        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;"
-      >
-        <div class="row" style="display: flex; align-items: center;">
+      <div class="column flex-1 align-center" style="margin-bottom: 20px;">
+        <div class="row flex-1 align-center">
           <mvb-textfield
             id="association-textfield"
             style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 350px;
               --mvb-textfield-height: 50px;
+              --mvb-textfield-width: 320px;
               --border-width: 1px;
             "
             placeholder="Add association"
@@ -99,6 +93,7 @@ export class CreateAssociation extends LitElement {
             @keypress=${(e: KeyboardEvent) =>
               e.key === 'Enter' ? this.createAssociation() : undefined}
           ></mvb-textfield>
+          <span class="flex-1"></span>
           <btn-round
             style="margin-left: 10px; font-size: 18px"
             title="Add this association to the list for others to see"
@@ -110,4 +105,6 @@ export class CreateAssociation extends LitElement {
         </div>
       </div>`;
   }
+
+  static styles = [sharedStyles];
 }

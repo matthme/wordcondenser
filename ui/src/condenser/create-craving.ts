@@ -122,7 +122,7 @@ export class CreateCraving extends LitElement {
     return html`
       <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div style="display: flex; flex-direction: column; align-items: center;">
+      <div class="column" style="align-items: center;">
         <div class="box">
           <div
             style="font-size: 40px; font-weight: bold; color: #abb5da; opacity: 0.85; margin-bottom: 30px; margin-top: 40px;"
@@ -227,6 +227,7 @@ export class CreateCraving extends LitElement {
         margin: 10px;
         padding: 10px 70px;
         background: #fff6e309;
+        max-width: 800px;
       }
 
       .group-selection-element {

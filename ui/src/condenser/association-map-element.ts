@@ -81,7 +81,9 @@ export class AssociationMapElement extends LitElement {
         style="background-color: ${color}3B;"
         title=${date.toLocaleString()}
       >
-        <div style="text-align: left;">${association.association}</div>
+        <div style="text-align: left; word-break: break-all;">
+          ${association.association}
+        </div>
         <span style="display: flex; flex: 1;"></span>
         <div
           style="align-items: center;"
@@ -99,7 +101,7 @@ export class AssociationMapElement extends LitElement {
           <img
             src="drop.svg"
             alt="Drop indicating how many people resonated with this association"
-            style="height: 23px; margin-top: -2px; ${this.association.iResonated
+            style="height: 20px; margin-top: -2px; ${this.association.iResonated
               ? ''
               : 'opacity: 0.8;'}"
           />
@@ -121,13 +123,13 @@ export class AssociationMapElement extends LitElement {
       .association {
         /* background-color: #ffd72335; */
         color: rgb(var(--font-active-color));
-        font-size: 24px;
-        padding: 8px 12px;
+        font-size: 22px;
+        padding: 4px 12px;
         display: flex;
         flex-direction: row;
         align-items: center;
         border-radius: 15px;
-        margin: 5px 10px;
+        margin: 3px 0;
       }
 
       .resonator {
@@ -138,7 +140,7 @@ export class AssociationMapElement extends LitElement {
         cursor: pointer;
         color: rgb(var(--font-active-color));
         border: 1px solid transparent;
-        font-size: 24px;
+        font-size: 22px;
       }
 
       .resonator:hover {

@@ -230,11 +230,7 @@ export class HolochainApp extends LitElement {
 
   renderCravings() {
     return html`
-      <div
-        id="content"
-        class="column"
-        style="align-items: flex-start; width: 100%;"
-      >
+      <div id="content" class="column align-center flex-1">
         <all-cravings
           id="all-cravings"
           @selected-craving=${(e: CustomEvent) => {
@@ -255,19 +251,20 @@ export class HolochainApp extends LitElement {
     switch (this._dashboardMode) {
       case DashboardMode.Home:
         return html`
-          <div style="padding: 40px; align-items: center;" class="column">
+          <div class="column align-center">
             ${!window.localStorage.getItem('hide-logo')
               ? html`
-                  <div style="margin-top: -50px; margin-bottom: 20px;">
+                  <div style="margin-top: -50px; margin-bottom: 0px;">
                     <img
                       alt="Logo of the Word Condenser"
+                      style="height: 450px;"
                       title="Hi, I am the Word Condenser! I am condensing words that are latently dissolved across the humid space of human experience and imagination"
                       src="word_condenser_logo.svg"
                       class="logo"
                     />
                   </div>
                   <div
-                    style="color: #b1bae0; font-size: 25px; opacity: 0.85; margin-top: -15px; margin-bottom: 70px; font-style: italic; max-width: 1200px;"
+                    style="color: #b1bae0; font-size: 25px; opacity: 0.85; margin-top: -25px; margin-bottom: 30px; font-style: italic; max-width: 1200px;"
                   >
                     ${this.getSlogan()}
                   </div>
@@ -322,7 +319,7 @@ export class HolochainApp extends LitElement {
       case DashboardMode.CravingView:
         return html`
           <craving-view
-            style="display: flex; flex: 1; width: 100%;"
+            class="flex-1"
             @back-home=${() => {
               this._dashboardMode = DashboardMode.Home;
               this._selectedCraving = undefined;
@@ -428,7 +425,7 @@ export class HolochainApp extends LitElement {
 
             <div
               class="confirm-btn"
-              style="align-items: center; margin-top: 30px; margin-bottom: 20px; margin-top: 150px;"
+              style="align-items: center; margin-top: 30px; margin-bottom: 20px; margin-top: 100px;"
               tabindex="0"
               @click=${() => {
                 window.localStorage.removeItem('intro-seen');
@@ -446,31 +443,37 @@ export class HolochainApp extends LitElement {
               >
             </div>
 
-            <div
+            <!-- <div
               class="confirm-btn"
               style="align-items: center; margin-top: 30px; margin-bottom: 80px;"
               tabindex="0"
               @click=${() => {
-                this._dashboardMode = DashboardMode.NoCookiesEVER;
-              }}
+              this._dashboardMode = DashboardMode.NoCookiesEVER;
+            }}
               @keypress=${() => {
-                this._dashboardMode = DashboardMode.NoCookiesEVER;
-              }}
+              this._dashboardMode = DashboardMode.NoCookiesEVER;
+            }}
             >
               <span style="color: #abb5d6; font-size: 1em;"
                 >Accept to not need to accept Cookies</span
               >
-            </div>
+            </div> -->
 
             <div
               class="confirm-btn column"
               style="align-items: center; margin-top: 30px; margin-bottom: 80px;"
               tabindex="0"
               @click=${() => {
-                throw new Error('Not implemented');
+                window.open(
+                  'https://github.com/matthme/wordcondenser/issues/new',
+                  '_blank',
+                );
               }}
               @keypress=${() => {
-                throw new Error('Not implemented');
+                window.open(
+                  'https://github.com/matthme/wordcondenser/issues/new',
+                  '_blank',
+                );
               }}
             >
               <img
@@ -502,29 +505,32 @@ export class HolochainApp extends LitElement {
     }
   }
 
+  renderRefreshButton() {
+    return html`${this._dashboardMode !== DashboardMode.Settings &&
+    window.localStorage.getItem('intro-seen')
+      ? html`<img
+          class="icon"
+          src="refresh.svg"
+          alt="Refresh icon"
+          style="height: 53px; position: fixed; bottom: 10px; left: 10px; cursor: pointer;"
+          title="Refresh"
+          tabindex="0"
+          @click=${() => this.handleRefresh()}
+          @keypress=${() => this.handleRefresh()}
+        />`
+      : html``}`;
+  }
+
   render() {
     if (this.loading) return html` <loading-animation></loading-animation> `;
 
     return html`
-      <main style="position: relative;">
+      <div class="column flex-1" style="width: 100%;">
         ${window.localStorage.getItem('intro-seen')
           ? this.renderHome()
           : html`<intro-section
               @intro-finished=${() => this.requestUpdate()}
             ></intro-section>`}
-        ${this._dashboardMode !== DashboardMode.Settings &&
-        window.localStorage.getItem('intro-seen')
-          ? html`<img
-              class="icon"
-              src="refresh.svg"
-              alt="Refresh icon"
-              style="height: 53px; position: fixed; bottom: 10px; left: 10px; cursor: pointer;"
-              title="Refresh"
-              tabindex="0"
-              @click=${() => this.handleRefresh()}
-              @keypress=${() => this.handleRefresh()}
-            />`
-          : html``}
         ${window.localStorage.getItem('intro-seen')
           ? html``
           : html`
@@ -546,7 +552,7 @@ export class HolochainApp extends LitElement {
                 <span style="color: #abb5d6; font-size: 1em;">Skip Intro</span>
               </div>
             `}
-      </main>
+      </div>
     `;
   }
 
@@ -561,7 +567,6 @@ export class HolochainApp extends LitElement {
         justify-content: flex-start;
         font-size: calc(10px + 2vmin);
         /* color: #1a2b42; */
-        width: 100vw;
         min-height: 100vh;
         margin: 0;
         text-align: center;
@@ -570,11 +575,6 @@ export class HolochainApp extends LitElement {
         --font-active-color: 255, 198, 76;
         --background-hover-color: #ffd7230e;
         color: rgb(var(--font-active-color));
-      }
-
-      main {
-        flex: 1;
-        width: 100%;
       }
 
       .app-footer {

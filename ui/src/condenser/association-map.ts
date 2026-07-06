@@ -43,7 +43,7 @@ export class AssociationMap extends LitElement {
     if (associationDatas.length === 0)
       return html` <div class="column" style="flex: 1; align-items: center;">
         <div
-          style="font-size: 23px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
+          style="font-size: 21px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
         >
           No associations found for this craving.
         </div>
@@ -63,7 +63,7 @@ export class AssociationMap extends LitElement {
     }
 
     return html`
-      <div style="display: flex; flex-direction: column; margin: 8px;">
+      <div style="display: flex; flex-direction: column;">
         ${associationDatas.map(
           association =>
             html`<association-map-element
