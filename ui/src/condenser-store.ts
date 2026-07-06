@@ -12,7 +12,7 @@ import { WeaveClient } from '@theweave/api';
 import { CravingService } from './craving-service';
 import { CravingStore } from './craving-store';
 import { Craving } from './condenser/types';
-import { getLocalStorageItem, notifyOS } from './utils';
+import { getLocalStorageItem } from './utils';
 
 export class CondenserStore {
   private _cravingStores: ActionHashMap<CravingStore> =
@@ -75,7 +75,10 @@ export class CondenserStore {
       entryRecord,
     );
 
-    const cravingStore = await CravingStore.connect(cravingService);
+    const cravingStore = await CravingStore.connect(
+      cravingService,
+      this.weaveClient,
+    );
     this._cravingStores.set(entryRecord.actionHash, cravingStore);
 
     this.reSubscribeToPolling();
@@ -118,15 +121,16 @@ export class CondenserStore {
           // TODO! Notify Moss
           // This is a new Craving :) Send OS notification
           try {
-            await notifyOS(
+            await this.weaveClient.notifyFrame([
               {
                 title: 'New Craving',
-                body: 'A new Craving is available.',
-                urgency: 'medium',
+                body: 'A new craving is available.',
+                notification_type: 'craving',
+                urgency: 'high',
+                timestamp: Date.now(),
+                icon_src: undefined,
               },
-              false,
-              true,
-            );
+            ]);
           } catch (e) {
             console.warn(`Failed to send OS notification: ${e}`);
           }
@@ -148,7 +152,10 @@ export class CondenserStore {
             entryRecord.actionHash,
             entryRecord,
           );
-          const cravingStore = await CravingStore.connect(cravingService);
+          const cravingStore = await CravingStore.connect(
+            cravingService,
+            this.weaveClient,
+          );
           console.log(
             'Setting craving store for action hash ',
             encodeHashToBase64(entryRecord.actionHash),

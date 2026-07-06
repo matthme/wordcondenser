@@ -19,13 +19,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { isEqual } from 'lodash-es';
 
-import {
-  CravingMessageStore,
-  CravingNotificationSettings,
-  NotificationPayload,
-} from './types';
-
-export const isKangaroo = () => (window as any).__HC_KANGAROO__;
+import { CravingMessageStore, CravingNotificationSettings } from './types';
 
 export function getNickname(pubKey: AgentPubKey, cravingTitle: string) {
   const pubKeyB64 = encodeHashToBase64(pubKey);
@@ -375,19 +369,6 @@ export function enableCravingNotifications(cravingDnaHash: DnaHashB64): void {
     `notificationSettings#${cravingDnaHash}`,
     JSON.stringify(settings),
   );
-}
-
-export async function notifyOS(
-  notification: NotificationPayload,
-  os: boolean,
-  systray: boolean,
-): Promise<void> {
-  console.log(
-    `%%%%%%%%%% Notifying OS %%%%%%%%%%%%\nos: ${os}, systray: ${systray}, notification: ${JSON.stringify(
-      notification,
-    )}`,
-  );
-  console.warn('notifyOS not implemented yet.');
 }
 
 export function reloadableLazyLoadAndPoll<T>(

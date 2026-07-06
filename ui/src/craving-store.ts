@@ -9,6 +9,7 @@ import {
   Record,
 } from '@holochain/client';
 import { EntryRecord } from '@holochain-open-dev/utils';
+import { isWeaveContext, WeaveClient } from '@theweave/api';
 
 import { CravingService } from './craving-service';
 import { Craving } from './condenser/types';
@@ -20,14 +21,11 @@ import {
   getNotifiedCommentsCount,
   getNotifiedOffersCount,
   getNotifiedReflectionsCount,
-  isKangaroo,
   newAssociationsCount,
   newCommentsCount,
   newOffersCount,
   newReflectionsCount,
-  notifyOS,
   reloadableLazyLoadAndPoll,
-  reloadableLazyLoadAndPollUntil,
   setNotifiedAssociationsCount,
   setNotifiedCommentsCount,
   setNotifiedOffersCount,
@@ -53,13 +51,14 @@ export class CravingStore {
 
   private constructor(
     public service: CravingService,
+    public weaveClient: WeaveClient,
     public craving: EntryRecord<Craving>,
     public messageStore: CravingMessageStore | undefined, // networkSeed: string,
   ) {
     // this.networkSeed = networkSeed;
   }
 
-  static async connect(service: CravingService) {
+  static async connect(service: CravingService, weaveClient: WeaveClient) {
     const craving = service.craving;
 
     // get message store for this Craving from localStorage
@@ -68,7 +67,7 @@ export class CravingStore {
       encodeHashToBase64(service.cravingHash),
     );
 
-    return new CravingStore(service, craving, messageStore);
+    return new CravingStore(service, weaveClient, craving, messageStore);
   }
 
   /**
@@ -266,7 +265,7 @@ export class CravingStore {
         encodeHashToBase64(this.service.cravingHash),
       ) || 0;
 
-    if (isKangaroo() && currentCount > notifiedCount) {
+    if (isWeaveContext() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
         encodeHashToBase64(this.service.cravingHash),
       );
@@ -275,16 +274,16 @@ export class CravingStore {
         notificationSettings.associations.systray
       ) {
         try {
-          const notification = {
-            title: 'New Association',
-            body: 'New Association',
-            urgency: 'medium' as 'medium' | 'high' | 'low',
-          };
-          await notifyOS(
-            notification,
-            notificationSettings.associations.os,
-            notificationSettings.associations.systray,
-          );
+          await this.weaveClient.notifyFrame([
+            {
+              title: `New Association for Craving '${this.craving.entry.title}'`,
+              body: 'A new association has been added by someone.',
+              notification_type: 'association',
+              urgency: 'low',
+              timestamp: Date.now(),
+              icon_src: undefined,
+            },
+          ]);
           setNotifiedAssociationsCount(
             encodeHashToBase64(this.service.cravingHash),
             currentCount,
@@ -310,7 +309,7 @@ export class CravingStore {
     const notifiedCount =
       getNotifiedOffersCount(encodeHashToBase64(this.service.cravingHash)) || 0;
 
-    if (isKangaroo() && currentCount > notifiedCount) {
+    if (isWeaveContext() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
         encodeHashToBase64(this.service.cravingHash),
       );
@@ -319,16 +318,16 @@ export class CravingStore {
         notificationSettings.offers.systray
       ) {
         try {
-          const notification = {
-            title: 'New Offer',
-            body: 'New Offer',
-            urgency: 'medium' as 'medium' | 'high' | 'low',
-          };
-          await notifyOS(
-            notification,
-            notificationSettings.offers.os,
-            notificationSettings.offers.systray,
-          );
+          await this.weaveClient.notifyFrame([
+            {
+              title: `New Offer for Craving '${this.craving.entry.title}'`,
+              body: 'A new offer has been added by someone.',
+              notification_type: 'offer',
+              urgency: 'medium',
+              timestamp: Date.now(),
+              icon_src: undefined,
+            },
+          ]);
           setNotifiedOffersCount(
             encodeHashToBase64(this.service.cravingHash),
             currentCount,
@@ -367,7 +366,7 @@ export class CravingStore {
     const notifiedCount =
       getNotifiedCommentsCount(encodeHashToBase64(this.service.cravingHash)) ||
       0;
-    if (isKangaroo() && currentCount > notifiedCount) {
+    if (isWeaveContext() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
         encodeHashToBase64(this.service.cravingHash),
       );
@@ -376,16 +375,16 @@ export class CravingStore {
         notificationSettings.comments.systray
       ) {
         try {
-          const notification = {
-            title: 'New Comment',
-            body: 'New Comment',
-            urgency: 'medium' as 'medium' | 'high' | 'low',
-          };
-          await notifyOS(
-            notification,
-            notificationSettings.comments.os,
-            notificationSettings.comments.systray,
-          );
+          await this.weaveClient.notifyFrame([
+            {
+              title: `New Comment for Craving '${this.craving.entry.title}'`,
+              body: 'A new offer has been added by someone.',
+              notification_type: 'offer',
+              urgency: 'medium',
+              timestamp: Date.now(),
+              icon_src: undefined,
+            },
+          ]);
           setNotifiedCommentsCount(
             encodeHashToBase64(this.service.cravingHash),
             currentCount,
@@ -424,7 +423,7 @@ export class CravingStore {
         encodeHashToBase64(this.service.cravingHash),
       ) || 0;
 
-    if (isKangaroo() && currentCount > notifiedCount) {
+    if (isWeaveContext() && currentCount > notifiedCount) {
       const notificationSettings = getCravingNotificationSettings(
         encodeHashToBase64(this.service.cravingHash),
       );
@@ -433,16 +432,16 @@ export class CravingStore {
         notificationSettings.reflections.systray
       ) {
         try {
-          const notification = {
-            title: 'New Reflection',
-            body: 'New Reflection',
-            urgency: 'medium' as 'medium' | 'high' | 'low',
-          };
-          await notifyOS(
-            notification,
-            notificationSettings.reflections.os,
-            notificationSettings.reflections.systray,
-          );
+          await this.weaveClient.notifyFrame([
+            {
+              title: `New Reflection for Craving '${this.craving.entry.title}'`,
+              body: 'A new reflection has been added by someone.',
+              notification_type: 'offer',
+              urgency: 'medium',
+              timestamp: Date.now(),
+              icon_src: undefined,
+            },
+          ]);
           setNotifiedReflectionsCount(
             encodeHashToBase64(this.service.cravingHash),
             currentCount,
