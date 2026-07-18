@@ -3,5 +3,5 @@ manifest_version: "0"
 name: word-condenser
 ui:
   path: "../ui/dist.zip"
-happ_manifest:
+happ:
   path: "./word-condenser.happ"
