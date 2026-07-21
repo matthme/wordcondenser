@@ -44,7 +44,7 @@ export default defineConfig({
       ],
       applets: [
         {
-          name: "Word Condenser",
+          name: "Word Condenser webhapp",
           instanceName: "Word Condenser",
           registeringAgent: 1,
           joiningAgents: [2],
@@ -53,22 +53,8 @@ export default defineConfig({
     },
   ],
   applets: [
-    {
-      name: "Word Condenser",
-      subtitle: "Finding new language together.",
-      description: "Create words.",
-      icon: {
-        type: "filesystem",
-        path: "./ui/icon.png",
-      },
-      source: {
-        type: "localhost",
-        happPath: "./workdir/word-condenser.happ",
-        uiPort: 8888,
-      },
-    },
     // {
-    //   name: "Word Condenser webhapp",
+    //   name: "Word Condenser",
     //   subtitle: "Finding new language together.",
     //   description: "Create words.",
     //   icon: {
@@ -76,9 +62,23 @@ export default defineConfig({
     //     path: "./ui/icon.png",
     //   },
     //   source: {
-    //     type: "filesystem",
-    //     path: "./workdir/word-condenser.webhapp",
+    //     type: "localhost",
+    //     happPath: "./workdir/word-condenser.happ",
+    //     uiPort: 8888,
     //   },
     // },
+    {
+      name: "Word Condenser webhapp",
+      subtitle: "Finding new language together.",
+      description: "Create words.",
+      icon: {
+        type: "filesystem",
+        path: "./ui/icon.png",
+      },
+      source: {
+        type: "filesystem",
+        path: "./workdir/word-condenser.webhapp",
+      },
+    },
   ],
 });

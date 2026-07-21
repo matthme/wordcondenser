@@ -1,4 +1,4 @@
-import { get, lazyLoadAndPoll, Unsubscriber } from '@holochain-open-dev/stores';
+import { lazyLoadAndPoll, Unsubscriber } from '@holochain-open-dev/stores';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import {
   Record as HolochainRecord,
@@ -39,10 +39,18 @@ export class CondenserStore {
     let unsubscribers: Array<Unsubscriber> = [];
 
     Array.from(this._cravingStores.values()).forEach(store => {
-      const unsubscribe1 = store.associationsCount.subscribe(() => undefined);
-      const unsubscribe2 = store.offersCount.subscribe(() => undefined);
-      const unsubscribe3 = store.allReflectionsCount.subscribe(() => undefined);
-      const unsubscribe4 = store.allCommentsCount.subscribe(() => undefined);
+      const unsubscribe1 = (store as CravingStore).associationsCount.subscribe(
+        () => undefined,
+      );
+      const unsubscribe2 = (store as CravingStore).offersCount.subscribe(
+        () => undefined,
+      );
+      const unsubscribe3 = (
+        store as CravingStore
+      ).allReflectionsCount.subscribe(() => undefined);
+      const unsubscribe4 = (store as CravingStore).allCommentsCount.subscribe(
+        () => undefined,
+      );
       unsubscribers = [unsubscribe1, unsubscribe2, unsubscribe3, unsubscribe4];
     });
     this._pollingUnsubscriber = () => {

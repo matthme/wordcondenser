@@ -78,6 +78,8 @@ export class CreateOffer extends LitElement {
       this._title = undefined;
       this.reflectionField.textAreaField.value = '';
       this.titleField.inputField.value = '';
+
+      this._cravingStore.allReflections.reload();
     } catch (e: any) {
       console.error(e);
       const errorSnackbar = this.shadowRoot?.getElementById(

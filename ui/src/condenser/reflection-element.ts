@@ -1,11 +1,15 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AppClient, AgentPubKey } from '@holochain/client';
+import {
+  AppClient,
+  AgentPubKey,
+  Record as HolochainRecord,
+} from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
 import '@material/mwc-snackbar';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { AsyncReadable, StoreSubscriber } from '@holochain-open-dev/stores';
 
 import { decodeEntry } from '@holochain-open-dev/utils';
 import { clientContext, cravingStoreContext } from '../contexts';
@@ -44,8 +48,12 @@ export class ReflectionElement extends LitElement {
   @state()
   showComments: boolean = false;
 
-  private _comments = new StoreSubscriber(this, () =>
-    this._cravingStore.commentsOnReflection(this.reflection.actionHash),
+  private _comments = new StoreSubscriber(
+    this,
+    () =>
+      this._cravingStore.commentsOnReflection(
+        this.reflection.actionHash,
+      ) as AsyncReadable<Array<HolochainRecord>>,
   );
 
   commentsExist() {

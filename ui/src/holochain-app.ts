@@ -1,13 +1,7 @@
+/* eslint-disable lit/binding-positions */
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import {
-  ActionHash,
-  AppClient,
-  AppWebsocket,
-  CellId,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-} from '@holochain/client';
+import { AppClient, AppWebsocket, encodeHashToBase64 } from '@holochain/client';
 import { provide } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 
@@ -35,8 +29,6 @@ import '@fontsource/poppins/900.css';
 
 import './condenser/create-craving';
 import './condenser/all-cravings';
-import './condenser/all-disabled-cravings';
-import './condenser/all-available-cravings';
 import './craving-view';
 import './intro';
 import './no-cookies-ever';

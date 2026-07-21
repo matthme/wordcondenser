@@ -27,7 +27,6 @@
     "@material/mwc-icon-button": "^0.27.0",
     "@material/mwc-snackbar": "^0.27.0",
     "@material/mwc-formfield": "^0.27.0",
-    "@msgpack/msgpack": "^2.7.2",
     "@open-wc/scoped-elements": "^2.1.1",
     "@theweave/api": "^0.6.9",
     "@vaadin/date-time-picker": "^23.2.8",
@@ -43,8 +42,8 @@
   },
   "devDependencies": {
     "@open-wc/eslint-config": "^4.3.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.4",
-    "@typescript-eslint/parser": "^6.7.4",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
     "@types/lodash-es": "^4.17.5",
     "@types/md5": "^2.3.2",
     "@types/uuid": "9.0.0",
@@ -55,7 +54,7 @@
     "rimraf": "^3.0.2",
     "vite": "^4.0.0",
     "vite-plugin-checker": "^0.5.3",
-    "typescript": "^4.5.5"
+    "typescript": "^5.0.0"
   },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
@@ -79,6 +78,7 @@
       "@typescript-eslint/no-unused-vars": "off",
       "import/no-unresolved": "off",
       "import/extensions": "off",
+      "no-console": "off",
       "no-use-before-define": "off"
     }
   },
