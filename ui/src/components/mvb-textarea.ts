@@ -8,7 +8,7 @@ export class MVBTextArea extends LitElement {
 
   @property() rows: number = 4;
 
-  @property() cols: number = 50;
+  @property() cols: number | undefined;
 
   @property() width: string | undefined;
 
@@ -34,13 +34,13 @@ export class MVBTextArea extends LitElement {
 
   render() {
     return html`
-      <div class="wrapper column">
+      <div class="wrapper column flex-1">
         <div class="container" style="position: relative">
           <textarea
             id="textarea-field"
             type="text"
             class="textarea"
-            style="${this.width ? `width: ${this.width}` : ''}"
+            style="width: calc(100% - 40px);"
             .placeholder=${this.placeholder}
             .rows=${this.rows}
             .cols=${this.cols}
@@ -81,7 +81,7 @@ export class MVBTextArea extends LitElement {
         padding: 0 10px;
         color: var(--mvb-primary-color);
         font-size: var(--mvb-textfield-font-size, 20px);
-        resize: both;
+        resize: vertical;
       }
 
       .textarea::placeholder {

@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { Record, AppAgentClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId, ActionHash } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -10,21 +10,22 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import { clientContext, cravingStoreContext } from '../contexts';
 import { Association } from './types';
-import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
+import { CravingStore } from '../craving-store';
+import { sharedStyles } from '../sharedStyles';
 
 @customElement('create-association')
 export class CreateAssociation extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
-  cravingCellId!: CellId;
+  cravingHash!: ActionHash;
 
   @state()
   _association: string | undefined;
@@ -41,34 +42,30 @@ export class CreateAssociation extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: null,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_association',
-        payload: association,
-      });
-
-      // console.log("@create-association: Created association.");
+      const entryRecord =
+        await this._cravingStore.service.createAssociation(association);
 
       this.dispatchEvent(
         new CustomEvent('association-created', {
           composed: true,
           bubbles: true,
           detail: {
-            associationHash: record.signed_action.hashed.hash,
+            associationHash: entryRecord?.actionHash,
           },
         }),
       );
+
+      this._cravingStore.allAssociations.reload();
 
       (
         this.shadowRoot?.getElementById('association-textfield') as MVBTextField
       ).clear();
     } catch (e: any) {
+      console.error(e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the association: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the association: ${e}`;
       errorSnackbar.show();
     }
   }
@@ -76,17 +73,15 @@ export class CreateAssociation extends LitElement {
   render() {
     return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div
-        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;"
-      >
-        <div class="row" style="display: flex; align-items: center;">
+      <div class="column flex-1 align-center" style="margin-bottom: 20px;">
+        <div class="row flex-1 align-center">
           <mvb-textfield
             id="association-textfield"
             style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 350px;
               --mvb-textfield-height: 50px;
+              --mvb-textfield-width: 320px;
               --border-width: 1px;
             "
             placeholder="Add association"
@@ -98,6 +93,7 @@ export class CreateAssociation extends LitElement {
             @keypress=${(e: KeyboardEvent) =>
               e.key === 'Enter' ? this.createAssociation() : undefined}
           ></mvb-textfield>
+          <span class="flex-1"></span>
           <btn-round
             style="margin-left: 10px; font-size: 18px"
             title="Add this association to the list for others to see"
@@ -109,4 +105,6 @@ export class CreateAssociation extends LitElement {
         </div>
       </div>`;
   }
+
+  static styles = [sharedStyles];
 }

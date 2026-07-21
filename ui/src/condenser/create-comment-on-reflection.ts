@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
-import { ActionHash, Record, AppAgentClient, CellId } from '@holochain/client';
+import { ActionHash, Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-snackbar';
 import { Snackbar } from '@material/mwc-snackbar';
@@ -8,22 +8,19 @@ import { Snackbar } from '@material/mwc-snackbar';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import { clientContext, cravingStoreContext } from '../contexts';
 import { CommentOnReflection } from './types';
-import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
 import { MVBTextArea } from '../components/mvb-textarea';
+import { CravingStore } from '../craving-store';
 
 @customElement('create-comment-on-reflection')
 export class CreateCommentOnReflection extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
-
-  @property({ type: Object })
-  cravingCellId!: CellId;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
   reflectionHash!: ActionHash;
@@ -42,20 +39,15 @@ export class CreateCommentOnReflection extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: null,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_comment_on_reflection',
-        payload: comment,
-      });
+      const entryRecord =
+        await this._cravingStore.service.createCommentOnReflection(comment);
 
       this.dispatchEvent(
         new CustomEvent('comment-on-reflection-created', {
           composed: true,
           bubbles: true,
           detail: {
-            commentHash: record.signed_action.hashed.hash,
+            commentHash: entryRecord?.actionHash,
           },
         }),
       );
@@ -63,11 +55,17 @@ export class CreateCommentOnReflection extends LitElement {
       (
         this.shadowRoot?.getElementById('comment-textarea') as MVBTextArea
       ).clear();
+
+      // Reload the store to update the UI immediately
+      this._cravingStore.commentsOnReflections
+        .get(this.reflectionHash)
+        ?.reload();
     } catch (e: any) {
+      console.error('Eror creating comment: ', e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the comment: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the comment: ${e}`;
       errorSnackbar.show();
       this._comment = undefined;
       throw new Error(`Error creating a comment on a reflection: ${e}`);
@@ -77,24 +75,24 @@ export class CreateCommentOnReflection extends LitElement {
   render() {
     return html` <mwc-snackbar id="create-error" leading> </mwc-snackbar>
 
-      <div class="container">
-        <div class="column" style="display: flex; align-items: flex-end;">
-          <mvb-textarea
-            id="comment-textarea"
-            style="
+      <div class="column container">
+        <mvb-textarea
+          id="comment-textarea"
+          style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 300px;
               --mvb-textfield-height: 50px;
               --border-width: 1px;
             "
-            placeholder="Write comment"
-            @input=${(e: CustomEvent) => {
-              this._comment = (e.target as any).value;
-            }}
-            required
-          ></mvb-textarea>
+          placeholder="Write comment"
+          @input=${(e: CustomEvent) => {
+            this._comment = (e.target as any).value;
+          }}
+          required
+        ></mvb-textarea>
 
+        <div class="row">
+          <span class="flex-1"></span>
           <div
             class="row ${this.isCommentValid() ? 'icon' : 'disabled'}"
             style="align-items: center; margin-top: 5px; ${this.isCommentValid()
@@ -121,12 +119,11 @@ export class CreateCommentOnReflection extends LitElement {
     sharedStyles,
     css`
       .container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
+        /* align-items: flex-end; */
         margin-top: 10px;
         margin-right: 12px;
         margin-bottom: 20px;
+        padding-left: 50px;
       }
 
       .disabled {

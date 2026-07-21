@@ -1,43 +1,51 @@
-use hdk::prelude::*;
 use craving_integrity::*;
+use hdk::prelude::*;
+
+use crate::helper::ZomeFnInput;
 #[hdk_extern]
 pub fn create_comment_on_reflection(
     comment_on_reflection: CommentOnReflection,
 ) -> ExternResult<Record> {
-    let comment_on_reflection_hash = create_entry(
-        &EntryTypes::CommentOnReflection(comment_on_reflection.clone()),
-    )?;
+    let comment_on_reflection_hash = create_entry(&EntryTypes::CommentOnReflection(
+        comment_on_reflection.clone(),
+    ))?;
     create_link(
         comment_on_reflection.reflection_hash.clone(),
         comment_on_reflection_hash.clone(),
         LinkTypes::ReflectionToCommentOnReflections,
         (),
     )?;
-    let record = get(comment_on_reflection_hash.clone(), GetOptions::default())?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Could not find the newly created CommentOnReflection"))
-            ),
-        )?;
+    let record = get(comment_on_reflection_hash.clone(), GetOptions::local())?.ok_or(
+        wasm_error!(WasmErrorInner::Guest(String::from(
+            "Could not find the newly created CommentOnReflection"
+        ))),
+    )?;
     Ok(record)
 }
 #[hdk_extern]
 pub fn get_comment_on_reflection(
-    original_comment_on_reflection_hash: ActionHash,
+    original_comment_on_reflection_hash: ZomeFnInput<ActionHash>,
 ) -> ExternResult<Option<Record>> {
     let links = get_links(
-        original_comment_on_reflection_hash.clone(),
-        LinkTypes::CommentOnReflectionUpdates,
-        None,
+        LinkQuery::try_new(
+            original_comment_on_reflection_hash.input.clone(),
+            LinkTypes::CommentOnReflectionUpdates,
+        )?,
+        original_comment_on_reflection_hash.get_strategy(),
     )?;
+
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
     let latest_comment_on_reflection_hash = match latest_link {
-        Some(link) => ActionHash::try_from(link.target.clone()).map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
-        None => original_comment_on_reflection_hash.clone(),
+        Some(link) => ActionHash::try_from(link.target.clone())
+            .map_err(|err| wasm_error!(WasmErrorInner::from(err)))?,
+        None => original_comment_on_reflection_hash.input.clone(),
     };
-    get(latest_comment_on_reflection_hash, GetOptions::default())
+    get(
+        latest_comment_on_reflection_hash,
+        original_comment_on_reflection_hash.get_options(),
+    )
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateCommentOnReflectionInput {
@@ -46,9 +54,7 @@ pub struct UpdateCommentOnReflectionInput {
     pub updated_comment_on_reflection: CommentOnReflection,
 }
 #[hdk_extern]
-pub fn update_comment_on_reflection(
-    input: UpdateCommentOnReflectionInput,
-) -> ExternResult<Record> {
+pub fn update_comment_on_reflection(input: UpdateCommentOnReflectionInput) -> ExternResult<Record> {
     let updated_comment_on_reflection_hash = update_entry(
         input.previous_comment_on_reflection_hash.clone(),
         &input.updated_comment_on_reflection,
@@ -59,12 +65,13 @@ pub fn update_comment_on_reflection(
         LinkTypes::CommentOnReflectionUpdates,
         (),
     )?;
-    let record = get(updated_comment_on_reflection_hash.clone(), GetOptions::default())?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Could not find the newly updated CommentOnReflection"))
-            ),
-        )?;
+    let record = get(
+        updated_comment_on_reflection_hash.clone(),
+        GetOptions::local(),
+    )?
+    .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
+        "Could not find the newly updated CommentOnReflection"
+    ))))?;
     Ok(record)
 }
 #[hdk_extern]
@@ -75,19 +82,24 @@ pub fn delete_comment_on_reflection(
 }
 #[hdk_extern]
 pub fn get_comment_on_reflections_for_reflection(
-    reflection_hash: ActionHash,
+    reflection_hash: ZomeFnInput<ActionHash>,
 ) -> ExternResult<Vec<Record>> {
     let links = get_links(
-        reflection_hash,
-        LinkTypes::ReflectionToCommentOnReflections,
-        None,
+        LinkQuery::try_new(
+            reflection_hash.input.clone(),
+            LinkTypes::ReflectionToCommentOnReflections,
+        )?,
+        reflection_hash.get_strategy(),
     )?;
+
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            link.target.into_any_dht_hash().unwrap(),
-            GetOptions::default(),
-        ))
+        .map(|link| {
+            GetInput::new(
+                link.target.into_any_dht_hash().unwrap(),
+                reflection_hash.get_options(),
+            )
+        })
         .collect();
     let records: Vec<Record> = HDK
         .with(|hdk| hdk.borrow().get(get_input))?

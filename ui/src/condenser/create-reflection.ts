@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property, query } from 'lit/decorators.js';
-import { Record, AppAgentClient, CellId } from '@holochain/client';
+import { Record, AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-button';
 import '@material/mwc-snackbar';
@@ -10,20 +10,25 @@ import '@material/mwc-textfield';
 import '../components/btn-round';
 import '../components/mvb-textfield';
 
-import { clientContext, condenserContext } from '../contexts';
+import {
+  clientContext,
+  condenserContext,
+  cravingStoreContext,
+} from '../contexts';
 import { Reflection } from './types';
 import { CondenserStore } from '../condenser-store';
 import { MVBTextField } from '../components/mvb-textfield';
 import { MVBTextArea } from '../components/mvb-textarea';
 import { sharedStyles } from '../sharedStyles';
+import { CravingStore } from '../craving-store';
 
 @customElement('create-reflection')
 export class CreateOffer extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
-  @consume({ context: condenserContext })
-  _store!: CondenserStore;
+  @consume({ context: cravingStoreContext })
+  _cravingStore!: CravingStore;
 
   @property({ type: Object })
   cravingCellId!: CellId;
@@ -57,20 +62,15 @@ export class CreateOffer extends LitElement {
     };
 
     try {
-      const record: Record = await this.client.callZome({
-        cap_secret: null,
-        cell_id: this.cravingCellId,
-        zome_name: 'craving',
-        fn_name: 'create_reflection',
-        payload: reflection,
-      });
+      const entryRecord =
+        await this._cravingStore.service.createReflection(reflection);
 
       this.dispatchEvent(
         new CustomEvent('reflection-created', {
           composed: true,
           bubbles: true,
           detail: {
-            reflectionHash: record.signed_action.hashed.hash,
+            reflectionHash: entryRecord?.actionHash,
           },
         }),
       );
@@ -79,10 +79,11 @@ export class CreateOffer extends LitElement {
       this.reflectionField.textAreaField.value = '';
       this.titleField.inputField.value = '';
     } catch (e: any) {
+      console.error(e);
       const errorSnackbar = this.shadowRoot?.getElementById(
         'create-error',
       ) as Snackbar;
-      errorSnackbar.labelText = `Error creating the reflection: ${e.data.data}`;
+      errorSnackbar.labelText = `Error creating the reflection: ${e}`;
       errorSnackbar.show();
     }
   }
@@ -98,10 +99,10 @@ export class CreateOffer extends LitElement {
           style="
               --mvb-primary-color: #abb5d6;
               --mvb-secondary-color: #838ba4;
-              --mvb-textfield-width: 825px;
               --mvb-textfield-height: 50px;
               --border-width: 2px;
               margin-bottom: 10px;
+              width: 100%;
             "
           placeholder="Title"
           @input=${(e: CustomEvent) => {
@@ -117,10 +118,9 @@ export class CreateOffer extends LitElement {
               --mvb-secondary-color: #838ba4;
               --border-width: 1px;
               margin-bottom: 15px;
+              width: 100%;
             "
-          cols="59"
           placeholder="Reflection"
-          width="780px"
           @input=${(e: CustomEvent) => {
             this._reflection = (e.target as any).value;
           }}

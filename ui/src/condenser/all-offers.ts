@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
-import { AppAgentClient, CellId } from '@holochain/client';
+import { AppClient, CellId } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import '@material/mwc-circular-progress';
@@ -18,10 +18,7 @@ import { sharedStyles } from '../sharedStyles';
 @customElement('all-offers')
 export class AllOffers extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
-
-  @consume({ context: condenserContext })
-  _condenserStore!: CondenserStore;
+  client!: AppClient;
 
   @property({ type: Object })
   cravingCellId!: CellId;
@@ -31,16 +28,19 @@ export class AllOffers extends LitElement {
     'resonanceAbsolute';
 
   @consume({ context: cravingStoreContext })
-  _store!: CravingStore;
+  _cravingStore!: CravingStore;
 
-  private _allOffers = new StoreSubscriber(this, () => this._store.allOffers);
+  private _allOffers = new StoreSubscriber(
+    this,
+    () => this._cravingStore.allOffers,
+  );
 
   renderList(offerDatasInput: Array<OfferData>) {
     let offerDatas = offerDatasInput;
     if (offerDatas.length === 0)
       return html` <div class="column" style="flex: 1; align-items: center;">
         <div
-          style="font-size: 23px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
+          style="font-size: 21px; padding-top: 50px; text-align: center; max-width: 400px; color: #929ab9;"
         >
           No offers found for this craving.
         </div>
@@ -76,7 +76,9 @@ export class AllOffers extends LitElement {
         return html`ERROR`;
       case 'complete':
         // update offers count in localStorage
-        this._store.updateOffersCount(this._allOffers.value.value.length);
+        this._cravingStore.updateOffersCount(
+          this._allOffers.value.value.length,
+        );
         return this.renderList(this._allOffers.value.value);
       default:
         return html`You found the border of the universe...`;

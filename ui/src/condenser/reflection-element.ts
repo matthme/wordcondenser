@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AppAgentClient, AgentPubKey } from '@holochain/client';
+import { AppClient, AgentPubKey } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
@@ -27,10 +27,10 @@ import './create-comment-on-reflection';
 @customElement('reflection-element')
 export class ReflectionElement extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: cravingStoreContext })
-  cravingStore!: CravingStore;
+  _cravingStore!: CravingStore;
 
   @property()
   reflection!: ReflectionData;
@@ -45,7 +45,7 @@ export class ReflectionElement extends LitElement {
   showComments: boolean = false;
 
   private _comments = new StoreSubscriber(this, () =>
-    this.cravingStore.commentsOnReflection(this.reflection.actionHash),
+    this._cravingStore.commentsOnReflection(this.reflection.actionHash),
   );
 
   commentsExist() {
@@ -65,7 +65,7 @@ export class ReflectionElement extends LitElement {
   newComments(): number | undefined {
     if (this._comments.value.status === 'complete') {
       return newCommentsForReflectionCount(
-        this.cravingStore.service.cellId[0],
+        this._cravingStore.craving.actionHash,
         this.reflection.actionHash,
         this._comments.value.value.length,
       );
@@ -96,19 +96,19 @@ export class ReflectionElement extends LitElement {
       case 'error':
         return html`error`;
       case 'complete':
-        this.cravingStore.updateCommentsCount(
+        this._cravingStore.updateCommentsCount(
           this.reflection.actionHash,
           this._comments.value.value.length,
         );
         return html`
-          <div class="column" style="flex-end; padding-left: 40px;">
+          <div class="column" style="padding-left: 40px;">
             ${this._comments.value.value.map(record => {
               const comment = record
                 ? (decodeEntry(record) as CommentOnReflection)
                 : undefined;
               const author = record.signed_action.hashed.content.author;
-              const craving = this.cravingStore.craving;
-              const nickName = getNickname(author, craving.title);
+              const craving = this._cravingStore.craving;
+              const nickName = getNickname(author, craving.entry.title);
               const timestamp = record.signed_action.hashed.content.timestamp;
               const date = new Date(timestamp / 1000);
 
@@ -140,7 +140,6 @@ export class ReflectionElement extends LitElement {
 
           <create-comment-on-reflection
             .reflectionHash=${this.reflection.actionHash}
-            .cravingCellId=${this.cravingStore.service.cellId}
           >
           </create-comment-on-reflection>
         `;
@@ -152,7 +151,7 @@ export class ReflectionElement extends LitElement {
   renderReflection() {
     const color = getHexColorForTimestamp(this.reflection.timestamp);
     const date = new Date(this.reflection.timestamp / 1000);
-    const craving = this.cravingStore.craving;
+    const craving = this._cravingStore.craving;
 
     return html`
       <div class="container">
@@ -171,7 +170,7 @@ export class ReflectionElement extends LitElement {
               style="font-size: 20px; ${this.isMine(this.reflection.author)
                 ? 'color: #e06208;'
                 : ''}"
-              >${getNickname(this.reflection.author, craving.title)}</span
+              >${getNickname(this.reflection.author, craving.entry.title)}</span
             >
             <span style="font-size: 12px; color: #abb5d6; margin-top: 3px;"
               >${date.toLocaleString()}</span
@@ -284,6 +283,7 @@ export class ReflectionElement extends LitElement {
       }
 
       .content {
+        white-space: pre-line;
         text-align: left;
         font-size: 19px;
         color: #abb5d6;

@@ -11,6 +11,19 @@ export const sharedStyles = css`
     flex-direction: row;
   }
 
+  .flex-1 {
+    display: flex;
+    flex: 1;
+  }
+
+  .align-center {
+    align-items: center;
+  }
+
+  .justify-center {
+    justify-content: center;
+  }
+
   .center-content {
     justify-content: center;
     align-items: center;
@@ -37,5 +50,16 @@ export const sharedStyles = css`
   .flex-scrollable-y {
     max-height: 100%;
     overflow-y: auto;
+  }
+
+  /* Invisible scrollbars */
+
+  .invisible-scrollbars {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .invisible-scrollbars::-webkit-scrollbar {
+    display: none;
   }
 `;

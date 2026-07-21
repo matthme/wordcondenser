@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { AppAgentClient, NewEntryAction } from '@holochain/client';
+import { AppClient, NewEntryAction } from '@holochain/client';
 import { consume } from '@lit-labs/context';
 import '@material/mwc-circular-progress';
 import '@material/mwc-icon-button';
@@ -23,16 +23,15 @@ import { Offer } from './types';
 @customElement('offer-element')
 export class OfferElement extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: cravingStoreContext })
-  store!: CravingStore;
+  _cravingStore!: CravingStore;
 
   @property()
   offer!: OfferData;
 
   async handleResonator() {
-    // console.log(":::HANDLING RESONATOR:::");
     if (this.offer.iResonated) {
       await this.unresonate();
     } else {
@@ -45,9 +44,8 @@ export class OfferElement extends LitElement {
       this.offer.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.resonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.resonateWithEntry(entryHash);
+      await this._cravingStore.allOffers.reload();
     } catch (e) {
       console.log('ERROR trying to resonate: ', e);
     }
@@ -58,9 +56,8 @@ export class OfferElement extends LitElement {
       this.offer.record.signed_action.hashed.content as NewEntryAction
     ).entry_hash;
     try {
-      await this.store.service.unresonateWithEntry(entryHash);
-      // timeout required, otherwise it for some reason misses things...
-      setTimeout(() => this.requestUpdate(), 50);
+      await this._cravingStore.service.unresonateWithEntry(entryHash);
+      await this._cravingStore.allOffers.reload();
     } catch (e) {
       console.log('ERROR trying to unresonate: ', e);
     }
@@ -75,7 +72,9 @@ export class OfferElement extends LitElement {
 
     return html`
       <div class="offer" title="${date.toLocaleString()}">
-        <div style="text-align: left;">${offer.offer}</div>
+        <div style="text-align: left; word-break: break-all;">
+          ${offer.offer}
+        </div>
         <span style="display: flex; flex: 1;"></span>
         <div
           style="align-items: center;"
@@ -91,7 +90,7 @@ export class OfferElement extends LitElement {
           <img
             src="drop.svg"
             alt="Drop indicating how many people resonated with this offer"
-            style="height: 23px; margin-top: -2px; ${this.offer.iResonated
+            style="height: 20px; margin-top: -2px; ${this.offer.iResonated
               ? ''
               : 'opacity: 0.8;'}"
           />
@@ -111,13 +110,13 @@ export class OfferElement extends LitElement {
       .offer {
         background-color: #ffd72335;
         color: rgb(var(--font-active-color));
-        font-size: 24px;
-        padding: 8px 12px;
+        font-size: 22px;
+        padding: 4px 12px;
         display: flex;
         flex-direction: row;
         align-items: center;
         border-radius: 15px;
-        margin: 5px 10px;
+        margin: 3px 0;
       }
 
       .resonator {
@@ -128,7 +127,7 @@ export class OfferElement extends LitElement {
         cursor: pointer;
         color: rgb(var(--font-active-color));
         border: 1px solid transparent;
-        font-size: 24px;
+        font-size: 22px;
       }
 
       .resonator:hover {

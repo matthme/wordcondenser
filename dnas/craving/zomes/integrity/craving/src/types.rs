@@ -5,7 +5,6 @@ pub const DEFAULT_MAX_REFLECTION_CHARS: usize = 4000;
 pub const DEFAULT_MAX_OFFER_CHARS: usize = 300;
 pub const DEFAULT_MAX_ANECDOTE_CHARS: usize = 750;
 
-
 #[derive(Clone, Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct CravingDnaProperties {
     pub title: String,

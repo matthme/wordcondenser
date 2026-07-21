@@ -6,7 +6,6 @@ import {
   DnaHashB64,
   encodeHashToBase64,
 } from '@holochain/client';
-import { invoke } from '@tauri-apps/api';
 import {
   uniqueNamesGenerator,
   colors,
@@ -14,12 +13,13 @@ import {
   Config,
 } from 'unique-names-generator';
 import {
-  CravingMessageStore,
-  CravingNotificationSettings,
-  NotificationPayload,
-} from './types';
+  AsyncReadable,
+  AsyncStatus,
+  writable,
+} from '@holochain-open-dev/stores';
+import { isEqual } from 'lodash-es';
 
-export const isKangaroo = () => (window as any).__HC_KANGAROO__;
+import { CravingMessageStore, CravingNotificationSettings } from './types';
 
 export function getNickname(pubKey: AgentPubKey, cravingTitle: string) {
   const pubKeyB64 = encodeHashToBase64(pubKey);
@@ -122,11 +122,11 @@ export function getSessionStorageItem<T>(key: string): T | undefined {
 // ================  unread events counts ================
 
 export function newAssociationsCount(
-  cravingDnaHash: DnaHash,
+  cravingActionHash: DnaHash,
   currentCount: number,
 ): number {
   const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(
-    encodeHashToBase64(cravingDnaHash),
+    encodeHashToBase64(cravingActionHash),
   );
   if (cravingMessageStore) {
     if (
@@ -144,11 +144,11 @@ export function newAssociationsCount(
 }
 
 export function newOffersCount(
-  cravingDnaHash: DnaHash,
+  cravingActionHash: DnaHash,
   currentCount: number,
 ): number {
   const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(
-    encodeHashToBase64(cravingDnaHash),
+    encodeHashToBase64(cravingActionHash),
   );
   if (cravingMessageStore) {
     if (
@@ -181,11 +181,11 @@ export function newOffersCount(
 }
 
 export function newReflectionsCount(
-  cravingDnaHash: DnaHash,
+  cravingActionHash: DnaHash,
   currentCount: number,
 ): number {
   const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(
-    encodeHashToBase64(cravingDnaHash),
+    encodeHashToBase64(cravingActionHash),
   );
   if (cravingMessageStore) {
     if (cravingMessageStore.reflections) {
@@ -201,17 +201,17 @@ export function newReflectionsCount(
 
 /**
  * Get the counts of new comments for a single Reflection.
- * @param cravingDnaHash
+ * @param cravingActionHash
  * @param currentCount
  * @returns
  */
 export function newCommentsForReflectionCount(
-  cravingDnaHash: DnaHash,
+  cravingActionHash: ActionHash,
   reflectionHash: ActionHash,
   currentCount: number,
 ): number {
   const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(
-    encodeHashToBase64(cravingDnaHash),
+    encodeHashToBase64(cravingActionHash),
   );
   if (cravingMessageStore) {
     const b64Hash = encodeHashToBase64(reflectionHash);
@@ -231,16 +231,16 @@ export function newCommentsForReflectionCount(
 
 /**
  * Get the counts of new comments across all Reflections of a Craving.
- * @param cravingDnaHash
+ * @param cravingActionHash
  * @param currentCount
  * @returns
  */
 export function newCommentsCount(
-  cravingDnaHash: DnaHash,
+  cravingActionHash: DnaHash,
   currentCount: number,
 ): number {
   const cravingMessageStore = getLocalStorageItem<CravingMessageStore>(
-    encodeHashToBase64(cravingDnaHash),
+    encodeHashToBase64(cravingActionHash),
   );
   if (cravingMessageStore) {
     if (
@@ -268,59 +268,63 @@ export function newCommentsCount(
 }
 
 export function setNotifiedAssociationsCount(
-  carvingDnaHash: DnaHashB64,
+  cravingActionHash: DnaHashB64,
   newCount: number,
 ) {
   window.localStorage.setItem(
-    `associationsNotified#${carvingDnaHash}`,
+    `associationsNotified#${cravingActionHash}`,
     JSON.stringify(newCount),
   );
 }
 
-export function getNotifiedAssociationsCount(carvingDnaHash: DnaHashB64) {
-  return getLocalStorageItem<number>(`associationsNotified#${carvingDnaHash}`);
+export function getNotifiedAssociationsCount(cravingActionHash: DnaHashB64) {
+  return getLocalStorageItem<number>(
+    `associationsNotified#${cravingActionHash}`,
+  );
 }
 
 export function setNotifiedCommentsCount(
-  carvingDnaHash: DnaHashB64,
+  cravingActionHash: DnaHashB64,
   newCount: number,
 ) {
   window.localStorage.setItem(
-    `commentsNotified#${carvingDnaHash}`,
+    `commentsNotified#${cravingActionHash}`,
     JSON.stringify(newCount),
   );
 }
 
-export function getNotifiedCommentsCount(carvingDnaHash: DnaHashB64) {
-  return getLocalStorageItem<number>(`commentsNotified#${carvingDnaHash}`);
+export function getNotifiedCommentsCount(cravingActionHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`commentsNotified#${cravingActionHash}`);
 }
 
 export function setNotifiedOffersCount(
-  carvingDnaHash: DnaHashB64,
+  cravingActionHash: DnaHashB64,
   newCount: number,
 ) {
   window.localStorage.setItem(
-    `offersNotified#${carvingDnaHash}`,
+    `offersNotified#${cravingActionHash}`,
     JSON.stringify(newCount),
   );
 }
 
-export function getNotifiedOffersCount(carvingDnaHash: DnaHashB64) {
-  return getLocalStorageItem<number>(`offersNotified#${carvingDnaHash}`);
+export function getNotifiedOffersCount(cravingActionHash: DnaHashB64) {
+  return getLocalStorageItem<number>(`offersNotified#${cravingActionHash}`);
 }
 
 export function setNotifiedReflectionsCount(
-  carvingDnaHash: DnaHashB64,
+  cravingActionHash: DnaHashB64,
   newCount: number,
 ) {
   window.localStorage.setItem(
-    `reflectionsNotified#${carvingDnaHash}`,
+    `reflectionsNotified#${cravingActionHash}`,
     JSON.stringify(newCount),
   );
 }
 
-export function getNotifiedReflectionsCount(carvingDnaHash: DnaHashB64) {
-  return getLocalStorageItem<number>(`reflectionsNotified#${carvingDnaHash}`);
+export function getNotifiedReflectionsCount(cravingActionHash: DnaHashB64) {
+  return getLocalStorageItem<number>(
+    `reflectionsNotified#${cravingActionHash}`,
+  );
 }
 
 export function getCravingNotificationSettings(
@@ -367,15 +371,128 @@ export function enableCravingNotifications(cravingDnaHash: DnaHashB64): void {
   );
 }
 
-export async function notifyOS(
-  notification: NotificationPayload,
-  os: boolean,
-  systray: boolean,
-): Promise<void> {
-  console.log(
-    `%%%%%%%%%% Notifying OS %%%%%%%%%%%%\nos: ${os}, systray: ${systray}, notification: ${JSON.stringify(
-      notification,
-    )}`,
-  );
-  return invoke('notify_os', { notification, os, systray });
+export function reloadableLazyLoadAndPoll<T>(
+  load: () => Promise<T>,
+  pollIntervalMs: number,
+  errDescription: string,
+  firstLoad?: () => Promise<T>,
+): AsyncReadable<T> & { reload: () => Promise<void> } {
+  const store = writable<AsyncStatus<T>>({ status: 'pending' }, set => {
+    let interval: any;
+    let currentValue: any;
+    let isFirstLoad = true;
+    async function loadInner() {
+      let value;
+      if (isFirstLoad && !!firstLoad) {
+        value = await firstLoad();
+      } else {
+        value = await load();
+      }
+      if (isFirstLoad || !isEqual(value, currentValue)) {
+        currentValue = value;
+        isFirstLoad = false;
+        set({ status: 'complete', value });
+      }
+    }
+    loadInner()
+      .then(() => {
+        interval = setInterval(() => {
+          loadInner();
+        }, pollIntervalMs);
+      })
+      .catch(e => {
+        set({ status: 'error', error: e });
+      });
+    return () => {
+      set({ status: 'pending' });
+      if (interval) clearInterval(interval);
+    };
+  });
+
+  const reload = async () => {
+    try {
+      const value = await load();
+      store.set({
+        status: 'complete',
+        value,
+      });
+    } catch (error) {
+      store.set({ status: 'error', error });
+    }
+  };
+
+  return {
+    subscribe: store.subscribe,
+    reload,
+  };
+}
+
+export function reloadableLazyLoadAndPollUntil<T>(
+  load: () => Promise<T>,
+  untilNot: any,
+  pollIntervalMs: number,
+  errDescription: string,
+  firstLoad?: () => Promise<T>,
+): AsyncReadable<T> & { reload: () => Promise<void> } {
+  const store = writable<AsyncStatus<T>>({ status: 'pending' }, set => {
+    let interval: any;
+    let currentValue: any;
+    let isFirstLoad = true;
+    async function loadInner(): Promise<boolean> {
+      let value;
+      if (isFirstLoad && !!firstLoad) {
+        value = await firstLoad();
+      } else {
+        value = await load();
+      }
+      if (isFirstLoad || !isEqual(value, currentValue)) {
+        currentValue = value;
+        isFirstLoad = false;
+        set({ status: 'complete', value });
+      }
+      // The first load may fetch with GetOptions::Local so we still
+      // want to poll one more time with GetOptions::Network in any case
+      if (!isEqual(value, untilNot) && !isFirstLoad) {
+        return false;
+      }
+      return true;
+    }
+    loadInner()
+      .then(proceed => {
+        if (!proceed) return;
+        interval = setInterval(() => {
+          loadInner()
+            .then(proceedFurther => {
+              if (!proceedFurther) clearInterval(interval);
+            })
+            .catch(e => {
+              console.warn(errDescription, e);
+            });
+        }, pollIntervalMs);
+      })
+      .catch(e => {
+        set({ status: 'error', error: e });
+      });
+    return () => {
+      set({ status: 'pending' });
+      if (interval) clearInterval(interval);
+    };
+  });
+
+  const reload = async () => {
+    try {
+      const value = await load();
+      store.set({
+        status: 'complete',
+        value,
+      });
+    } catch (error) {
+      store.set({ status: 'error', error });
+    }
+  };
+
+  return {
+    subscribe: store.subscribe,
+    reload,
+  };
 }

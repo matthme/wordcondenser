@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
 import {
   Record,
-  AppAgentClient,
+  AppClient,
   CellId,
   AgentPubKey,
   ActionHash,
@@ -32,7 +32,7 @@ export interface ReflectionData {
 @customElement('all-reflections')
 export class AllReflections extends LitElement {
   @consume({ context: clientContext })
-  client!: AppAgentClient;
+  client!: AppClient;
 
   @consume({ context: condenserContext })
   _condenserStore!: CondenserStore;
@@ -54,7 +54,7 @@ export class AllReflections extends LitElement {
   renderList(reflections: Array<Record>) {
     if (reflections.length === 0)
       return html`<div
-        style="font-size: 23px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
+        style="font-size: 21px; margin-top: 40px; margin-bottom: 70px; color: #929ab9;"
       >
         No reflections found for this craving.
       </div>`;

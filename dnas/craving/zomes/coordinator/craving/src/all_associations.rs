@@ -1,20 +1,25 @@
 use std::collections::HashMap;
 
-use hdk::prelude::*;
 use craving_integrity::*;
+use hdk::prelude::*;
 
+use crate::helper::ZomeFnInput;
 
 /// Getting all deduplicated associations.
 #[hdk_extern]
-pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
-    let path = Path::from("all_associations");
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AllAssociations, None)?;
+pub fn get_associations_for_craving(input: ZomeFnInput<ActionHash>) -> ExternResult<Vec<Record>> {
+    let links = get_links(
+        LinkQuery::try_new(input.input.clone(), LinkTypes::AllAssociations)?,
+        input.get_strategy(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            link.target.into_any_dht_hash().unwrap(),
-            GetOptions::default(),
-        ))
+        .map(|link| {
+            GetInput::new(
+                link.target.into_any_dht_hash().unwrap(),
+                input.get_options(),
+            )
+        })
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
 
@@ -38,7 +43,7 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
                                 sorted_and_deduped_records.insert(eh.clone(), record);
                             }
                         }
-                    },
+                    }
                     None => {
                         sorted_and_deduped_records.insert(eh.clone(), record);
                     }
@@ -55,19 +60,23 @@ pub fn get_all_associations(_: ()) -> ExternResult<Vec<Record>> {
 /// Get all association records, i.e. if the same association has been created multiple
 /// times, return all of them
 #[hdk_extern]
-pub fn get_all_association_actions(_: ()) -> ExternResult<Vec<Record>> {
-    let path = Path::from("all_associations");
-    let links = get_links(path.path_entry_hash()?, LinkTypes::AllAssociations, None)?;
+pub fn get_association_actions_for_craving(
+    input: ZomeFnInput<ActionHash>,
+) -> ExternResult<Vec<Record>> {
+    let links = get_links(
+        LinkQuery::try_new(input.input.clone(), LinkTypes::AllAssociations)?,
+        input.get_strategy(),
+    )?;
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            link.target.into_any_dht_hash().unwrap(),
-            GetOptions::default(),
-        ))
+        .map(|link| {
+            GetInput::new(
+                link.target.into_any_dht_hash().unwrap(),
+                input.get_options(),
+            )
+        })
         .collect();
     let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
     let records: Vec<Record> = records.into_iter().filter_map(|r| r).collect();
     Ok(records)
 }
-
-

@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "scripts": {
     "start": "vite --port $UI_PORT --clearScreen false",
     "build": "vite build",
@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@fontsource/poppins": "4.5.10",
-    "@holochain/client": "^0.12.5",
-    "@holochain-open-dev/elements": "^0.2.0",
-    "@holochain-open-dev/stores": "^0.1.9",
-    "@holochain-open-dev/utils": "^0.9.9",
+    "@holochain/client": "^0.20.6",
+    "@holochain-open-dev/elements": "^0.601.2",
+    "@holochain-open-dev/stores": "^0.601.2",
+    "@holochain-open-dev/profiles": "0.601.4",
+    "@holochain-open-dev/utils": "0.601.2",
     "@lit-labs/context": "^0.2.0",
     "@lit-labs/task": "^2.0.0",
     "@lit/localize": "^0.11.4",
@@ -28,7 +29,7 @@
     "@material/mwc-formfield": "^0.27.0",
     "@msgpack/msgpack": "^2.7.2",
     "@open-wc/scoped-elements": "^2.1.1",
-    "@tauri-apps/api": "^1.5.0",
+    "@theweave/api": "^0.6.9",
     "@vaadin/date-time-picker": "^23.2.8",
     "silly-password-generator": "1.0.21",
     "emittery": "^1.0.1",

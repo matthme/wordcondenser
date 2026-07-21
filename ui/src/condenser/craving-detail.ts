@@ -14,22 +14,6 @@ import { condenserContext } from '../contexts';
 import { CravingStore } from '../craving-store';
 import { CondenserStore } from '../condenser-store';
 import { sharedStyles } from '../sharedStyles';
-import {
-  newAssociationsCount,
-  newOffersCount,
-  newCommentsCount,
-  newReflectionsCount,
-  getNotifiedOffersCount,
-  isKangaroo,
-  setNotifiedOffersCount,
-  getNotifiedCommentsCount,
-  setNotifiedCommentsCount,
-  getNotifiedReflectionsCount,
-  setNotifiedReflectionsCount,
-  getCravingNotificationSettings,
-  getNotifiedAssociationsCount,
-  setNotifiedAssociationsCount,
-} from '../utils';
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
@@ -44,10 +28,6 @@ export class CravingDetail extends LitElement {
 
   @state()
   _editing = false;
-
-  private _lobbiesForCraving = new StoreSubscriber(this, () =>
-    this.condenserStore.getLobbiesForCraving(this.store.service.cellId[0]),
-  );
 
   private _allReflectionsCount = new StoreSubscriber(
     this,
@@ -67,12 +47,6 @@ export class CravingDetail extends LitElement {
   private _associationsCount = new StoreSubscriber(
     this,
     () => this.store.associationsCount,
-  );
-
-  private _amIFiltered = new StoreSubscriber(this, () =>
-    this.condenserStore.amIFiltered(
-      this._lobbiesForCraving.value.map(data => data.dnaHash),
-    ),
   );
 
   // [number of total associations total, number of new associations]
@@ -249,13 +223,8 @@ export class CravingDetail extends LitElement {
   }
 
   render() {
-    if (this._amIFiltered.value) {
-      return html``;
-    }
-
-    const timestamp = this.store.initTime;
     const craving = this.store.craving;
-    const date = new Date(timestamp);
+    const date = new Date(craving.action.timestamp);
 
     // console.log("Craving: ", craving);
 
@@ -271,7 +240,6 @@ export class CravingDetail extends LitElement {
             ? this.dispatchEvent(
                 new CustomEvent('selected-craving', {
                   detail: {
-                    cellId: this.store.service.cellId,
                     craving,
                   },
                   bubbles: true,
@@ -283,7 +251,6 @@ export class CravingDetail extends LitElement {
           this.dispatchEvent(
             new CustomEvent('selected-craving', {
               detail: {
-                cellId: this.store.service.cellId,
                 craving,
               },
               bubbles: true,
@@ -297,34 +264,10 @@ export class CravingDetail extends LitElement {
         >
           ${this.renderCounts()}
           <span style="display: flex; flex: 1;"></span>
-          <span style="font-size: 14px;"
-            >installed ${timeAgo.format(date)}</span
-          >
+          <span style="font-size: 14px;">created ${timeAgo.format(date)}</span>
         </div>
-        <div class="craving-title">${craving.title}</div>
-        <div class="craving-description">${craving.description}</div>
-
-        <div
-          class="column"
-          style="flex: 1; align-items: flex-end; width: 100%;"
-        >
-          <div
-            class="row"
-            style="margin-top: 5px; justify-content: flex-end; margin-right: -15px; overflow-x: auto;"
-          >
-            ${this._lobbiesForCraving.value.map(lobbyData => {
-              if (lobbyData.info?.logo_src) {
-                return html`<img
-                  title=${lobbyData.name}
-                  alt="Group logo"
-                  src=${lobbyData.info.logo_src}
-                  style="height: 50px; width: 50px; border-radius: 50%; margin: 5px 2px 12px 2px;"
-                />`;
-              }
-              return html``;
-            })}
-          </div>
-        </div>
+        <div class="craving-title">${craving.entry.title}</div>
+        <div class="craving-description">${craving.entry.description}</div>
       </div>
     `;
   }
@@ -358,7 +301,7 @@ export class CravingDetail extends LitElement {
       }
 
       .craving-description {
-        white-space: normal;
+        white-space: pre-line;
         text-align: left;
         font-size: 19px;
         height: 120px;

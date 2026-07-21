@@ -24,7 +24,7 @@ export class NoCookiesEver extends LitElement {
               time</i
             ></b
           >. <br /><br />For this it is important that you only use Holochain
-          apps that are open source so that people out there can check the
+          apps that are open source such that people out there can check the
           integrity of the stuff that your computer is running on your behalf.
         </div>
 
