@@ -8,7 +8,7 @@ export default defineConfig({
       networkSeed: "098rc1m-09384u-crm-29384u-cmkj",
       icon: {
         type: "filesystem",
-        path: "./ui/tennis_club.png",
+        path: "./workdir/tennis_club.png",
       },
       creatingAgent: {
         agentIdx: 1,
@@ -16,7 +16,7 @@ export default defineConfig({
           nickname: "Gaston",
           avatar: {
             type: "filesystem",
-            path: "./ui/gaston.jpeg",
+            path: "./workdir/gaston.jpeg",
           },
         },
       },
@@ -27,7 +27,7 @@ export default defineConfig({
             nickname: "Marsupilami",
             avatar: {
               type: "filesystem",
-              path: "./ui/marsupilami.jpeg",
+              path: "./workdir/marsupilami.jpeg",
             },
           },
         },
@@ -37,7 +37,7 @@ export default defineConfig({
             nickname: "Marsupilami Nr. 2",
             avatar: {
               type: "filesystem",
-              path: "./ui/marsupilami.jpeg",
+              path: "./workdir/marsupilami.jpeg",
             },
           },
         },
@@ -59,7 +59,7 @@ export default defineConfig({
       description: "Create words.",
       icon: {
         type: "filesystem",
-        path: "./ui/gaston.jpeg",
+        path: "./ui/icon.png",
       },
       source: {
         type: "localhost",
@@ -73,7 +73,7 @@ export default defineConfig({
     //   description: "Create words.",
     //   icon: {
     //     type: "filesystem",
-    //     path: "./ui/gaston.jpeg",
+    //     path: "./ui/icon.png",
     //   },
     //   source: {
     //     type: "filesystem",
